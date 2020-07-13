@@ -40,29 +40,27 @@ class PlayerController:
 
         self.busy = False
 
-        self.horizontal_goal_offset = 5
+        self.horizontal_goal_offset = 2
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
         self.shikigami_haunting_range = 18  # exceed: moonlight slash's estimalte x hitbox RADIUS in minimap coords.
-        self.shikigami_haunting_delay = 0.7  # delay after using shikigami haunting where character is not movable
+        self.shikigami_haunting_delay = 0.5  # delay after using shikigami haunting where character is not movable
 
-        self.horizontal_movement_threshold = 19 - 3  # teleport instead of walk if distance greater than threshold
+        self.horizontal_movement_threshold = 18-2  # teleport instead of walk if distance greater than threshold
 
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
 
-        self.last_shield_chase_time = 0
-        self.shield_chase_cooldown = 6
-        self.shield_chase_delay = 1.0  # delay after using SC where character is not movable
-        self.last_shield_chase_coords = None
-        self.min_shield_chase_distance = 20
+        self.last_yaksha_boss_time = 0
+        self.yaksha_boss_cooldown = 30
+        self.yaksha_boss_delay = 1.6
 
         self.last_kishin_shoukan_time = 0
-        self.kishin_shoukan_cooldown = 60 + 1
-        self.kishin_shoukan_delay = 1.6 - 0.2  # delay after using thousand sword where character is not movable
+        self.kishin_shoukan_cooldown = 60
+        self.kishin_shoukan_delay = 1.6
 
-        self.rune_cooldown = 60 * 15  # 15 minutes for rune cooldown
+        self.rune_cooldown = 15
         self.last_rune_solve_time = 0
 
         self.v_buff_cd = 180 + 1  # common cool down for v buff
@@ -108,16 +106,17 @@ class PlayerController:
 
         if not no_attack_distance:
             self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to right direction
-            # self.shikigami_haunting()
 
         if loc_delta > 0:  # left movement
             if no_attack_distance and no_attack_distance < abs_loc_delta:
-                self.optimized_horizontal_move(self.x-no_attack_distance+self.horizontal_goal_offset)
+                self.optimized_horizontal_move(self.x-no_attack_distance+self.horizontal_goal_offset, teleport_once=True)
 
             self.update()
             loc_delta = self.x - goal_x
             abs_loc_delta = abs(loc_delta)
             if abs_loc_delta < self.horizontal_movement_threshold:
+                if not no_attack_distance:
+                    self.shikigami_haunting()
                 self.horizontal_move_goal(goal_x)
             else:
                 while True:
@@ -130,16 +129,18 @@ class PlayerController:
                         self.shikigami_haunting()
 
                     if abs(self.x - goal_x) < self.shikigami_haunting_range:
-                        self.optimized_horizontal_move(goal_x)
+                        self.optimized_horizontal_move(goal_x, teleport_once=True)
                     else:
-                        self.optimized_horizontal_move(self.x - self.shikigami_haunting_range + self.random_duration(2, 0))
+                        self.optimized_horizontal_move(self.x - self.shikigami_haunting_range, teleport_once=True)
         elif loc_delta < 0:  # right movement
             if no_attack_distance and no_attack_distance < abs_loc_delta:
-                self.optimized_horizontal_move(self.x+no_attack_distance-self.horizontal_goal_offset)
+                self.optimized_horizontal_move(self.x+no_attack_distance-self.horizontal_goal_offset, teleport_once=True)
             self.update()
             loc_delta = self.x - goal_x
             abs_loc_delta = abs(loc_delta)
             if abs_loc_delta < self.horizontal_movement_threshold:
+                if not no_attack_distance:
+                    self.shikigami_haunting()
                 self.horizontal_move_goal(goal_x)
             else:
                 while True:
@@ -152,11 +153,11 @@ class PlayerController:
                         self.shikigami_haunting()
 
                     if abs(goal_x - self.x) < self.shikigami_haunting_range:
-                        self.optimized_horizontal_move(goal_x)
+                        self.optimized_horizontal_move(goal_x, teleport_once=True)
                     else:
-                        self.optimized_horizontal_move(self.x + self.shikigami_haunting_range - abs(self.random_duration(2, 0)))
+                        self.optimized_horizontal_move(self.x + self.shikigami_haunting_range, teleport_once=True)
 
-    def optimized_horizontal_move(self, goal_x, ledge=False, enforce_time=True):
+    def optimized_horizontal_move(self, goal_x, teleport_once=False, enforce_time=True):
         """
         Move from self.x to goal_x in as little time as possible. Uses multiple movement solutions for efficient paths. Blocking call
         :param goal_x: x coordinate to move to. This function only takes into account x coordinate movements.
@@ -190,6 +191,8 @@ class PlayerController:
             else:
                 # Distance is quite big, so we teleport
                 self.teleport_right()
+                if not teleport_once:
+                    self.horizontal_move_goal(goal_x)
         elif loc_delta > 0:  # we are moving to the left
             if abs_loc_delta <= self.horizontal_movement_threshold:
                 # Just walk if distance is less than 10
@@ -211,6 +214,8 @@ class PlayerController:
             else:
                 # Distance is quite big, so we teleport
                 self.teleport_left()
+                if not teleport_once:
+                    self.horizontal_move_goal(goal_x)
 
     def horizontal_move_goal(self, goal_x):
         """
@@ -306,7 +311,7 @@ class PlayerController:
         self.key_mgr.direct_release(DIK_DOWN)
 
     def shikigami_haunting(self, wait_delay=True):
-        for _ in range(3):
+        for _ in range(4):
             self.key_mgr.single_press(self.keymap["shikigami_haunting"])
             time.sleep(0.05 + abs(self.random_duration(0.01)))
         self.skill_cast_counter += 1
@@ -314,45 +319,16 @@ class PlayerController:
             time.sleep(self.shikigami_haunting_delay)
 
     def kishin_shoukan(self):
-        if time.time() - self.last_thousand_sword_time > self.kishin_shoukan_cooldown:
-            self.update()
-            if self.distance((self.x, self.y), self.last_thousand_sword_coords if self.last_thousand_sword_coords else (1000,1000)) >= self.min_thousand_sword_distance or \
-                    time.time() - self.last_thousand_sword_time > self.thousand_sword_cooldown*3:
-                self.key_mgr.single_press(self.keymap["kishin_shoukan"], additional_duration=abs(self.random_duration()))
-                self.last_thousand_sword_time = time.time()
-                self.skill_cast_counter += 1
-                self.last_thousand_sword_coords = (self.x, self.y)
-                print("kishin shoukan cast")
-                time.sleep(self.kishin_shoukan_delay)
+        self.key_mgr.single_press(self.keymap["kishin_shoukan"], additional_duration=abs(self.random_duration()))
+        self.last_kishin_shoukan_time = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(self.kishin_shoukan_delay)
 
-    def shield_chase(self):
-        if time.time() - self.last_shield_chase_time > self.shield_chase_cooldown:
-            if self.distance((self.x, self.y), self.last_shield_chase_coords if self.last_shield_chase_coords else (1000,1000)) >= self.min_shield_chase_distance or \
-                    time.time() - self.last_shield_chase_time > self.shield_chase_cooldown*3:
-
-                self.update()
-                cast_yccords = self.y
-                self.key_mgr.single_press(self.keymap["shield_chase"], additional_duration=abs(self.random_duration()))
-                """self.key_mgr.single_press(DIK_ALT)
-                self.update()
-                after_cast_ycoords = self.y
-                print("shield chase cast")
-                if cast_yccords == after_cast_ycoords:
-                    #  Shield chase has been used.
-                    self.last_shield_chase_time = time.time()
-                    self.last_shield_chase_coords = (self.x, self.y)
-                    self.skill_cast_counter += 1
-                    time.sleep(self.shield_chase_delay - 0.2)
-                    print("shield chase cast - actually casted")
-                    return 0
-                else:
-                    # No monsters nearby, was not used
-                    print("shield chase cast - not casted")
-                    time.sleep(0.2)
-                    return 1"""
-                # Disabled skill usage check for now
-                self.skill_cast_counter += 1
-                return 0
+    def yaksha_boss(self):
+        self.key_mgr.single_press(self.keymap["yaksha_boss"])
+        self.last_yaksha_boss_time = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(self.yaksha_boss_delay)
 
     def holy_symbol(self):
         if time.time() - self.last_holy_symbol_time > self.v_buff_cd + random.randint(0, 14):

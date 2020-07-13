@@ -61,10 +61,10 @@ class PlatformDataCaptureWindow(tk.Toplevel):
         self.tool_frame_4 = tk.Frame(self.master_tool_frame)
         self.tool_frame_4.pack(fill=X)
         self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Set yaksha boss coord",
-                                                 command=self._set_place_skill_coord('yaksha_boss'))
+                                                 command=lambda: self._set_place_skill_coord('yaksha_boss'))
         self.set_yaksha_coord_button.pack(side=LEFT, expand=YES, fill=X)
         self.set_kishin_coord_button = tk.Button(self.tool_frame_4, text="Set kishin shoukan coord",
-                                                 command=self._set_place_skill_coord('kishin_shoukan'))
+                                                 command=lambda: self._set_place_skill_coord('kishin_shoukan'))
         self.set_kishin_coord_button.pack(side=RIGHT, expand=YES, fill=X)
 
         self.tool_frame_5 = tk.Frame(self.master_tool_frame)
@@ -100,7 +100,7 @@ class PlatformDataCaptureWindow(tk.Toplevel):
             self.load_platform_file(open_file_path)
 
     def _set_place_skill_coord(self, skill_name):
-        self.other_attrs[skill_name + '_coord'] = [self.last_coord_x, self.last_coord_y]
+        self.other_attrs[skill_name + '_coord'] = (self.last_coord_x, self.last_coord_y)
 
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
@@ -194,6 +194,8 @@ class PlatformDataCaptureWindow(tk.Toplevel):
         self.update_listbox()
 
     def on_save(self):
+        assert self.minimap_rect
+
         minimap_rect = self.minimap_rect  # dialog may cover minimap
         path = asksaveasfilename(initialdir=os.getcwd(), title="Save path setting", filetypes=(("Terrain file (*.platform)","*.platform"),))
         if path:

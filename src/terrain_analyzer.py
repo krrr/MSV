@@ -47,7 +47,6 @@ class Platform:
         self.last_visit = 0
         self.solutions = []
         self.hash = hash
-        self.no_moster
 
     def __repr__(self):
         return 'Platform(%s, %s, %s, %s)' % (self.start_x, self.start_y, self.end_x, self.end_y)
@@ -116,6 +115,9 @@ class PathAnalyzer:
         self.astar_open_val_grid = []  # 2d array to keep track of "open" values in a star search.
         self.astar_minimap_rect = []  # minimap rect (x,y,w,h) for use in generating astar data
 
+        self.yaksha_boss_coord = None
+        self.kishin_shoukan_coord = None
+
     def save(self, filename="mapdata.platform", other_attrs = None):
         """Save platforms, oneway_platforms, minimap_roi to a file
         :param filename: path to save file
@@ -132,28 +134,30 @@ class PathAnalyzer:
         :return boundingRect tuple of minimap as stored on file (defaults to (x, y, w, h) if file is valid else 0"""
         if not self.verify_data_file(filename):
             return 0
-        else:
-            with open(filename, "rb") as f:
-                data = pickle.load(f)
-                self.platforms = data["platforms"]
-                self.oneway_platforms = data["oneway"]
-                minimap_coords = data["minimap"]
-                self.astar_minimap_rect = minimap_coords
 
-            self.generate_solution_dict()
-            self.astar_map_grid = []
-            self.astar_open_val_grid = []
-            map_width, map_height = self.astar_minimap_rect[2], self.astar_minimap_rect[3]
+        with open(filename, "rb") as f:
+            data = pickle.load(f)
+            self.platforms = data["platforms"]
+            self.oneway_platforms = data["oneway"]
+            minimap_coords = data["minimap"]
+            self.astar_minimap_rect = minimap_coords
+            self.yaksha_boss_coord = data.get('yaksha_boss_coord')
+            self.kishin_shoukan_coord = data.get('kishin_shoukan_coord')
 
-            # Reinitialize map grid data
-            for height in range(map_height + 1):
-                self.astar_map_grid.append([0 for x in range(map_width + 1)])
-                self.astar_open_val_grid.append([0 for x in range(map_width + 1)])
-            for key, platform in self.platforms.items():
-                # currently this only uses the platform's start x and y coords and traces them until end x coords.
-                for platform_coord in range(platform.start_x, platform.end_x + 1):
-                    self.astar_map_grid[platform.start_y][platform_coord] = 1
-            return minimap_coords 
+        self.generate_solution_dict()
+        self.astar_map_grid = []
+        self.astar_open_val_grid = []
+        map_width, map_height = self.astar_minimap_rect[2], self.astar_minimap_rect[3]
+
+        # Reinitialize map grid data
+        for height in range(map_height + 1):
+            self.astar_map_grid.append([0 for x in range(map_width + 1)])
+            self.astar_open_val_grid.append([0 for x in range(map_width + 1)])
+        for key, platform in self.platforms.items():
+            # currently this only uses the platform's start x and y coords and traces them until end x coords.
+            for platform_coord in range(platform.start_x, platform.end_x + 1):
+                self.astar_map_grid[platform.start_y][platform_coord] = 1
+        return minimap_coords
 
     def verify_data_file(self, filename):
         """
@@ -210,7 +214,6 @@ class PathAnalyzer:
             visited_platform_hashes.add(current_solution.from_hash)
             if current_solution.to_hash == goal_hash:
                 calculated_paths.append(paths)
-                break
 
             try:
                 next_solution = self.platforms[current_solution.to_hash].solutions
@@ -383,8 +386,8 @@ class PathAnalyzer:
 
     def calculate_interplatform_solutions(self, hash, oneway=False):
         """Find relationships between platform, like how one platform links to another using movement.
-        :param platform : platform hash in self.platforms Platform
-        :return : None
+        :param hash: platform hash in self.platforms Platform
+        :return None
         destination_platform : platform object in self.platforms which is the destination
         x, y : coordinate area where the method can be used (x1<=coord_x<=x2, y1<=coord_y<=y2)
         method : movement method string

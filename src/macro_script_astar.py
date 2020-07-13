@@ -80,7 +80,8 @@ class MacroControllerAStar(macro_script.MacroController):
 
         # Rune Detector
         self.player_manager.update()
-        rune_platform_hash, rune_coords = self.find_rune_platform()
+        rune_coords = self.screen_processor.find_rune_marker()
+        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
         if rune_platform_hash:
             self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
@@ -137,7 +138,7 @@ class MacroControllerAStar(macro_script.MacroController):
         return 0
 
 
-    def navigate_to_platform(self, rune_platform_hash, rune_coords):
+    def navigate_to_platform(self, platform_hash, rune_coords):
         """
         Uses A* pathfinding to navigate to rune coord
         :return: None

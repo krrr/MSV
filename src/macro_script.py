@@ -117,74 +117,70 @@ class MacroController:
         else:
             return 0
 
-    def find_rune_platform(self):
+    def find_coord_platform(self, coord):
         """
         Checks if a rune exists on a platform and if exists, returns platform hash
-        :return: Platform hash, rune_coord_tuple of platform where the rune is located, else 0, 0 if rune does not exist
+        :return: Platform hash if located, else None
         """
         self.player_manager.update()
-        rune_coords = self.screen_processor.find_rune_marker()
-        if rune_coords:
-            rune_platform_hash = None
+        if coord:
+            platform_hash = None
             for key, platform in self.terrain_analyzer.platforms.items():
-                if rune_coords[1] >= platform.start_y - self.rune_platform_offset and \
-                        rune_coords[1] <= platform.start_y + self.rune_platform_offset and \
-                        rune_coords[0] >= platform.start_x and \
-                        rune_coords[0] <= platform.end_x:
-                    rune_platform_hash = key
+                if coord[1] >= platform.start_y - self.rune_platform_offset and \
+                        coord[1] <= platform.start_y + self.rune_platform_offset and \
+                        coord[0] >= platform.start_x and \
+                        coord[0] <= platform.end_x:
+                    platform_hash = key
             for key, platform in self.terrain_analyzer.oneway_platforms.items():
-                if rune_coords[1] >= platform.start_y - self.rune_platform_offset and \
-                        rune_coords[1] <= platform.start_y + self.rune_platform_offset and \
-                        rune_coords[0] >= platform.start_x and \
-                        rune_coords[0] <= platform.end_x:
-                    rune_platform_hash = key
+                if coord[1] >= platform.start_y - self.rune_platform_offset and \
+                        coord[1] <= platform.start_y + self.rune_platform_offset and \
+                        coord[0] >= platform.start_x and \
+                        coord[0] <= platform.end_x:
+                    platform_hash = key
 
-            if rune_platform_hash:
-                return rune_platform_hash, rune_coords
-            else:
-                return 0, 0
-        else:
-            return 0, 0
+            if platform_hash:
+                return platform_hash
 
-    def navigate_to_platform(self, rune_platform_hash, rune_coords):
+        return None
+
+    def navigate_to_platform(self, platform_hash, coord):
         """
         Automatically goes to rune_coords by calling find_rune_platform. Update platform information before calling.
         :return: 0
         """
-        if self.current_platform_hash != rune_platform_hash:
-            rune_solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, rune_platform_hash)
-            if rune_solutions:
-                self.logger.debug("paths to rune: %s" % (" ".join(x.method for x in rune_solutions)))
-                for solution in rune_solutions:
+        if self.current_platform_hash != platform_hash:
+            solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
+            if solutions:
+                self.logger.debug("paths to platform %s: %s" % (platform_hash, " ".join(x.method for x in solutions)))
+                for solution in solutions:
                     if self.player_manager.x < solution.lower_bound[0]:
                         # We are left of solution bounds.
-                        self.player_manager.horizontal_move_goal(solution.lower_bound[0])
+                        self.player_manager.optimized_horizontal_move(solution.lower_bound[0])
                     else:
                         # We are right of solution bounds
-                        self.player_manager.horizontal_move_goal(solution.upper_bound[0])
-                    time.sleep(1)
-                    rune_movement_type = solution.method
-                    if rune_movement_type == ta.METHOD_DROP:
+                        self.player_manager.optimized_horizontal_move(solution.upper_bound[0])
+                    movement_type = solution.method
+                    if movement_type == ta.METHOD_DROP:
                         self.player_manager.drop()
                         time.sleep(1)
-                    elif rune_movement_type == ta.METHOD_JUMPL:
+                    elif movement_type == ta.METHOD_JUMPL:
                         self.player_manager.jumpl()
                         time.sleep(0.5)
-                    elif rune_movement_type == ta.METHOD_JUMPR:
+                    elif movement_type == ta.METHOD_JUMPR:
                         self.player_manager.jumpr()
                         time.sleep(0.5)
-                    elif rune_movement_type == ta.METHOD_TELEPORTL:
+                    elif movement_type == ta.METHOD_TELEPORTL:
                         self.player_manager.teleport_left()
-                        time.sleep(0.5)
-                    elif rune_movement_type == ta.METHOD_TELEPORTR:
+                        time.sleep(0.3)
+                    elif movement_type == ta.METHOD_TELEPORTR:
                         self.player_manager.teleport_right()
-                        time.sleep(0.5)
-                    elif rune_movement_type == ta.METHOD_TELEPORTUP:
+                        time.sleep(0.3)
+                    elif movement_type == ta.METHOD_TELEPORTUP:
                         self.player_manager.teleport_up()
-                        time.sleep(0.5)
-                time.sleep(0.5)
+                        time.sleep(0.3)
+                time.sleep(0.4)
             else:
-                self.logger.debug("could not generate path to rune platform %s from starting platform %s"%(rune_platform_hash, self.current_platform_hash))
+                self.logger.debug("could not generate path to rune platform %s from starting platform %s" % (platform_hash, self.current_platform_hash))
         return 0
 
     def log_skill_usage_statistics(self):
@@ -281,14 +277,15 @@ class MacroController:
 
         # Rune Detector
         self.player_manager.update()
-        rune_platform_hash, rune_coords = self.find_rune_platform()
+        rune_coords = self.screen_processor.find_rune_marker()
+        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
         if rune_platform_hash:
             self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_cooldown or rune_solve_time_offset <= 30:
                 self.navigate_to_platform(rune_platform_hash, rune_coords)
                 time.sleep(0.3)
-                self.player_manager.horizontal_move_goal(rune_coords[0])
+                self.player_manager.optimized_horizontal_move(rune_coords[0])
                 time.sleep(0.1)
                 self.keyhandler.single_press(dc.DIK_PERIOD)
                 time.sleep(1.5)
@@ -391,7 +388,26 @@ class MacroController:
         time.sleep(0.05)
 
         # set skills
-        # self.player_manager.kishin_shoukan()
+        if (self.terrain_analyzer.kishin_shoukan_coord and
+                time.time() - self.player_manager.last_kishin_shoukan_time > self.player_manager.kishin_shoukan_cooldown):
+            platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
+            if platform:
+                self.logger.debug('placing kishin shoukan')
+                self.navigate_to_platform(platform, self.terrain_analyzer.kishin_shoukan_coord)
+                self.player_manager.optimized_horizontal_move(self.terrain_analyzer.kishin_shoukan_coord[0])
+                self.player_manager.kishin_shoukan()
+                self.player_manager.last_kishin_shoukan_time = time.time()
+
+        if (self.terrain_analyzer.yaksha_boss_coord and
+                time.time() - self.player_manager.last_yaksha_boss_time > self.player_manager.yaksha_boss_cooldown):
+            platform = self.find_coord_platform(self.terrain_analyzer.yaksha_boss_coord)
+            if platform:
+                self.logger.debug('placing yaksha boss')
+                self.navigate_to_platform(platform, self.terrain_analyzer.yaksha_boss_coord)
+                self.player_manager.optimized_horizontal_move(self.terrain_analyzer.yaksha_boss_coord[0])
+                self.keyhandler.single_press(dc.DIK_RIGHT)
+                self.player_manager.yaksha_boss()
+                self.player_manager.last_yaksha_boss_time = time.time()
 
         # Finished
         self.loop_count += 1

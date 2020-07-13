@@ -94,7 +94,7 @@ class KeyboardInputManager:
         :return: None"""
         self.key_state[key_code] = value
 
-    def single_press(self, key_code, duration=0.08, additional_duration=0):
+    def single_press(self, key_code, duration=0.06, additional_duration=0):
         """
         Presses key_code for duration seconds. Since it uses time.sleep(), it is a blocking call.
         :param key_code: DIK key code of key

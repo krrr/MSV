@@ -22,7 +22,9 @@ solution = pathextractor.pathfind('6029314b', '0f9c84c4')
 assert solution and len(solution) == 2 and solution[0].method == terrain_analyzer.METHOD_TELEPORTUP and solution[1].method == terrain_analyzer.METHOD_TELEPORTUP
 
 solution = pathextractor.pathfind('a12ed5e3', '0f9c84c4')
-print(solution)
+assert solution and len(solution) ==1 and solution[0].method == terrain_analyzer.METHOD_JUMPL
 
+solution = pathextractor.pathfind('31c36acc', '0f9c84c4')
+print(solution)
 # for solution in pathextractor.pathfind(start_hash, goal_hash):
 #     print(solution.method, solution.to_hash)
