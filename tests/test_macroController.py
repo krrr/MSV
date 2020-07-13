@@ -1,9 +1,11 @@
 from unittest import TestCase
 from src.macro_script import MacroController
 
-class TestMacroController(TestCase):
-    def test_load_and_process_platform_map(self):
-        g = MacroController(rune_model_dir="non-unittests/arrow_classifier_keras_gray.h5")
-        retval = g.load_and_process_platform_map(r"unittest_data/test_valid_data.platform")
-        self.assertNotEqual(retval, 0)
 
+class TestMacroController(TestCase):
+    macro_controller = None
+
+    def setUp(self):
+        self.macro_controller = MacroController(rune_model_dir="../src/arrow_classifier_keras_gray.h5")
+        ret = self.macro_controller.load_and_process_platform_map(r"unittest_data/mirror_touched_sea2.platform")
+        assert ret != 0

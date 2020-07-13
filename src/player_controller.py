@@ -1,8 +1,9 @@
-from directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP, DIK_ALT
+from directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
 from keystate_manager import DEFAULT_KEY_MAP
 import time, math, random
-# simple jump vertical distance: about 6 pixels
 
+
+# simple jump vertical distance: about 6 pixels
 class PlayerController:
     """
     This class keeps track of character location and manages advanced movement and attacks.
@@ -26,35 +27,27 @@ class PlayerController:
         ChangePlatform
         AttackinPlatform
         """
-        self.x = None
-        self.y = None
-
+        self.x = self.y = None
 
         self.keymap = {}
         for key, value in keymap.items():
             self.keymap[key] = value[0]
         self.jump_key = self.keymap["jump"]
+        self.teleport_key = self.keymap["teleport"]
         self.key_mgr = key_mgr
         self.screen_processor = screen_handler
-        self.goal_x = None
-        self.goal_y = None
+        self.goal_x = self.goal_y = None
 
         self.busy = False
 
-        self.finemode_limit = 4
         self.horizontal_goal_offset = 5
-
-        self.demonstrike_min_distance = 18
-
-        self.horizontal_jump_distance = 10
-        self.horizontal_jump_height = 9
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
-        self.moonlight_slash_x_radius = 13  # exceed: moonlight slash's estimalte x hitbox RADIUS in minimap coords.
-        self.moonlight_slash_delay = 0.9  # delay after using MS where character is not movable
+        self.shikigami_haunting_range = 18  # exceed: moonlight slash's estimalte x hitbox RADIUS in minimap coords.
+        self.shikigami_haunting_delay = 0.7  # delay after using shikigami haunting where character is not movable
 
-        self.horizontal_movement_threshold = 21 # Glide instead of walk if distance greater than threshold
+        self.horizontal_movement_threshold = 19 - 3  # teleport instead of walk if distance greater than threshold
 
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
@@ -65,37 +58,19 @@ class PlayerController:
         self.last_shield_chase_coords = None
         self.min_shield_chase_distance = 20
 
-        self.last_thousand_sword_time = 0
-        self.thousand_sword_cooldown = 8 + 2
-        self.thousand_sword_delay = 1.6 - 0.2  # delay after using thousand sword where character is not movable
-        self.last_thousand_sword_coords = None
-        self.min_thousand_sword_distance = 25
+        self.last_kishin_shoukan_time = 0
+        self.kishin_shoukan_cooldown = 60 + 1
+        self.kishin_shoukan_delay = 1.6 - 0.2  # delay after using thousand sword where character is not movable
 
         self.rune_cooldown = 60 * 15  # 15 minutes for rune cooldown
         self.last_rune_solve_time = 0
 
-        self.holy_symbol_cooldown = 60 * 3 + 1
+        self.v_buff_cd = 180 + 1  # common cool down for v buff
+        self.buff_common_delay = 2  # common delay for v buff
+
         self.last_holy_symbol_time = 0
-        self.holy_symbol_delay = 1.7
-
-        self.hyper_body_cooldown = 60 * 3 + 1
-        self.last_hyper_body_time = 0
-        self.hyper_body_delay = 1.7
-
-        self.overload_stack = 0
-
-        # Initialization code for self.randomize_skill
-        self.thousand_sword_percent = 30
-        self.shield_chase_percent = 40
-        self.choices = []
-
-        for obj in range(self.thousand_sword_percent):
-            self.choices.append(1)
-        for obj in range(self.shield_chase_percent):
-            self.choices.append(2)
-
-        for obj in range(100 - len(self.choices)):
-            self.choices.append(0)
+        self.last_speed_infusion_time = 0
+        self.last_haku_reborn_time = 0
 
     def update(self, player_coords_x=None, player_coords_y=None):
         """
@@ -115,57 +90,35 @@ class PlayerController:
                 player_coords_y = self.y
         self.x, self.y = player_coords_x, player_coords_y
 
-    def jump_double_curve(self, start_x, start_y, current_x):
-        """
-        Calculates the height at horizontal double jump starting from(start_x, start_y) at x coord current_x
-        :param start_x: start x coord
-        :param start_y: start y coord
-        :param current_x: x of coordinate to calculate height
-        :return: height at current_x
-        """
-        slope = 0.05
-        x_jump_range = 10
-        y_jump_height = 1.4
-        max_coord_x = (start_x*2 + x_jump_range)/2
-        max_coord_y = start_y - y_jump_height
-        if max_coord_y <= 0:
-            return 0
-
-        y = slope * (current_x - max_coord_x)**2 + max_coord_y
-        return max(0, y)
-
     def distance(self, coord1, coord2):
         return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
 
-    def moonlight_slash_sweep_move(self, goal_x, glide=True, no_attack_distance=0):
+    def shikigami_haunting_sweep_move(self, goal_x, no_attack_distance=0):
         """
         This function will, while moving towards goal_x, constantly use exceed: moonlight slash and not overlapping
         This function currently does not have an time enforce implementation, meaning it may fall into an infinite loop
         if player coordinates are not read correctly.
         X coordinate max error on flat surface: +- 5 pixels
         :param goal_x: minimap x goal coordinate.
-        :param glide: If True, will used optimized_horizontal_move. Else, will use horizontal_move_goal
         :param no_attack_distance: Distance in x pixels where any attack skill would not be used and just move
-        :return: None
         """
         start_x = self.x
         loc_delta = self.x - goal_x
         abs_loc_delta = abs(loc_delta)
 
         if not no_attack_distance:
-            self.moonlight_slash()
-            time.sleep(abs(self.random_duration()))
-        if loc_delta > 0:
-            # left movement
+            self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to right direction
+            # self.shikigami_haunting()
+
+        if loc_delta > 0:  # left movement
             if no_attack_distance and no_attack_distance < abs_loc_delta:
                 self.optimized_horizontal_move(self.x-no_attack_distance+self.horizontal_goal_offset)
 
             self.update()
             loc_delta = self.x - goal_x
             abs_loc_delta = abs(loc_delta)
-            if abs_loc_delta < self.moonlight_slash_x_radius:
+            if abs_loc_delta < self.horizontal_movement_threshold:
                 self.horizontal_move_goal(goal_x)
-
             else:
                 while True:
                     self.update()
@@ -173,43 +126,21 @@ class PlayerController:
                     if self.x <= goal_x + self.horizontal_goal_offset:
                         break
 
-                    elif abs(self.x - goal_x) < self.moonlight_slash_x_radius * 2:
-                        #  Movement distance is too short to effectively glide. So just wak
-                        if glide:
-                            self.optimized_horizontal_move(goal_x)
-                        else:
-                            self.horizontal_move_goal(goal_x)
+                    if abs(self.x - start_x) >= no_attack_distance:
+                        self.shikigami_haunting()
 
-                        if abs(self.x - start_x) >= no_attack_distance:
-                            time.sleep(abs(self.random_duration()))
-                            self.moonlight_slash()
-                            #time.sleep(abs(self.random_duration()))
-                            self.randomize_skill()
-
-
+                    if abs(self.x - goal_x) < self.shikigami_haunting_range:
+                        self.optimized_horizontal_move(goal_x)
                     else:
-                        if glide:
-                            self.optimized_horizontal_move(self.x - self.moonlight_slash_x_radius * 2 + self.random_duration(2, 0))
-                        else:
-                            self.horizontal_move_goal(self.x - self.moonlight_slash_x_radius * 2 + self.random_duration(2, 0))
-
-                        time.sleep(abs(self.random_duration()))
-                        self.moonlight_slash()
-                        #time.sleep(abs(self.random_duration()))
-                        self.randomize_skill()
-
-                    time.sleep(abs(self.random_duration()))
-
-        elif loc_delta < 0:
-            # right movement
+                        self.optimized_horizontal_move(self.x - self.shikigami_haunting_range + self.random_duration(2, 0))
+        elif loc_delta < 0:  # right movement
             if no_attack_distance and no_attack_distance < abs_loc_delta:
                 self.optimized_horizontal_move(self.x+no_attack_distance-self.horizontal_goal_offset)
             self.update()
             loc_delta = self.x - goal_x
             abs_loc_delta = abs(loc_delta)
-            if abs_loc_delta < self.moonlight_slash_x_radius:
+            if abs_loc_delta < self.horizontal_movement_threshold:
                 self.horizontal_move_goal(goal_x)
-
             else:
                 while True:
                     self.update()
@@ -217,30 +148,13 @@ class PlayerController:
                     if self.x >= goal_x - self.horizontal_goal_offset:
                         break
 
-                    elif abs(goal_x - self.x) < self.moonlight_slash_x_radius * 2:
-                        if glide:
-                            self.optimized_horizontal_move(goal_x)
-                        else:
-                            self.horizontal_move_goal(goal_x)
+                    if abs(self.x - start_x) >= no_attack_distance:
+                        self.shikigami_haunting()
 
-                        if abs(self.x - start_x) >= no_attack_distance:
-                            time.sleep(abs(self.random_duration()))
-                            self.moonlight_slash()
-                            #time.sleep(abs(self.random_duration()))
-                            self.randomize_skill()
-
+                    if abs(goal_x - self.x) < self.shikigami_haunting_range:
+                        self.optimized_horizontal_move(goal_x)
                     else:
-                        if glide:
-                            self.optimized_horizontal_move(self.x + self.moonlight_slash_x_radius * 2 - abs(self.random_duration(2, 0)))
-                        else:
-                            self.horizontal_move_goal(self.x + self.moonlight_slash_x_radius * 2 - abs(self.random_duration(2, 0)))
-
-                        time.sleep(abs(self.random_duration()))
-                        self.moonlight_slash()
-                        #time.sleep(abs(self.random_duration()))
-                        self.randomize_skill()
-
-                    time.sleep(abs(self.random_duration()))
+                        self.optimized_horizontal_move(self.x + self.shikigami_haunting_range - abs(self.random_duration(2, 0)))
 
     def optimized_horizontal_move(self, goal_x, ledge=False, enforce_time=True):
         """
@@ -254,15 +168,13 @@ class PlayerController:
         loc_delta = self.x - goal_x
         abs_loc_delta = abs(loc_delta)
         start_time = time.time()
-        horizontal_goal_offset = self.horizontal_goal_offset
-        if loc_delta < 0:
-            # we need to move right
-            time_limit = math.ceil(abs_loc_delta/self.x_movement_enforce_rate)
+        time_limit = math.ceil(abs_loc_delta/self.x_movement_enforce_rate)
+        if loc_delta < 0:  # we need to move right
             if abs_loc_delta <= self.horizontal_movement_threshold:
                 # Just walk if distance is less than threshold
-                self.key_mgr._direct_press(DIK_RIGHT)
+                self.key_mgr.direct_press(DIK_RIGHT)
 
-                # Below: use a loop to continously press right until goal is reached or time is up
+                # Below: use a loop to continuously press right until goal is reached or time is up
                 while True:
                     if time.time()-start_time > time_limit:
                         break
@@ -274,35 +186,14 @@ class PlayerController:
                         # Reached or exceeded destination x coordinates
                         break
 
-                self.key_mgr._direct_release(DIK_RIGHT)
-
+                self.key_mgr.direct_release(DIK_RIGHT)
             else:
-                # Distance is quite big, so we glide
-                self.key_mgr._direct_press(DIK_RIGHT)
-                time.sleep(abs(0.05+self.random_duration(gen_range=0.1)))
-                self.key_mgr._direct_press(self.jump_key)
-                time.sleep(abs(0.15+self.random_duration(gen_range=0.15)))
-                self.key_mgr._direct_release(self.jump_key)
-                time.sleep(abs(0.1+self.random_duration(gen_range=0.15)))
-                self.key_mgr._direct_press(self.jump_key)
-                while True:
-                    if time.time() - start_time > time_limit:
-                        break
-
-                    self.update()
-                    if self.x >= goal_x - self.horizontal_goal_offset * 3:
-                        break
-                self.key_mgr._direct_release(self.jump_key)
-                time.sleep(0.1 + self.random_duration())
-                self.key_mgr._direct_release(DIK_RIGHT)
-
-
-        elif loc_delta > 0:
-            # we are moving to the left
-            time_limit = math.ceil(abs_loc_delta / self.x_movement_enforce_rate)
+                # Distance is quite big, so we teleport
+                self.teleport_right()
+        elif loc_delta > 0:  # we are moving to the left
             if abs_loc_delta <= self.horizontal_movement_threshold:
                 # Just walk if distance is less than 10
-                self.key_mgr._direct_press(DIK_LEFT)
+                self.key_mgr.direct_press(DIK_LEFT)
 
                 # Below: use a loop to continously press left until goal is reached or time is up
                 while True:
@@ -316,27 +207,10 @@ class PlayerController:
                         # Reached or exceeded destination x coordinates
                         break
 
-                self.key_mgr._direct_release(DIK_LEFT)
-
+                self.key_mgr.direct_release(DIK_LEFT)
             else:
-                # Distance is quite big, so we glide
-                self.key_mgr._direct_press(DIK_LEFT)
-                time.sleep(abs(0.05+self.random_duration(gen_range=0.1)))
-                self.key_mgr._direct_press(self.jump_key)
-                time.sleep(abs(0.15+self.random_duration(gen_range=0.15)))
-                self.key_mgr._direct_release(self.jump_key)
-                time.sleep(abs(0.1+self.random_duration(gen_range=0.15)))
-                self.key_mgr._direct_press(self.jump_key)
-                while True:
-                    if time.time() - start_time > time_limit:
-                        break
-
-                    self.update()
-                    if self.x <= goal_x + self.horizontal_goal_offset * 3:
-                        break
-                self.key_mgr._direct_release(self.jump_key)
-                time.sleep(0.1 + self.random_duration())
-                self.key_mgr._direct_release(DIK_LEFT)
+                # Distance is quite big, so we teleport
+                self.teleport_left()
 
     def horizontal_move_goal(self, goal_x):
         """
@@ -346,21 +220,19 @@ class PlayerController:
         :return: None
         """
         current_x = self.x
-        if goal_x - current_x > 0:
-            # need to go right:
+        if goal_x - current_x > 0:  # need to go right:
             mode = "r"
-        elif goal_x - current_x < 0:
-            # need to go left:
+        elif goal_x - current_x < 0:  # need to go left:
             mode = "l"
         else:
             return 0
 
         if mode == "r":
             # need to go right:
-            self.key_mgr._direct_press(DIK_RIGHT)
+            self.key_mgr.direct_press(DIK_RIGHT)
         elif mode == "l":
             # need to go left:
-            self.key_mgr._direct_press(DIK_LEFT)
+            self.key_mgr.direct_press(DIK_LEFT)
         while True:
             self.update()
             if not self.x:
@@ -368,155 +240,90 @@ class PlayerController:
 
             if mode == "r":
                 if self.x >= goal_x-self.horizontal_goal_offset:
-                    self.key_mgr._direct_release(DIK_RIGHT)
+                    self.key_mgr.direct_release(DIK_RIGHT)
                     break
             elif mode == "l":
                 if self.x <= goal_x+self.horizontal_goal_offset:
-                    self.key_mgr._direct_release(DIK_LEFT)
+                    self.key_mgr.direct_release(DIK_LEFT)
                     break
 
+    def teleport_up(self):
+        self._do_teleport(DIK_UP)
 
-    def dbljump_max(self):
+    def teleport_left(self):
+        self._do_teleport(DIK_LEFT)
+
+    def teleport_right(self):
+        self._do_teleport(DIK_RIGHT)
+
+    def _do_teleport(self, dir_key, retry_limit=2):
         """Warining: is a blocking call"""
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(0.1 + self.random_duration(0.05))
-        self.key_mgr._direct_release(self.jump_key)
-        time.sleep(abs(0.05 + self.random_duration(0.05)))
-        self.key_mgr._direct_press(DIK_UP)
-        time.sleep(abs(0.01 + self.random_duration(0.05)))
-        self.key_mgr._direct_release(DIK_UP)
-        time.sleep(0.1)
-        self.key_mgr._direct_press(DIK_UP)
-        time.sleep(abs(0.01 + self.random_duration(0.05)))
-        self.key_mgr._direct_release(DIK_UP)
+        self.key_mgr.direct_press(dir_key)
+        time.sleep(0.05)
+        self.key_mgr.direct_press(self.teleport_key)
+        time.sleep(0.04)
+        self.key_mgr.direct_release(dir_key)
+        time.sleep(abs(self.random_duration(0.1)))
+        self.key_mgr.direct_release(self.teleport_key)
 
-    def dbljump_half(self):
-        """Warining: is a blocking call"""
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(0.1 + self.random_duration(0.1))
-        self.key_mgr._direct_release(self.jump_key)
-        time.sleep(0.23 + self.random_duration(0.1))
-        self.key_mgr._direct_press(DIK_UP)
-        time.sleep(0.01)
-        self.key_mgr._direct_release(DIK_UP)
-        time.sleep(0.1)
-        self.key_mgr._direct_press(DIK_UP)
-        time.sleep(abs(0.01 + self.random_duration(0.15)))
-        self.key_mgr._direct_release(DIK_UP)
-
-    def dbljump_timed(self, delay):
-        """
-        If using linear eq, delay explicit amount of time for double jump
-        :param delay: time before double jump command is issued in float seconds
-        :return: None
-        """
-        self.key_mgr.single_press(self.jump_key)
-        time.sleep(delay)
-        self.key_mgr.single_press(DIK_UP)
-        time.sleep(0.01)
-        self.key_mgr.single_press(DIK_UP)
+        if retry_limit == 0:
+            return
+        pos = (self.x, self.y)
+        self.update()
+        new_pos = (self.x, self.y)
+        if abs(pos[0] - new_pos[0]) <= 2 and abs(pos[1] - new_pos[1]) <= 2:
+            time.sleep(0.35)
+            self._do_teleport(dir_key, retry_limit-1)
 
     def jumpl(self):
         """Blocking call"""
-        self.key_mgr._direct_press(DIK_LEFT)
-        time.sleep(0.05)
-        self.key_mgr._direct_press(self.jump_key)
+        self.key_mgr.direct_press(DIK_LEFT)
         time.sleep(0.1)
-        self.key_mgr._direct_release(DIK_LEFT)
-        self.key_mgr._direct_release(self.jump_key)
-
-    def jumpl_double(self):
-        """Blocking call"""
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(abs(0.05 + self.random_duration(0.1)))
-        self.key_mgr._direct_release(self.jump_key)
+        self.key_mgr.direct_press(self.jump_key)
         time.sleep(0.1)
-        self.key_mgr._direct_press(DIK_LEFT)
-        time.sleep(abs(0.05 + self.random_duration(0.1)))
-        self.key_mgr._direct_release(DIK_LEFT)
-        time.sleep(0.05)
-        self.key_mgr._direct_press(DIK_LEFT)
-        time.sleep(abs(0.05 + self.random_duration(0.2)))
-        self.key_mgr._direct_release(DIK_LEFT)
-
-    def jumpl_glide(self):
-        """Blocking call"""
-        self.key_mgr._direct_press(DIK_LEFT)
-        time.sleep(0.05)
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(0.15)
-        self.key_mgr._direct_release(self.jump_key)
-        time.sleep(0.1)
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(0.2)
-        self.key_mgr._direct_release(self.jump_key)
-        self.key_mgr._direct_release(DIK_LEFT)
+        self.key_mgr.direct_release(DIK_LEFT)
+        time.sleep(0.04 + abs(self.random_duration(0.1)))
+        self.key_mgr.direct_release(self.jump_key)
 
     def jumpr(self):
         """Blocking call"""
-        self.key_mgr._direct_press(DIK_RIGHT)
-        time.sleep(0.05)
-        self.key_mgr._direct_press(self.jump_key)
+        self.key_mgr.direct_press(DIK_RIGHT)
         time.sleep(0.1)
-        self.key_mgr._direct_release(DIK_RIGHT)
-        self.key_mgr._direct_release(self.jump_key)
-
-    def jumpr_double(self):
-        """Blocking call"""
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(abs(0.05+self.random_duration(0.1)))
-        self.key_mgr._direct_release(self.jump_key)
+        self.key_mgr.direct_press(self.jump_key)
         time.sleep(0.1)
-        self.key_mgr._direct_press(DIK_RIGHT)
-        time.sleep(abs(0.05 + self.random_duration(0.1)))
-        self.key_mgr._direct_release(DIK_RIGHT)
-        time.sleep(0.05)
-        self.key_mgr._direct_press(DIK_RIGHT)
-        time.sleep(abs(0.05 + self.random_duration(0.2)))
-        self.key_mgr._direct_release(DIK_RIGHT)
-
-    def jumpr_glide(self):
-        """Blocking call"""
-        self.key_mgr._direct_press(DIK_RIGHT)
-        time.sleep(0.05)
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(0.15)
-        self.key_mgr._direct_release(self.jump_key)
-        time.sleep(0.1)
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(0.2)
-        self.key_mgr._direct_release(self.jump_key)
-        self.key_mgr._direct_release(DIK_RIGHT)
+        self.key_mgr.direct_release(DIK_RIGHT)
+        time.sleep(0.04 + abs(self.random_duration(0.1)))
+        self.key_mgr.direct_release(self.jump_key)
 
     def drop(self):
         """Blocking call"""
-        self.key_mgr._direct_press(DIK_DOWN)
-        time.sleep(abs(0.1+self.random_duration()))
-        self.key_mgr._direct_press(self.jump_key)
-        time.sleep(abs(0.1+self.random_duration()))
-        self.key_mgr._direct_release(DIK_DOWN)
-        time.sleep(abs(0.1+self.random_duration()))
-        self.key_mgr._direct_release(self.jump_key)
+        self.key_mgr.direct_press(DIK_DOWN)
+        time.sleep(0.05 + abs(self.random_duration()))
+        self.key_mgr.direct_press(self.jump_key)
+        time.sleep(0.05 + abs(self.random_duration()))
+        self.key_mgr.direct_release(self.jump_key)
+        time.sleep(0.1 + abs(self.random_duration()))
+        self.key_mgr.direct_release(DIK_DOWN)
 
-    def moonlight_slash(self):
-
-        self.key_mgr.single_press(self.keymap["moonlight_slash"])
-        self.overload_stack += 1
+    def shikigami_haunting(self, wait_delay=True):
+        for _ in range(3):
+            self.key_mgr.single_press(self.keymap["shikigami_haunting"])
+            time.sleep(0.05 + abs(self.random_duration(0.01)))
         self.skill_cast_counter += 1
-        time.sleep(self.moonlight_slash_delay)
+        if wait_delay:
+            time.sleep(self.shikigami_haunting_delay)
 
-    def thousand_sword(self):
-        if time.time() - self.last_thousand_sword_time > self.thousand_sword_cooldown:
+    def kishin_shoukan(self):
+        if time.time() - self.last_thousand_sword_time > self.kishin_shoukan_cooldown:
             self.update()
             if self.distance((self.x, self.y), self.last_thousand_sword_coords if self.last_thousand_sword_coords else (1000,1000)) >= self.min_thousand_sword_distance or \
                     time.time() - self.last_thousand_sword_time > self.thousand_sword_cooldown*3:
-                self.key_mgr.single_press(self.keymap["thousand_sword"], additional_duration=abs(self.random_duration()))
+                self.key_mgr.single_press(self.keymap["kishin_shoukan"], additional_duration=abs(self.random_duration()))
                 self.last_thousand_sword_time = time.time()
                 self.skill_cast_counter += 1
                 self.last_thousand_sword_coords = (self.x, self.y)
-                self.overload_stack += 5
-                print("thousand sword cast")
-                time.sleep(self.thousand_sword_delay)
+                print("kishin shoukan cast")
+                time.sleep(self.kishin_shoukan_delay)
 
     def shield_chase(self):
         if time.time() - self.last_shield_chase_time > self.shield_chase_cooldown:
@@ -548,39 +355,25 @@ class PlayerController:
                 return 0
 
     def holy_symbol(self):
-        if time.time() - self.last_holy_symbol_time > self.holy_symbol_cooldown + random.randint(0, 14):
+        if time.time() - self.last_holy_symbol_time > self.v_buff_cd + random.randint(0, 14):
             self.key_mgr.single_press(self.keymap["holy_symbol"], additional_duration=abs(self.random_duration()))
             self.skill_cast_counter += 1
             self.last_holy_symbol_time = time.time()
-            time.sleep(self.holy_symbol_delay)
+            time.sleep(self.buff_common_delay)
 
-    def hyper_body(self):
-        if time.time() - self.last_hyper_body_time > self.hyper_body_cooldown + random.randint(0, 14):
-            self.key_mgr.single_press(self.keymap["hyper_body"], additional_duration=abs(self.random_duration()))
+    def speed_infusion(self):
+        if time.time() - self.last_speed_infusion_time > self.v_buff_cd + random.randint(0, 14):
+            self.key_mgr.single_press(self.keymap["speed_infusion"], additional_duration=abs(self.random_duration()))
             self.skill_cast_counter += 1
-            self.last_hyper_body_time = time.time()
-            time.sleep(self.hyper_body_delay)
+            self.last_speed_infusion_time = time.time()
+            time.sleep(self.buff_common_delay)
 
-    def release_overload(self):
-        if self.overload_stack >= 18 + random.randint(0, 12):
-            self.key_mgr.single_press(self.keymap["release_overload"],additional_duration=abs(self.random_duration()))
+    def haku_reborn(self):
+        if time.time() - self.last_haku_reborn_time > 500 + random.randint(0, 14):
+            self.key_mgr.single_press(self.keymap["haku_reborn"], additional_duration=abs(self.random_duration()))
             self.skill_cast_counter += 1
-            self.overload_stack = 0
-            time.sleep(0.1)
-
-    def randomize_skill(self):
-        selection = random.choice(self.choices)
-        if selection == 0:
-            return 0
-        elif selection == 1:
-            self.thousand_sword()
-            return 1
-        elif selection == 2:
-            retval = self.shield_chase()
-            if retval == 0:
-                return 2
-            else:
-                return 0
+            self.last_haku_reborn_time = time.time()
+            time.sleep(self.buff_common_delay)
 
     def random_duration(self, gen_range=0.1, digits=2):
         """
@@ -593,4 +386,3 @@ class PlayerController:
         if random.choice([1,-1]) == -1:
             d *= -1
         return d
-

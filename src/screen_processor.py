@@ -1,24 +1,22 @@
 import cv2, win32gui, time, math, win32ui, win32con
-from PIL import ImageGrab
+from PIL import ImageGrab, Image
 import numpy as np, ctypes, ctypes.wintypes
+
 
 class MapleWindowNotFoundError(Exception):
     pass
-
-
-MAPLESTORY_WINDOW_TITLE = "MapleStory"
-
-
-
 
 
 class MapleScreenCapturer:
     """Container for capturing MS screen"""
     def __init__(self):
         self.hwnd = None
+        self.dpi_ratio = 1
+        if not ctypes.windll.user32.IsProcessDPIAware():
+            ctypes.windll.user32.SetProcessDPIAware()
 
     def ms_get_screen_hwnd(self):
-        window_hwnd = win32gui.FindWindow(0, MAPLESTORY_WINDOW_TITLE)
+        window_hwnd = win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
         if not window_hwnd:
             return 0
         else:
@@ -35,6 +33,7 @@ class MapleScreenCapturer:
             f = ctypes.windll.dwmapi.DwmGetWindowAttribute
         except WindowsError:
             f = None
+
         if f:  # Vista & 7 stuff
             rect = ctypes.wintypes.RECT()
             DWMWA_EXTENDED_FRAME_BOUNDS = 9
@@ -65,7 +64,15 @@ class MapleScreenCapturer:
         if set_focus:
             win32gui.SetForegroundWindow(self.hwnd)
             time.sleep(0.1)
+
+        try:
+            self.dpi_ratio = ctypes.windll.user32.GetDpiForSystem() / 96
+        except AttributeError:
+            pass
+
         img = ImageGrab.grab(rect)
+        # if self.dpi_ratio != 1:
+        #     img = img.resize((round(img.width / self.dpi_ratio), round(img.height / self.dpi_ratio)), Image.LANCZOS)
         return img
 
     def screen_capture(self,w, h, x=0, y=0, save=True, save_name=''):
@@ -96,6 +103,7 @@ class MapleScreenCapturer:
 
     def pil_image_to_array(self, img):
         return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+
 
 class StaticImageProcessor:
     def __init__(self, img_handle=None):
@@ -131,8 +139,6 @@ class StaticImageProcessor:
 
         else:
             raise Exception("Could not find MapleStory window!!")
-
-
 
     def update_image(self, src=None, set_focus=True, update_rect=False):
         """
@@ -236,8 +242,6 @@ class StaticImageProcessor:
 
         return 0
 
-
-
     def find_other_player_marker(self, rect=None):
         """
         Processes self.bgr_image to return coordinate of other players on minimap if exists.
@@ -308,4 +312,7 @@ if __name__ == "__main__":
     dx = MapleScreenCapturer()
     hwnd = dx.ms_get_screen_hwnd()
     rect = dx.ms_get_screen_rect(hwnd)
-    dx.capture(rect=rect)
+    image = dx.capture(rect=rect)
+
+    # image = image.resize((round(image.width / dx.dpi_ratio), round(image.height / dx.dpi_ratio)), Image.LANCZOS)
+    image.show()

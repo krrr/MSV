@@ -1,5 +1,5 @@
 import terrain_analyzer as ta
-from terrain_analyzer import METHOD_DROP, METHOD_MOVEL, METHOD_MOVER, METHOD_DBLJMP, METHOD_DBLJMP_HALF, METHOD_DBLJMP_MAX
+from terrain_analyzer import METHOD_DROP, METHOD_MOVEL, METHOD_MOVER, METHOD_TELEPORTUP
 import directinput_constants as dc
 import macro_script
 import logging, math, time, random
@@ -85,9 +85,9 @@ class MacroControllerAStar(macro_script.MacroController):
             self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_cooldown or rune_solve_time_offset <= 30:
-                self.navigate_to_rune_platform()
+                self.navigate_to_platform(rune_platform_hash, rune_coords)
                 time.sleep(1)
-                self.rune_solver.press_space()
+                self.keyhandler.single_press(dc.DIK_PERIOD)
                 time.sleep(1.5)
                 solve_result = self.rune_solver.solve_auto()
                 self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
@@ -114,29 +114,30 @@ class MacroControllerAStar(macro_script.MacroController):
             print(mid_coord, method)
             if method == METHOD_MOVER or method == METHOD_MOVEL:
                 self.player_manager.optimized_horizontal_move(mid_coord[0])
-            elif method == METHOD_DBLJMP:
-                interdelay = self.terrain_analyzer.calculate_vertical_doublejump_delay(self.player_manager.y, mid_coord[1])
-                print(interdelay)
-                self.player_manager.dbljump_timed(interdelay)
+            elif method == METHOD_TELEPORTUP:
+                # interdelay = self.terrain_analyzer.calculate_vertical_doublejump_delay(self.player_manager.y, mid_coord[1])
+                # print(interdelay)
+                self.player_manager.teleport_up()
             elif method == METHOD_DROP:
                 self.player_manager.drop()
             time.sleep(1)
         # End inter-platform movement
 
-        self.player_manager.randomize_skill()
-
         # Other buffs
         self.player_manager.holy_symbol()
-        self.player_manager.hyper_body()
-        self.player_manager.release_overload()
+        self.player_manager.speed_infusion()
+        self.player_manager.haku_reborn()
         time.sleep(0.05)
+
+        # set skills
+        # self.player_manager.kishin_shoukan()
 
         # Finished
         self.loop_count += 1
         return 0
 
 
-    def navigate_to_rune_platform(self):
+    def navigate_to_platform(self, rune_platform_hash, rune_coords):
         """
         Uses A* pathfinding to navigate to rune coord
         :return: None

@@ -1,18 +1,20 @@
 import tkinter as tk
 from tkinter.constants import *
+from util import get_config
 from tkinter.messagebox import showinfo, showwarning
-import os, pickle
 from directinput_constants import keysym_map
 from keystate_manager import DEFAULT_KEY_MAP
+
+
 class SetKeyMap(tk.Toplevel):
     def __init__(self, master):
         tk.Toplevel.__init__(self, master)
         self.wm_minsize(200, 30)
         self.master = master
-        self.title("키설정")
+        self.title("Key Setting")
         self.focus_get()
         self.grab_set()
-        if not os.path.exists("keymap.keymap"):
+        if not get_config().get('keymap'):
             self.create_default_keymap()
         self.keymap_data = self.read_keymap_file()
         self.labels = {}
@@ -31,12 +33,13 @@ class SetKeyMap(tk.Toplevel):
 
             keycount += 1
 
-        tk.Button(self, text="기본값 복원", command=self.set_default_keymap).grid(row=keycount, column=0)
-        tk.Button(self, text="저장하고 종료", command=self.onSave).grid(row=keycount, column=1)
+        tk.Button(self, text="Restore default", command=self.set_default_keymap).grid(row=keycount, column=0)
+        tk.Button(self, text="Save", command=self.onSave).grid(row=keycount, column=1)
+        self.focus_set()
 
     def set_default_keymap(self):
         self.create_default_keymap()
-        showinfo("키설정", "기본값으로 복원했습니다")
+        showinfo("key config", "default restored")
         self.destroy()
 
     def keysym2dik(self, keysym):
@@ -47,11 +50,10 @@ class SetKeyMap(tk.Toplevel):
             return 0
 
     def onSave(self):
-        with open("keymap.keymap", "wb") as f:
-            pickle.dump({"keymap": self.keymap_data}, f)
+        get_config()['keymap'] = self.keymap_data.copy()
         self.destroy()
 
-    def onPress(self, event,  key_name):
+    def on_press(self, event,  key_name):
         found = False
         for key, value in keysym_map.items():
             if event.keysym == key or str(event.keysym).upper() == key:
@@ -60,34 +62,24 @@ class SetKeyMap(tk.Toplevel):
                 found = True
                 break
         if not found:
-            showwarning("키설정", "현재 지원하지 않는 키입니다. 기본 키로 초기화 됩니다."+str(event.keysym))
+            showwarning("key config", "현재 지원하지 않는 키입니다. 기본 키로 초기화 됩니다."+str(event.keysym))
             self.keymap_data[key_name] = DEFAULT_KEY_MAP[key_name]
             self.labels[key_name].set(self.dik2keysym(DEFAULT_KEY_MAP[key_name][0]))
 
         self.unbind("<Key>")
 
     def set_key(self, key_name):
-        self.labels[key_name].set("키를 입력해 주세요")
+        self.labels[key_name].set("please input")
         self.unbind("<Key>")
-        self.bind("<Key>", lambda event: self.onPress(event, key_name))
+        self.bind("<Key>", lambda event: self.on_press(event, key_name))
 
     def dik2keysym(self, dik):
-            for keysym, _dik in keysym_map.items():
-                if dik == _dik:
-                    return keysym
-
+        for keysym, _dik in keysym_map.items():
+            if dik == _dik:
+                return keysym
 
     def read_keymap_file(self):
-        if os.path.exists("keymap.keymap"):
-            with open("keymap.keymap", "rb") as f:
-                try:
-                    data = pickle.load(f)
-                    keymap = data["keymap"]
-                except:
-                    return 0
-                else:
-                    return keymap
+        return get_config().get('keymap') or DEFAULT_KEY_MAP.copy()
 
     def create_default_keymap(self):
-        with open("keymap.keymap", "wb") as f:
-            pickle.dump({"keymap": DEFAULT_KEY_MAP}, f)
+        get_config()['keymap'] = DEFAULT_KEY_MAP.copy()

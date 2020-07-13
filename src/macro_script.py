@@ -6,6 +6,7 @@ import directinput_constants as dc
 import rune_solver as rs
 import logging, math, time, random
 
+
 class CustomLogger:
     def __init__(self, logger_obj, logger_queue):
         self.logger_obj = logger_obj
@@ -21,11 +22,10 @@ class CustomLogger:
         if self.logger_queue:
             self.logger_queue.put(("log", " ".join([str(x) for x in args])))
 
+
 class MacroController:
     def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None):
-
         #sys.excepthook = self.exception_hook
-
         self.screen_capturer = sp.MapleScreenCapturer()
         logger = logging.getLogger(self.__class__.__name__)
         logger.setLevel(logging.DEBUG)
@@ -38,7 +38,7 @@ class MacroController:
         logger.addHandler(fh)
 
         self.logger = CustomLogger(logger, self.log_queue)
-        self.logger.debug("%s init"%self.__class__.__name__)
+        self.logger.debug("%s init" % self.__class__.__name__)
         self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = ta.PathAnalyzer()
         self.keyhandler = km.KeyboardInputManager()
@@ -59,10 +59,6 @@ class MacroController:
         self.reset_navmap_loop_count = 10  # every x times reset navigation map, scrambling pathing
         self.navmap_reset_type = 1  # navigation map reset type. 1 for random, -1 for just reset. GETS ALTERNATED
 
-        self.walk_probability = 5
-        # This sets random.randint(1, walk_probability) to decide of moonlight slash should just walk instead of glide
-        # Probability of walking is (1/walk_probability) * 100
-
         self.restrict_moonlight_slash_probability = 5
 
         self.platform_fail_loops = 0
@@ -80,13 +76,12 @@ class MacroController:
         self.logger.debug("%s init finished"%self.__class__.__name__)
 
     def load_and_process_platform_map(self, path):
-        retval = self.terrain_analyzer.load(path)
+        ret = self.terrain_analyzer.load(path)
         self.terrain_analyzer.generate_solution_dict()
-        if retval != 0:
-            self.logger.debug("Loaded platform data %s"%(path))
+        if ret != 0:
+            self.logger.debug("Loaded platform data %s" % path)
         else:
-            self.logger.debug("Failed to load platform data %s, terrain_analyzer.load returned 0"%(path))
-        return retval
+            raise Exception("Failed to load platform data %s" % path)
 
     def distance(self, x1, y1, x2, y2):
         return math.sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -151,14 +146,11 @@ class MacroController:
         else:
             return 0, 0
 
-    def navigate_to_rune_platform(self):
+    def navigate_to_platform(self, rune_platform_hash, rune_coords):
         """
         Automatically goes to rune_coords by calling find_rune_platform. Update platform information before calling.
         :return: 0
         """
-        rune_platform_hash, rune_coords = self.find_rune_platform()
-        if not rune_platform_hash:
-            return 0
         if self.current_platform_hash != rune_platform_hash:
             rune_solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, rune_platform_hash)
             if rune_solutions:
@@ -176,17 +168,20 @@ class MacroController:
                         self.player_manager.drop()
                         time.sleep(1)
                     elif rune_movement_type == ta.METHOD_JUMPL:
-                        self.player_manager.jumpl_double()
+                        self.player_manager.jumpl()
                         time.sleep(0.5)
                     elif rune_movement_type == ta.METHOD_JUMPR:
-                        self.player_manager.jumpr_double()
+                        self.player_manager.jumpr()
                         time.sleep(0.5)
-                    elif rune_movement_type == ta.METHOD_DBLJMP_MAX:
-                        self.player_manager.dbljump_max()
-                        time.sleep(1)
-                    elif rune_movement_type == ta.METHOD_DBLJMP_HALF:
-                        self.player_manager.dbljump_half()
-                        time.sleep(1)
+                    elif rune_movement_type == ta.METHOD_TELEPORTL:
+                        self.player_manager.teleport_left()
+                        time.sleep(0.5)
+                    elif rune_movement_type == ta.METHOD_TELEPORTR:
+                        self.player_manager.teleport_right()
+                        time.sleep(0.5)
+                    elif rune_movement_type == ta.METHOD_TELEPORTUP:
+                        self.player_manager.teleport_up()
+                        time.sleep(0.5)
                 time.sleep(0.5)
             else:
                 self.logger.debug("could not generate path to rune platform %s from starting platform %s"%(rune_platform_hash, self.current_platform_hash))
@@ -211,7 +206,7 @@ class MacroController:
         Important note: Since this function uses PathAnalyzer's pathing algorithm, when this function moves to a new
         platform, it will invoke PathAnalyzer.move_platform. HOWEVER, in an attempt to make the system error-proof,
         platform movement and solution flagging is done on the loop call succeeding the loop call where the actual
-        move ment is made. self.goal_platform is used for such purpose.
+        movement is made. self.goal_platform is used for such purpose.
         :return: loop exit code
         exit code information:
             0: all good
@@ -220,10 +215,6 @@ class MacroController:
         """
         # Check if MapleStory window is alive
         random.seed((time.time() * 10**4) % 10 **3)
-        if random.randint(1, self.restrict_moonlight_slash_probability) == 2:
-            restrict_moonlight_slash = True
-        else:
-            restrict_moonlight_slash = False
 
         self.log_skill_usage_statistics()
 
@@ -295,9 +286,11 @@ class MacroController:
             self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_cooldown or rune_solve_time_offset <= 30:
-                self.navigate_to_rune_platform()
-                time.sleep(1)
-                self.rune_solver.press_space()
+                self.navigate_to_platform(rune_platform_hash, rune_coords)
+                time.sleep(0.3)
+                self.player_manager.horizontal_move_goal(rune_coords[0])
+                time.sleep(0.1)
+                self.keyhandler.single_press(dc.DIK_PERIOD)
                 time.sleep(1.5)
                 solve_result = self.rune_solver.solve_auto()
                 self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
@@ -314,8 +307,7 @@ class MacroController:
         # We are on a platform. find an optimal way to clear platform.
         # If we know our next platform destination, we can make our path even more efficient
         next_platform_solution = self.terrain_analyzer.select_move(self.current_platform_hash)
-        #print("next platform solution:", next_platform_solution.method, next_platform_solution.to_hash)
-        self.logger.debug("next solution destination: %s method: %s"%(next_platform_solution.to_hash, next_platform_solution.method))
+        self.logger.debug("next destination: %s method: %s" % (next_platform_solution.to_hash, next_platform_solution.method))
         self.goal_platform_hash = next_platform_solution.to_hash
 
         # lookahead pathing
@@ -330,22 +322,22 @@ class MacroController:
                 lookahead_solution_lb[0] > next_platform_solution.lower_bound[0] and lookahead_solution_lb[0] < next_platform_solution.upper_bound[0]:
             lookahead_lb = lookahead_solution_lb[0] if lookahead_solution_lb[0] >= next_platform_solution.lower_bound[0] and lookahead_solution_lb[0] <= next_platform_solution.upper_bound[0] else next_platform_solution.lower_bound[0]
             lookahead_ub = lookahead_solution_ub[0] if lookahead_solution_ub[0] <= next_platform_solution.upper_bound[0] and lookahead_solution_ub[0] >= next_platform_solution.lower_bound[0] else next_platform_solution.upper_bound[0]
-
         else:
             lookahead_lb = next_platform_solution.lower_bound[0]
             lookahead_ub = next_platform_solution.upper_bound[0]
 
-        lookahead_lb = lookahead_lb + random.randint(0, 2)
-        lookahead_ub = lookahead_ub - random.randint(0, 2)
+        lookahead_lb += random.randint(0, 2)
+        lookahead_ub -= random.randint(0, 2)
 
         # end lookahead pathing
+
         # Start skill usage section
-        if abs(self.player_manager.x - next_platform_solution.lower_bound[0]) < abs(
-                self.player_manager.x - next_platform_solution.upper_bound[0]):
-            # closer to lower bound
-            skill_used = self.player_manager.randomize_skill()
+        if (abs(self.player_manager.x - next_platform_solution.lower_bound[0]) <
+                abs(self.player_manager.x - next_platform_solution.upper_bound[0])):
+            self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
-            skill_used = self.player_manager.randomize_skill()
+            self.keyhandler.single_press(dc.DIK_LEFT)
+        self.player_manager.shikigami_haunting()
         # End skill usage
 
         # Find coordinates to move to next platform
@@ -356,39 +348,18 @@ class MacroController:
                 in_solution_movement_goal = lookahead_ub
             else:
                 in_solution_movement_goal = lookahead_lb
-            if restrict_moonlight_slash:
-                self.player_manager.optimized_horizontal_move(in_solution_movement_goal)
-            else:
-                if random.randint(1, self.walk_probability) == 1:
-                    self.player_manager.moonlight_slash_sweep_move(in_solution_movement_goal, glide=False, no_attack_distance=skill_used * self.player_manager.moonlight_slash_x_radius+1.2)
-                else:
-                    self.player_manager.moonlight_slash_sweep_move(in_solution_movement_goal, no_attack_distance=skill_used * self.player_manager.moonlight_slash_x_radius*1.2)
 
+            self.player_manager.shikigami_haunting_sweep_move(in_solution_movement_goal, no_attack_distance=self.player_manager.shikigami_haunting_range)
         else:
             # We need to move within the solution bounds. First, find closest solution bound which can cover majority of current platform.
             if self.player_manager.x < next_platform_solution.lower_bound[0]:
                 # We are left of solution bounds.
-                #print("run sweep move")
-                if restrict_moonlight_slash:
-                    self.player_manager.optimized_horizontal_move(lookahead_ub)
-                else:
-                    if random.randint(1, self.walk_probability) == 1:
-                        self.player_manager.moonlight_slash_sweep_move(lookahead_ub, glide=False, no_attack_distance=skill_used * self.player_manager.moonlight_slash_x_radius*1.2)
-                    else:
-                        self.player_manager.moonlight_slash_sweep_move(lookahead_ub, no_attack_distance=skill_used * self.player_manager.moonlight_slash_x_radius*1.2)
-
+                self.player_manager.shikigami_haunting_sweep_move(lookahead_ub, no_attack_distance=self.player_manager.shikigami_haunting_range)
             else:
                 # We are right of solution bounds
-                #print("run sweep move")
-                if restrict_moonlight_slash:
-                    self.player_manager.optimized_horizontal_move(lookahead_lb)
-                else:
-                    if random.randint(1, self.walk_probability) == 1:
-                        self.player_manager.moonlight_slash_sweep_move(lookahead_lb, glide=False, no_attack_distance=skill_used * self.player_manager.moonlight_slash_x_radius*1.2)
-                    else:
-                        self.player_manager.moonlight_slash_sweep_move(lookahead_lb, no_attack_distance=skill_used * self.player_manager.moonlight_slash_x_radius*1.2)
+                self.player_manager.shikigami_haunting_sweep_move(lookahead_lb, no_attack_distance=self.player_manager.shikigami_haunting_range)
 
-        time.sleep(0.4)
+        time.sleep(0.1)
 
         # All movement and attacks finished. Now perform movement
         movement_type = next_platform_solution.method
@@ -396,30 +367,35 @@ class MacroController:
             self.player_manager.drop()
             time.sleep(1)
         elif movement_type == ta.METHOD_JUMPL:
-            self.player_manager.jumpl_double()
-            time.sleep(0.5)
-        elif movement_type == ta.METHOD_JUMPR:
-            self.player_manager.jumpr_double()
-            time.sleep(0.5)
-        elif movement_type == ta.METHOD_DBLJMP_MAX:
-            self.player_manager.dbljump_max()
-            time.sleep(1)
-        elif movement_type == ta.METHOD_DBLJMP_HALF:
-            self.player_manager.dbljump_half()
+            self.player_manager.jumpl()
             time.sleep(0.7)
+        elif movement_type == ta.METHOD_JUMPR:
+            self.player_manager.jumpr()
+            time.sleep(0.7)
+        elif movement_type == ta.METHOD_TELEPORTL:
+            self.player_manager.teleport_left()
+            time.sleep(0.5)
+        elif movement_type == ta.METHOD_TELEPORTR:
+            self.player_manager.teleport_right()
+            time.sleep(0.5)
+        elif movement_type == ta.METHOD_TELEPORTUP:
+            self.player_manager.teleport_up()
+            time.sleep(0.5)
 
         #End inter-platform movement
 
         # Other buffs
         self.player_manager.holy_symbol()
-        self.player_manager.hyper_body()
-        self.player_manager.release_overload()
+        self.player_manager.speed_infusion()
+        self.player_manager.haku_reborn()
         time.sleep(0.05)
+
+        # set skills
+        # self.player_manager.kishin_shoukan()
 
         # Finished
         self.loop_count += 1
         return 0
-
 
     def unstick(self):
         """
@@ -427,13 +403,24 @@ class MacroController:
         Solution: try random stuff to attempt it to reposition it self
         :return: None
         """
-        #Method one: get off ladder
+        # try to get off ladder
         self.player_manager.jumpr()
-        time.sleep(2)
+        time.sleep(1)
         if self.find_current_platform():
             return 0
-        self.player_manager.dbljump_max()
-        time.sleep(2)
+
+        self.player_manager.teleport_up()
+        time.sleep(0.7)
+        if self.find_current_platform():
+            return 0
+
+        self.player_manager.teleport_right()
+        time.sleep(0.7)
+        if self.find_current_platform():
+            return 0
+
+        self.player_manager.teleport_left()
+        time.sleep(0.7)
         if self.find_current_platform():
             return 0
 
@@ -442,4 +429,3 @@ class MacroController:
         self.logger.debug("aborted")
         if self.log_queue:
             self.log_queue.put(["stopped", None])
-

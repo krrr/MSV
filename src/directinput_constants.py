@@ -43,6 +43,7 @@ DIK_Y = 0x15
 DIK_Z = 0x2c
 
 DIK_COMMA = 0x33
+DIK_PERIOD = 0x34
 
 DIK_LEFT = 0xCB
 DIK_RIGHT = 0xCD
@@ -53,18 +54,29 @@ DIK_ALT = 0xB8
 DIK_SPACE = 0x39
 
 DIK_NUMLOCK = 0x45
+DIK_HOME = 0xC7
 
 DIK_LCTRL = 0x9D
+DIK_RCTRL = 0x9D
 
-DIK_RMENU = 0xB8 # Right Alt button (Kor/En)
+DIK_INSERT = 0xD2
+DIK_RMENU = 0xB8  # Right Alt button (Kor/En)
+DIK_RSHIFT = 0x36
+DIK_END = 0xCF
 
 DIK_RETURN = 0x1C
 
 keysym_map = {  # tkinter event keysym to dik key code coversion table
     "ALT_L":DIK_ALT,
     "CONTROL_L": DIK_LCTRL,
+    "CONTROL_R": DIK_RCTRL,
     "space": DIK_SPACE,
     "comma": DIK_COMMA,
+    "period": DIK_PERIOD,
+    "home": DIK_HOME,
+    "insert": DIK_INSERT,
+    "end": DIK_END,
+    "SHIFT_R": DIK_RSHIFT,
     "a": DIK_A,
     "b": DIK_B,
     "c": DIK_C,

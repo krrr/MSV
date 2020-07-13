@@ -7,14 +7,13 @@ import numpy as np
 cap = MapleScreenCapturer()
 kbd = KeyboardInputManager()
 from win32gui import SetForegroundWindow
-os.chdir("images/screenshots/finished")
+os.chdir("images/screenshots")
 imgs = glob.glob("*.png")
 highest = 0
 for name in imgs:
     order = int(name[6:].split(".")[0])
     highest = max(order, highest)
 
-os.chdir("../")
 x, y, w, h = 450, 180, 500, 130
 while True:
     img = cap.capture(set_focus=False)

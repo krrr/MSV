@@ -1,4 +1,8 @@
-import math, pickle, os, hashlib, random
+import hashlib
+import math
+import os
+import pickle
+import random
 
 """
 PlatformScan, graph based least-visited-node-first traversal algorithm
@@ -25,22 +29,29 @@ function select(current_node):
 """
 
 METHOD_DROP = "drop"
-METHOD_DBLJMP_MAX = "dbljmp_max"
-METHOD_DBLJMP_HALF = "dbljmp_half"
-METHOD_DBLJMP = "dbljmp"
+METHOD_TELEPORTUP = "teleportup"
 METHOD_JUMPR = "jumpr"
 METHOD_JUMPL = "jumpl"
+METHOD_TELEPORTR = "teleportr"
+METHOD_TELEPORTL = "teleportl"
 METHOD_MOVER = "movr"
 METHOD_MOVEL = "movl"
+
+
 class Platform:
-    def __init__(self, start_x = None, start_y = None, end_x = None, end_y = None, last_visit = None, solutions = None, hash = None):
+    def __init__(self, start_x=None, start_y=None, end_x=None, end_y=None, hash=None):
         self.start_x = start_x
         self.start_y = start_y
         self.end_x = end_x
         self.end_y = end_y
-        self.last_visit = last_visit # list of a list: [solution, 0]
-        self.solutions = solutions
+        self.last_visit = 0
+        self.solutions = []
         self.hash = hash
+        self.no_moster
+
+    def __repr__(self):
+        return 'Platform(%s, %s, %s, %s)' % (self.start_x, self.start_y, self.end_x, self.end_y)
+
 
 class Solution:
     def __init__(self, from_hash=None, to_hash=None, lower_bound=None, upper_bound=None, method=None, visited=False):
@@ -50,6 +61,9 @@ class Solution:
         self.upper_bound = upper_bound
         self.method = method
         self.visited = visited
+
+    def __repr__(self):
+        return 'Solution(%s -> %s by %s)' % (self.from_hash, self.to_hash, self.method)
 
 
 class AstarNode:
@@ -90,9 +104,10 @@ class PathAnalyzer:
         self.minimum_ladder_length = 5  # Minimum y length of coordinated to be logged as a ladder by input()
 
         # below constants are used for generating solution graphs
-        self.dbljump_max_height = 31  # total absolute jump height is about 31, but take account platform size
-        self.jump_range = 16  # horizontal jump distance is about 9~10 EDIT:now using glide jump which has more range
-        self.dbljump_half_height = 20  # absolute jump height of a half jump. Used for generating solution graph
+        self.teleport_vertical_range = 24
+        self.teleport_horizontal_range = 18
+        self.teleport_horizontal_y_range = 4
+        self.jump_range = 9  # horizontal jump distance is about 9~10
 
         # below constants are used for path related algorithms.
         self.subplatform_length = 2  # length of subdivided platform
@@ -101,12 +116,15 @@ class PathAnalyzer:
         self.astar_open_val_grid = []  # 2d array to keep track of "open" values in a star search.
         self.astar_minimap_rect = []  # minimap rect (x,y,w,h) for use in generating astar data
 
-    def save(self, filename="mapdata.platform", minimap_roi = None):
-        """Save platforms, oneway_platforms, ladders, minimap_roi to a file
+    def save(self, filename="mapdata.platform", other_attrs = None):
+        """Save platforms, oneway_platforms, minimap_roi to a file
         :param filename: path to save file
-        :param minimap_roi: tuple or list of onscreen minimap bounding box coordinates which will be saved"""
+        """
+        data = {"platforms": self.platforms, "oneway": self.oneway_platforms}
+        if other_attrs:
+            data.update(other_attrs)
         with open(filename, "wb") as f:
-            pickle.dump({"platforms" : self.platforms, "oneway": self.oneway_platforms, "minimap" : minimap_roi}, f)
+            pickle.dump(data, f)
 
     def load(self, filename="mapdata.platform"):
         """Open a map data file and load data from file. Also sets class variables platform, oneway_platform, and minimap.
@@ -182,14 +200,14 @@ class PathAnalyzer:
         max_steps = len(self.platforms) + len(self.oneway_platforms) + 2
         calculated_paths = []
         bfs_queue = []
-        visited_platform_hashes = []
+        visited_platform_hashes = set()
         for solution in start_platform.solutions:
             if solution.to_hash not in visited_platform_hashes:
                 bfs_queue.append([solution, [solution]])
 
         while bfs_queue:
             current_solution, paths = bfs_queue.pop()
-            visited_platform_hashes.append(current_solution.from_hash)
+            visited_platform_hashes.add(current_solution.from_hash)
             if current_solution.to_hash == goal_hash:
                 calculated_paths.append(paths)
                 break
@@ -200,7 +218,7 @@ class PathAnalyzer:
                 next_solution = self.oneway_platforms[current_solution.to_hash].solutions
             for solution in next_solution:
                 if solution.to_hash not in visited_platform_hashes:
-                    cv = paths
+                    cv = paths.copy()
                     cv.append(solution)
                     bfs_queue.append([solution, cv])
 
@@ -246,8 +264,6 @@ class PathAnalyzer:
             for method in self.platforms[from_platform].solutions:
                 method.visited = False
 
-
-
     def select_move(self, current_platform):
         """
         Selects a solution from current_platform using PlatformScan
@@ -287,7 +303,7 @@ class PathAnalyzer:
                 platform_end = max(self.current_oneway_coords, key=lambda x: x[0])
                 d_hash = self.hash(str(platform_start))
                 self.oneway_platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0],
-                                                  platform_end[1], 0, [], d_hash)
+                                                  platform_end[1], d_hash)
             self.current_oneway_coords = []
             if converted_tuple not in self.visited_coordinates:
                 self.current_oneway_coords.append(converted_tuple)
@@ -300,8 +316,7 @@ class PathAnalyzer:
             platform_end = max(self.current_platform_coords, key=lambda x: x[0])
 
             d_hash = self.hash(str(platform_start))
-            self.platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], 0,
-                                              [], d_hash)
+            self.platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], d_hash)
             self.current_platform_coords = []
 
     def flush_input_coords_to_oneway(self, coord_list=None):
@@ -312,8 +327,7 @@ class PathAnalyzer:
             platform_end = max(self.current_oneway_coords, key=lambda x: x[0])
 
             d_hash = self.hash(str(platform_start))
-            self.oneway_platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], 0,
-                                              [], d_hash)
+            self.oneway_platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], d_hash)
             self.current_oneway_coords_coords = []
 
     def input(self, inp_x, inp_y):
@@ -343,7 +357,7 @@ class PathAnalyzer:
                 platform_end = max(self.current_platform_coords, key=lambda x: x[0])
 
                 d_hash = self.hash(str(platform_start))
-                self.platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], 0, [], d_hash)
+                self.platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], d_hash)
 
             self.current_platform_coords = []
             if converted_tuple not in self.visited_coordinates:
@@ -377,8 +391,6 @@ class PathAnalyzer:
             drop : drop down directly
             jmpr : right jump
             jmpl : left jump
-            dbljmp_max : double jump up fully
-            dbljmp_half : double jump a bit less
         """
 
         return_map_dict = []
@@ -388,43 +400,46 @@ class PathAnalyzer:
             platform = self.platforms[hash]
         platform.solutions = []
         for key, other_platform in self.platforms.items():
-            if platform.hash != key:
-                # 1. Detect vertical overlaps
-                if platform.start_x < other_platform.end_x and platform.end_x > other_platform.start_x or \
-                        platform.start_x > other_platform.start_x and platform.start_x < other_platform.end_x:
-                    lower_bound_x = max(platform.start_x, other_platform.start_x)
-                    upper_bound_x = min(platform.end_x, other_platform.end_x)
-                    if platform.start_y < other_platform.end_y:
-                        # Platform is higher than current_platform. Thus we can just drop
-                        #solution = {"hash":key, "lower_bound":(lower_bound_x, platform.start_y), "upper_bound":(upper_bound_x, platform.start_y), "method":"drop", "visited" : False}
-                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_DROP, False)
-                        # Changed to using classes for readability
+            if platform.hash == key:
+                continue
+            # Has vertical overlaps
+            if platform.start_x < other_platform.end_x and platform.end_x > other_platform.start_x or \
+                    platform.start_x > other_platform.start_x and platform.start_x < other_platform.end_x:
+                lower_bound_x = max(platform.start_x, other_platform.start_x)
+                upper_bound_x = min(platform.end_x, other_platform.end_x)
+                if platform.start_y < other_platform.end_y:
+                    # Platform is higher than current_platform. Thus we can just drop
+                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_DROP, False)
+                    # Changed to using classes for readability
+                    platform.solutions.append(solution)
+                else:  # We need to use teleport to get there, but first check if within teleport range
+                    if abs(platform.start_y - other_platform.start_y) <= self.teleport_vertical_range:
+                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_TELEPORTUP, False)
                         platform.solutions.append(solution)
-                    else:
-                        # We need to use double jump to get there, but first check if within jump height
-                        if abs(platform.start_y - other_platform.start_y) <= self.dbljump_half_height:
-                            #solution = {"hash":key, "lower_bound":(lower_bound_x, platform.start_y), "upper_bound":(upper_bound_x, platform.start_y), "method":"dbljmp_half", "visited" : False}
-                            solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_DBLJMP_HALF, False)
-                            platform.solutions.append(solution)
-                        elif abs(platform.start_y - other_platform.start_y) <= self.dbljump_max_height:
-                            #solution = {"hash": key, "lower_bound": (lower_bound_x, platform.start_y),"upper_bound": (upper_bound_x, platform.start_y), "method": "dbljmp_max", "visited" : False}
-                            solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_DBLJMP_MAX, False)
-                            platform.solutions.append(solution)
-                else:
-                    # 2. No vertical overlaps. Calculate euclidean distance between each platform endpoints
-                    front_point_distance = math.sqrt((platform.start_x-other_platform.end_x)**2 + (platform.start_y-other_platform.end_y)**2)
-                    if front_point_distance <= self.jump_range:
-                        # We can jump from the left end of the platform to goal
-                        #solution = {"hash":key, "lower_bound":(platform.start_x, platform.start_y), "upper_bound":(platform.start_x, platform.start_y), "method":"jmpl", "visited" : False}
-                        solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_JUMPL, False)
-                        platform.solutions.append(solution)
-
-                    back_point_distance = math.sqrt((platform.end_x-other_platform.start_x)**2 + (platform.end_y-other_platform.start_y)**2)
-                    if back_point_distance <= self.jump_range:
-                        # We can jump fomr the right end of the platform to goal platform
-                        #solution = {"hash":key, "lower_bound":(platform.end_x, platform.end_y), "upper_bound":(platform.end_x, platform.end_y), "method":"jmpr", "visited" : False}
-                        solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_JUMPR, False)
-                        platform.solutions.append(solution)
+            # No vertical overlaps.
+            elif platform.start_x >= other_platform.end_x:  # other platform is on the left side
+                front_point_x_dis = abs(platform.start_x - other_platform.end_x)
+                front_point_y_dis = abs(platform.start_y - other_platform.end_y)
+                # Calculate euclidean distance between each platform endpoints
+                front_point_distance = math.sqrt(front_point_x_dis**2 + front_point_y_dis**2)
+                if front_point_distance <= self.jump_range or (platform.start_y <= other_platform.end_y and front_point_x_dis < self.jump_range):
+                    # We can jump from the left end of the platform to goal
+                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_JUMPL, False)
+                    platform.solutions.append(solution)
+                elif front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis < self.teleport_horizontal_y_range:
+                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_TELEPORTL, False)
+                    platform.solutions.append(solution)
+            else:  # other platform is on the right side
+                back_point_x_dis = abs(platform.end_x - other_platform.start_x)
+                back_point_y_dis = abs(platform.end_y - other_platform.start_y)
+                back_point_distance = math.sqrt(back_point_x_dis**2 + back_point_y_dis**2)
+                if back_point_distance <= self.jump_range or (platform.end_y <= other_platform.start_y and back_point_x_dis < self.jump_range):
+                    # We can jump form the right end of the platform to goal platform
+                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_JUMPR, False)
+                    platform.solutions.append(solution)
+                elif back_point_distance <= self.teleport_horizontal_range and back_point_y_dis < self.teleport_horizontal_y_range:
+                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_TELEPORTR, False)
+                    platform.solutions.append(solution)
 
     def astar_pathfind(self, start_coord, goal_coords):
         """
@@ -570,7 +585,7 @@ class PathAnalyzer:
                             break
                         drop_distance += 1
 
-                    for jmpheight in range(1, self.dbljump_max_height + 1):
+                    for jmpheight in range(1, self.teleport_vertical_range + 1):
                         if y - jmpheight <= 0:
                             break
                         if self.astar_map_grid[y - jmpheight][x + x_increment] == 1:
@@ -587,11 +602,11 @@ class PathAnalyzer:
                 else:
                     x_increment += 1
 
-        for jmpheight in range(1, self.dbljump_max_height):
+        for jmpheight in range(1, self.teleport_vertical_range):
             if y - jmpheight == 0:
                 break
             if self.astar_map_grid[y - jmpheight][x] == 1:
-                return_list.append(((x, y - jmpheight), METHOD_DBLJMP))
+                return_list.append(((x, y - jmpheight), METHOD_TELEPORTUP))
 
         drop_distance = 1
         while True:
@@ -607,24 +622,6 @@ class PathAnalyzer:
         jump_height = 6
 
         return return_list
-
-    def astar_jump_double_curve(self, start_x, start_y, current_x):
-        """
-        Calculates the height at horizontal double jump starting from(start_x, start_y) at x coord current_x
-        :param start_x: start x coord
-        :param start_y: start y coord
-        :param current_x: x of coordinate to calculate height
-        :return: height at current_x
-        """
-        slope = 0.05
-        x_jump_range = 10 if current_x > start_x else -10
-        y_jump_height = 1.4
-        max_coord_x = (start_x*2 + x_jump_range)/2
-        max_coord_y = start_y - y_jump_height
-        if max_coord_y <= 0:
-            return 0
-        y = slope * (current_x - max_coord_x) ** 2 + max_coord_y
-        return max(0, y)
 
     def calculate_vertical_doublejump_delay(self, y1, y2):
         """
@@ -654,4 +651,3 @@ class PathAnalyzer:
         self.current_platform_coords = []
         self.current_ladder_coords = []
         self.ladders = []
-

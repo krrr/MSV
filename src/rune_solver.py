@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 """Classifier model verifier"""
-import sys, logging
+import logging
+import random
 
 logger = logging.getLogger("log")
 logger.setLevel(logging.DEBUG)
@@ -14,11 +15,12 @@ try:
     from keras.models import load_model
     from tensorflow import device
     from keystate_manager import KeyboardInputManager
-    from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK, DIK_SPACE
+    from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK, DIK_PERIOD
     from win32con import VK_NUMLOCK
     from win32api import GetKeyState
 except:
     logger.exception("EXCEPTION FROM IMPORTS")
+
 
 class RuneDetector:
     def __init__(self, model_path, labels=None, screen_capturer=None, key_mgr=None):
@@ -143,7 +145,7 @@ class RuneDetector:
         if GetKeyState(VK_NUMLOCK):
             self.key_mgr.single_press(DIK_NUMLOCK)
             time.sleep(0.2)
-        self.logger.debug("Solved rune with solution %s"%(str(result)))
+        self.logger.debug("Solved rune with solution %s" % str(result))
         for inp in result:
             if inp == "up":
                 self.key_mgr.single_press(DIK_UP)
@@ -153,11 +155,8 @@ class RuneDetector:
                 self.key_mgr.single_press(DIK_LEFT)
             elif inp == "right":
                 self.key_mgr.single_press(DIK_RIGHT)
-            time.sleep(0.1)
+            time.sleep(0.17 + random.uniform(0, 0.1))
         return len(processed_imgs)
-
-    def press_space(self):
-        self.key_mgr.single_press(DIK_SPACE)
 
     def solve(self):
         """
@@ -172,6 +171,7 @@ class RuneDetector:
         result = self.classify(tensor)
 
         return result
+
 
 if __name__ == "__main__":
     try:
@@ -198,6 +198,3 @@ if __name__ == "__main__":
         logger.debug("Application exit.")
     except:
         logger.exception("EXCEPTION")
-
-
-

@@ -39,14 +39,14 @@ while True:
         time.sleep(2)
         key_mgr.single_press(testkey)
         s = time.time()
-        key_mgr._direct_press(src.directinput_constants.DIK_RIGHT)
+        key_mgr.direct_press(src.directinput_constants.DIK_RIGHT)
         last_coords = playerpos
         while True:
             scrp.update_image()
             cpos = scrp.find_player_minimap_marker(area)
             if last_coords != cpos:
                 print(time.time() - s)
-                key_mgr._direct_release(src.directinput_constants.DIK_RIGHT)
+                key_mgr.direct_release(src.directinput_constants.DIK_RIGHT)
                 break
             else:
                 print(last_coords, cpos)
