@@ -81,18 +81,10 @@ class AstarNode:
 class PathAnalyzer:
     """Converts minimap player coordinates to terrain information like ladders and platforms."""
     def __init__(self):
-        """
-        Difference between self.platforms and self.oneway_platforms: platforms can be a destination and an origin.
-        However, oneway_platforms can only be an origin. oneway_platforms can be used to detect when player goes out of bounds.
-        self.platforms: list of tuples, where tuple[0] is starting coordinate of platform, tuple[1] is end coordinate.
-
-        """
         self.platforms = {}  # Format: hash, Platform()
-        self.oneway_platforms = {}
         self.ladders = []
         self.visited_coordinates = []
         self.current_platform_coords = []
-        self.current_oneway_coords = []
         self.current_ladder_coords = []
         self.last_x = None
         self.last_y = None
@@ -120,17 +112,17 @@ class PathAnalyzer:
         self.kishin_shoukan_coord = None
 
     def save(self, filename="mapdata.platform", other_attrs = None):
-        """Save platforms, oneway_platforms, minimap_roi to a file
+        """Save platforms, minimap to a file
         :param filename: path to save file
         """
-        data = {"platforms": self.platforms, "oneway": self.oneway_platforms}
+        data = {"platforms": self.platforms}
         if other_attrs:
             data.update(other_attrs)
         with open(filename, "wb") as f:
             pickle.dump(data, f)
 
     def load(self, filename="mapdata.platform"):
-        """Open a map data file and load data from file. Also sets class variables platform, oneway_platform, and minimap.
+        """Open a map data file and load data from file. Also sets class variables platform and minimap.
         :param filename: Plath to map data file
         :return boundingRect tuple of minimap as stored on file (defaults to (x, y, w, h) if file is valid else 0"""
         if not self.verify_data_file(filename):
@@ -139,7 +131,6 @@ class PathAnalyzer:
         with open(filename, "rb") as f:
             data = pickle.load(f)
             self.platforms = data["platforms"]
-            self.oneway_platforms = data["oneway"]
             minimap_coords = data["minimap"]
             self.astar_minimap_rect = minimap_coords
             self.yaksha_boss_coord = data.get('yaksha_boss_coord')
@@ -171,7 +162,6 @@ class PathAnalyzer:
                 try:
                     data = pickle.load(f)
                     platforms = data["platforms"]
-                    oneway_platforms = data["oneway"]
                     minimap_coords = data["minimap"]
                 except:
                     return 0
@@ -198,11 +188,7 @@ class PathAnalyzer:
         :return: list, in order of solutions to reach goal, 0 if no path
         """
 
-        try:
-            start_platform = self.platforms[start_hash]
-        except KeyError:
-            start_platform = self.oneway_platforms[start_hash]
-        max_steps = len(self.platforms) + len(self.oneway_platforms) + 2
+        start_platform = self.platforms[start_hash]
         calculated_paths = []
         bfs_queue = []
         visited_platform_hashes = set()
@@ -216,10 +202,7 @@ class PathAnalyzer:
             if current_solution.to_hash == goal_hash:
                 calculated_paths.append(paths)
 
-            try:
-                next_solution = self.platforms[current_solution.to_hash].solutions
-            except KeyError:
-                next_solution = self.oneway_platforms[current_solution.to_hash].solutions
+            next_solution = self.platforms[current_solution.to_hash].solutions
             for solution in next_solution:
                 if solution.to_hash not in visited_platform_hashes:
                     cv = paths.copy()
@@ -238,8 +221,6 @@ class PathAnalyzer:
         for key, platform in self.platforms.items():
             platform.last_visit = 0
             self.calculate_interplatform_solutions(key)
-        for key, platform in self.oneway_platforms.items():
-            self.calculate_interplatform_solutions(key, oneway=True)
 
     def move_platform(self, from_platform, to_platform):
         """Update navigation map visit counter to keep track of visited platforms when moded
@@ -278,43 +259,10 @@ class PathAnalyzer:
             platform = self.platforms[solution.to_hash]
             return not getattr(platform, 'no_monster', False), platform.last_visit
 
-        try:
-            for solution in sorted(self.platforms[current_platform].solutions, key=key_func, reverse=True):
-                """if not solution.visited:
-                    return solution"""
-                return solution
-        except KeyError:
-            for solution in sorted(self.oneway_platforms[current_platform].solutions, key=key_func, reverse=True):
-                """if not solution.visited:
-                    return solution"""
-                return solution
-
-    def input_oneway_platform(self, inp_x, inp_y):
-        """input values to use in finding one way(platforms which can't be a destination platform)
-        Refer to input() to see how it works
-        :param inp_x: x coordinate to log
-        :param inp_y: y coordinate to log"""
-        converted_tuple = (inp_x, inp_y)
-        if converted_tuple not in self.visited_coordinates:
-            self.visited_coordinates.append(converted_tuple)
-
-        # check if in continous platform
-        if inp_y >= self.last_y-2 and inp_y <= self.last_y+2 and self.last_x >= self.last_x - self.platform_variance and self.last_x <= self.last_x + self.platform_variance:
-            # check if current coordinate is within platform being tracked
-            if converted_tuple not in self.current_oneway_coords:
-                self.current_oneway_coords.append(converted_tuple)
-        else:
-            # current coordinates do not belong in any platforms
-            # terminate pending platform, if exists and create new pending platform
-            if len(self.current_oneway_coords) >= self.minimum_platform_length-1:
-                platform_start = min(self.current_oneway_coords, key=lambda x: x[0])
-                platform_end = max(self.current_oneway_coords, key=lambda x: x[0])
-                d_hash = self.hash(str(platform_start))
-                self.oneway_platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0],
-                                                  platform_end[1], d_hash)
-            self.current_oneway_coords = []
-            if converted_tuple not in self.visited_coordinates:
-                self.current_oneway_coords.append(converted_tuple)
+        for solution in sorted(self.platforms[current_platform].solutions, key=key_func, reverse=True):
+            """if not solution.visited:
+                return solution"""
+            return solution
 
     def flush_input_coords_to_platform(self, coord_list=None):
         if coord_list:
@@ -326,17 +274,6 @@ class PathAnalyzer:
             d_hash = self.hash(str(platform_start))
             self.platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], d_hash)
             self.current_platform_coords = []
-
-    def flush_input_coords_to_oneway(self, coord_list=None):
-        if coord_list:
-            self.current_oneway_coords = coord_list
-        if self.current_oneway_coords:
-            platform_start = min(self.current_oneway_coords, key=lambda x: x[0])
-            platform_end = max(self.current_oneway_coords, key=lambda x: x[0])
-
-            d_hash = self.hash(str(platform_start))
-            self.oneway_platforms[d_hash] = Platform(platform_start[0], platform_start[1], platform_end[0], platform_end[1], d_hash)
-            self.current_oneway_coords_coords = []
 
     def input(self, inp_x, inp_y):
         """Use player minimap coordinates to determine start and end of platforms
@@ -389,7 +326,7 @@ class PathAnalyzer:
         self.last_x = inp_x
         self.last_y = inp_y
 
-    def calculate_interplatform_solutions(self, hash, oneway=False):
+    def calculate_interplatform_solutions(self, hash):
         """Find relationships between platform, like how one platform links to another using movement.
         :param hash: platform hash in self.platforms Platform
         :return None
@@ -402,10 +339,7 @@ class PathAnalyzer:
         """
 
         return_map_dict = []
-        if oneway:
-            platform = self.oneway_platforms[hash]
-        else:
-            platform = self.platforms[hash]
+        platform = self.platforms[hash]
         platform.solutions = []
         for key, other_platform in self.platforms.items():
             if platform.hash == key:
@@ -654,7 +588,6 @@ class PathAnalyzer:
         :return: None
         """
         self.platforms = {}
-        self.oneway_platforms = {}
         self.visited_coordinates = []
         self.current_platform_coords = []
         self.current_ladder_coords = []

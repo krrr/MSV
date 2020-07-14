@@ -89,14 +89,6 @@ class MacroController:
     def find_current_platform(self):
         current_platform_hash = None
 
-        for key, platform in self.terrain_analyzer.oneway_platforms.items():
-            if self.player_manager.y >= min(platform.start_y, platform.end_y) and \
-                    self.player_manager.y <= max(platform.start_y, platform.end_y) and \
-                    self.player_manager.x >= platform.start_x and \
-                    self.player_manager.x <= platform.end_x:
-                current_platform_hash = platform.hash
-                break
-
         for key, platform in self.terrain_analyzer.platforms.items():
             if self.player_manager.y == platform.start_y and \
                     self.player_manager.x >= platform.start_x and \
@@ -104,18 +96,16 @@ class MacroController:
                 current_platform_hash = platform.hash
                 break
 
-        #  Add additional check to take into account imperfect platform coordinates
-        for key, platform in self.terrain_analyzer.platforms.items():
-            if self.player_manager.y == platform.start_y and \
-                    self.player_manager.x >= platform.start_x - self.platform_error and \
-                    self.player_manager.x <= platform.end_x + self.platform_error:
-                current_platform_hash = platform.hash
-                break
+        if current_platform_hash is None:
+            #  Add additional check to take into account imperfect platform coordinates
+            for key, platform in self.terrain_analyzer.platforms.items():
+                if self.player_manager.y == platform.start_y and \
+                        self.player_manager.x >= platform.start_x - self.platform_error and \
+                        self.player_manager.x <= platform.end_x + self.platform_error:
+                    current_platform_hash = platform.hash
+                    break
 
-        if current_platform_hash:
-            return current_platform_hash
-        else:
-            return 0
+        return current_platform_hash
 
     def find_coord_platform(self, coord):
         """
@@ -131,12 +121,6 @@ class MacroController:
                         coord[0] >= platform.start_x and \
                         coord[0] <= platform.end_x:
                     platform_hash = key
-            for key, platform in self.terrain_analyzer.oneway_platforms.items():
-                if coord[1] >= platform.start_y - self.rune_platform_offset and \
-                        coord[1] <= platform.start_y + self.rune_platform_offset and \
-                        coord[0] >= platform.start_x and \
-                        coord[0] <= platform.end_x:
-                    platform_hash = key
 
             if platform_hash:
                 return platform_hash
@@ -145,8 +129,6 @@ class MacroController:
 
     def navigate_to_platform(self, platform_hash, coord):
         """
-        Automatically goes to rune_coords by calling find_rune_platform. Update platform information before calling.
-        :return: 0
         """
         if self.current_platform_hash != platform_hash:
             solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
@@ -155,10 +137,12 @@ class MacroController:
                 for solution in solutions:
                     if self.player_manager.x < solution.lower_bound[0]:
                         # We are left of solution bounds.
-                        self.player_manager.optimized_horizontal_move(solution.lower_bound[0])
+                        self.player_manager.shikigami_haunting_sweep_move(solution.lower_bound[0])
+                        self.player_manager.horizontal_move_goal(solution.lower_bound[0])
                     else:
                         # We are right of solution bounds
-                        self.player_manager.optimized_horizontal_move(solution.upper_bound[0])
+                        self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
+                        self.player_manager.horizontal_move_goal(solution.upper_bound[0])
                     movement_type = solution.method
                     if movement_type == ta.METHOD_DROP:
                         self.player_manager.drop()

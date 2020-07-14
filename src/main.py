@@ -261,10 +261,8 @@ class MainScreen(tk.Frame):
             try:
                 data = pickle.load(f)
                 platforms = data["platforms"]
-                oneway_platforms = data["oneway"]
                 # minimap_coords = data["minimap"]
-                self.log("Terrain file loaded (platforms: %s, one-ways: %s)" %
-                         (len(platforms.keys()), len(oneway_platforms.keys())))
+                self.log("Terrain file loaded (platforms: %s)" % len(platforms.keys()))
             except:
                 showerror(APP_TITLE, "File verification error\n file: %s\nFile verification failed. Please check if it is a broken file." % path)
             else:

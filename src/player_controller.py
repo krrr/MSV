@@ -319,7 +319,8 @@ class PlayerController:
             time.sleep(self.shikigami_haunting_delay)
 
     def kishin_shoukan(self):
-        self.key_mgr.single_press(self.keymap["kishin_shoukan"], duration=0.2, additional_duration=abs(self.random_duration()))
+        for _ in range(2):
+            self.key_mgr.single_press(self.keymap["kishin_shoukan"], duration=0.2, additional_duration=abs(self.random_duration()))
         self.last_kishin_shoukan_time = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.kishin_shoukan_delay)

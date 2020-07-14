@@ -51,13 +51,6 @@ class PlatformDataCaptureWindow(tk.Toplevel):
         self.stop_platform_record_button = tk.Button(self.tool_frame_2, text="Stop record platform", command=self.stop_record_platform, state=DISABLED)
         self.stop_platform_record_button.pack(side=RIGHT, expand=YES, fill=X)
 
-        self.tool_frame_3 = tk.Frame(self.master_tool_frame)
-        self.tool_frame_3.pack(fill=X)
-        self.start_oneway_record_button = tk.Button(self.tool_frame_3, text="Start record oneway", command=self.start_record_oneway)
-        self.start_oneway_record_button.pack(side=LEFT, expand=YES, fill=X)
-        self.stop_oneway_record_button = tk.Button(self.tool_frame_3, text="Stop record oneway",command=self.stop_record_oneway, state=DISABLED)
-        self.stop_oneway_record_button.pack(side=RIGHT, expand=YES, fill=X)
-
         self.tool_frame_4 = tk.Frame(self.master_tool_frame)
         self.tool_frame_4.pack(fill=X)
         self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Set yaksha boss coord",
@@ -75,7 +68,6 @@ class PlatformDataCaptureWindow(tk.Toplevel):
         self.platform_listbox = tk.Listbox(self, selectmode=MULTIPLE)
         self.platform_listbox.pack(expand=YES, fill=BOTH)
         self.platform_listbox_platform_index = {}
-        self.platform_listbox_oneway_index = {}
         self.platform_listbox.bind("<Button-3>", self.on_platform_list_rclick)
 
         self.platform_listbox_menu = tk.Menu(self, tearoff=0)
@@ -91,7 +83,7 @@ class PlatformDataCaptureWindow(tk.Toplevel):
         self.thread = threading.Thread(target=self.update_image, args=())
         self.thread.start()
 
-        self.record_mode = 0  # 0 if not recording, 1 if normal platform, 2 if oneway
+        self.record_mode = 0  # 0 if not recording, 1 if normal platform
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.focus_set()
@@ -129,10 +121,6 @@ class PlatformDataCaptureWindow(tk.Toplevel):
                     for key, hash in self.platform_listbox_platform_index.items():
                         if idx == key:
                             del self.terrain_analyzer.platforms[hash]
-
-                    for key, hash in self.platform_listbox_oneway_index.items():
-                        if idx == key:
-                            del self.terrain_analyzer.oneway_platforms[hash]
                 self.update_listbox()
 
     def _on_mark_no_monster(self):
@@ -143,7 +131,6 @@ class PlatformDataCaptureWindow(tk.Toplevel):
 
     def update_listbox(self):
         self.platform_listbox_platform_index = {}
-        self.platform_listbox_oneway_index = {}
         self.platform_listbox.delete(0, END)
         cindex = 0
         for key, platform in self.terrain_analyzer.platforms.items():
@@ -152,45 +139,17 @@ class PlatformDataCaptureWindow(tk.Toplevel):
             self.platform_listbox.itemconfigure(cindex, fg="green")
             cindex += 1
 
-        for key, platform in self.terrain_analyzer.oneway_platforms.items():
-            self.platform_listbox.insert(END, "(%d,%d), (%d,%d) oneway" % (platform.start_x, platform.start_y, platform.end_x, platform.end_y))
-            self.platform_listbox_oneway_index[cindex] = key
-            self.platform_listbox.itemconfigure(cindex, fg="red")
-            cindex += 1
-
     def start_record_platform(self):
         self.record_mode = 1
         self.start_platform_record_button.configure(state=DISABLED)
         self.stop_platform_record_button.configure(state=NORMAL)
-        self.start_oneway_record_button.configure(state=DISABLED)
-        self.stop_oneway_record_button.configure(state=DISABLED)
 
     def stop_record_platform(self):
         self.record_mode = 0
         self.start_platform_record_button.configure(state=NORMAL)
         self.stop_platform_record_button.configure(state=DISABLED)
-        self.start_oneway_record_button.configure(state=NORMAL)
-        self.stop_oneway_record_button.configure(state=DISABLED)
         self.coord_label.configure(fg="black")
         self.terrain_analyzer.flush_input_coords_to_platform(coord_list=self.current_coords)
-        self.current_coords = []
-        self.update_listbox()
-
-    def start_record_oneway(self):
-        self.record_mode = 2
-        self.start_platform_record_button.configure(state=DISABLED)
-        self.stop_platform_record_button.configure(state=DISABLED)
-        self.start_oneway_record_button.configure(state=DISABLED)
-        self.stop_oneway_record_button.configure(state=NORMAL)
-
-    def stop_record_oneway(self):
-        self.record_mode = 0
-        self.start_platform_record_button.configure(state=NORMAL)
-        self.stop_platform_record_button.configure(state=DISABLED)
-        self.start_oneway_record_button.configure(state=NORMAL)
-        self.stop_oneway_record_button.configure(state=DISABLED)
-        self.coord_label.configure(fg="black")
-        self.terrain_analyzer.flush_input_coords_to_oneway(coord_list=self.current_coords)
         self.current_coords = []
         self.update_listbox()
 
@@ -214,8 +173,6 @@ class PlatformDataCaptureWindow(tk.Toplevel):
             self.terrain_analyzer.reset()
             self.start_platform_record_button.configure(state=NORMAL)
             self.stop_platform_record_button.configure(state=DISABLED)
-            self.start_oneway_record_button.configure(state=NORMAL)
-            self.stop_oneway_record_button.configure(state=DISABLED)
             self.update_listbox()
 
     def find_minimap_coords(self):
@@ -243,8 +200,6 @@ class PlatformDataCaptureWindow(tk.Toplevel):
                     self.current_coords.append((self.last_coord_x, self.last_coord_y))
                 if self.record_mode == 1:
                     self.coord_label.configure(fg="green")
-                elif self.record_mode == 2:
-                    self.coord_label.configure(fg="red")
 
             self.coord_label.configure(text="%d,%d"%(playerpos[0], playerpos[1]))
             if self.minimap_rect == 0:
@@ -266,16 +221,9 @@ class PlatformDataCaptureWindow(tk.Toplevel):
                             platform_obj = self.terrain_analyzer.platforms[hash]
                             cv2.line(cropped_img, (platform_obj.start_x, platform_obj.start_y),(platform_obj.end_x, platform_obj.end_y), (0, 255, 0), 2)
                             break
-                    for key, hash in self.platform_listbox_oneway_index.items():
-                        if idx == key:
-                            platform_obj = self.terrain_analyzer.oneway_platforms[hash]
-                            cv2.line(cropped_img, (platform_obj.start_x, platform_obj.start_y),(platform_obj.end_x, platform_obj.end_y), (255, 0, 0), 2)
-                            break
             else:
                 for key, platform in self.terrain_analyzer.platforms.items():
                     cv2.line(cropped_img, (platform.start_x, platform.start_y), (platform.end_x, platform.end_y), (0,255,0), 2)
-                for key, platform in self.terrain_analyzer.oneway_platforms.items():
-                    cv2.line(cropped_img, (platform.start_x, platform.start_y), (platform.end_x, platform.end_y), (255,0,0), 2)
 
             img = Image.fromarray(cropped_img)
             img_tk = ImageTk.PhotoImage(image=img)
