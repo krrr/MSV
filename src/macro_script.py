@@ -178,7 +178,7 @@ class MacroController:
                     elif movement_type == ta.METHOD_TELEPORTUP:
                         self.player_manager.teleport_up()
                         time.sleep(0.3)
-                time.sleep(0.4)
+                time.sleep(0.3)
             else:
                 self.logger.debug("could not generate path to rune platform %s from starting platform %s" % (platform_hash, self.current_platform_hash))
         return 0
@@ -285,7 +285,8 @@ class MacroController:
             if rune_solve_time_offset >= self.player_manager.rune_cooldown or rune_solve_time_offset <= 30:
                 self.navigate_to_platform(rune_platform_hash, rune_coords)
                 time.sleep(0.3)
-                self.player_manager.optimized_horizontal_move(rune_coords[0])
+                self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
+                self.player_manager.horizontal_move_goal(rune_coords[0])
                 time.sleep(0.1)
                 self.keyhandler.single_press(dc.DIK_PERIOD)
                 time.sleep(1.5)
@@ -394,7 +395,8 @@ class MacroController:
             if platform:
                 self.logger.debug('placing kishin shoukan')
                 self.navigate_to_platform(platform, self.terrain_analyzer.kishin_shoukan_coord)
-                self.player_manager.optimized_horizontal_move(self.terrain_analyzer.kishin_shoukan_coord[0])
+                self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
+                self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
                 self.player_manager.kishin_shoukan()
                 self.player_manager.last_kishin_shoukan_time = time.time()
 
@@ -404,7 +406,8 @@ class MacroController:
             if platform:
                 self.logger.debug('placing yaksha boss')
                 self.navigate_to_platform(platform, self.terrain_analyzer.yaksha_boss_coord)
-                self.player_manager.optimized_horizontal_move(self.terrain_analyzer.yaksha_boss_coord[0])
+                self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
+                self.player_manager.horizontal_move_goal(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.keyhandler.single_press(dc.DIK_RIGHT)
                 self.player_manager.yaksha_boss()
                 self.player_manager.last_yaksha_boss_time = time.time()
@@ -421,7 +424,7 @@ class MacroController:
         """
         # try to get off ladder
         self.player_manager.jumpr()
-        time.sleep(1)
+        time.sleep(1.2)
         if self.find_current_platform():
             return 0
 

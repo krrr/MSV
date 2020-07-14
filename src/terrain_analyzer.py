@@ -47,6 +47,7 @@ class Platform:
         self.last_visit = 0
         self.solutions = []
         self.hash = hash
+        self.no_monster = False
 
     def __repr__(self):
         return 'Platform(%s, %s, %s, %s)' % (self.start_x, self.start_y, self.end_x, self.end_y)
@@ -86,7 +87,7 @@ class PathAnalyzer:
         self.platforms: list of tuples, where tuple[0] is starting coordinate of platform, tuple[1] is end coordinate.
 
         """
-        self.platforms = {} # Format: hash, Platform()
+        self.platforms = {}  # Format: hash, Platform()
         self.oneway_platforms = {}
         self.ladders = []
         self.visited_coordinates = []
@@ -273,13 +274,17 @@ class PathAnalyzer:
         :param current_platform: hash of departing platform
         :return: solution list in solution array of current_playform
         """
+        def key_func(solution):
+            platform = self.platforms[solution.to_hash]
+            return not getattr(platform, 'no_monster', False), platform.last_visit
+
         try:
-            for solution in sorted(self.platforms[current_platform].solutions, key= lambda x: self.platforms[x.to_hash].last_visit, reverse=True):
+            for solution in sorted(self.platforms[current_platform].solutions, key=key_func, reverse=True):
                 """if not solution.visited:
                     return solution"""
                 return solution
         except KeyError:
-            for solution in sorted(self.oneway_platforms[current_platform].solutions, key= lambda x: self.platforms[x.to_hash].last_visit, reverse=True):
+            for solution in sorted(self.oneway_platforms[current_platform].solutions, key=key_func, reverse=True):
                 """if not solution.visited:
                     return solution"""
                 return solution

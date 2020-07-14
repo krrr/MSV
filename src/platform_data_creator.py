@@ -138,7 +138,8 @@ class PlatformDataCaptureWindow(tk.Toplevel):
     def _on_mark_no_monster(self):
         selected = self.platform_listbox.curselection()
         for idx in selected:
-            print(idx)
+            hash = self.platform_listbox_platform_index[idx]
+            self.terrain_analyzer.platforms[hash].no_monster = True
 
     def update_listbox(self):
         self.platform_listbox_platform_index = {}

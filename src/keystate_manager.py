@@ -103,8 +103,10 @@ class KeyboardInputManager:
         :return: None
         """
         self.direct_press(key_code)
-        time.sleep(duration+additional_duration)
+        time.sleep(duration)
         self.direct_release(key_code)
+        if additional_duration != 0:
+            time.sleep(additional_duration)
 
     def translate_key_state(self):
         """
