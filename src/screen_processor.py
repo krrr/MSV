@@ -1,5 +1,5 @@
 import cv2, win32gui, time, math, win32ui, win32con
-from PIL import ImageGrab, Image
+from PIL import ImageGrab
 import numpy as np, ctypes, ctypes.wintypes
 
 
@@ -11,16 +11,11 @@ class MapleScreenCapturer:
     """Container for capturing MS screen"""
     def __init__(self):
         self.hwnd = None
-        self.dpi_ratio = 1
         if not ctypes.windll.user32.IsProcessDPIAware():
             ctypes.windll.user32.SetProcessDPIAware()
 
     def ms_get_screen_hwnd(self):
-        window_hwnd = win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
-        if not window_hwnd:
-            return 0
-        else:
-            return window_hwnd
+        return win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
 
     def ms_get_screen_rect(self, hwnd):
         """
@@ -61,19 +56,15 @@ class MapleScreenCapturer:
             self.hwnd = self.ms_get_screen_hwnd()
         if not rect:
             rect = self.ms_get_screen_rect(self.hwnd)
-        if set_focus:
+        if set_focus and win32gui.GetForegroundWindow() != self.hwnd:
             win32gui.SetForegroundWindow(self.hwnd)
             time.sleep(0.1)
+            if win32gui.GetForegroundWindow() != self.hwnd:
+                time.sleep(0.1)
+            if win32gui.GetForegroundWindow() != self.hwnd:
+                return None
 
-        try:
-            self.dpi_ratio = ctypes.windll.user32.GetDpiForSystem() / 96
-        except AttributeError:
-            pass
-
-        img = ImageGrab.grab(rect)
-        # if self.dpi_ratio != 1:
-        #     img = img.resize((round(img.width / self.dpi_ratio), round(img.height / self.dpi_ratio)), Image.LANCZOS)
-        return img
+        return ImageGrab.grab(rect)
 
     def screen_capture(self,w, h, x=0, y=0, save=True, save_name=''):
         # hwnd = win32gui.FindWindow(None, None)
@@ -308,11 +299,10 @@ class StaticImageProcessor:
 
         return 0
 
+
 if __name__ == "__main__":
     dx = MapleScreenCapturer()
     hwnd = dx.ms_get_screen_hwnd()
     rect = dx.ms_get_screen_rect(hwnd)
     image = dx.capture(rect=rect)
-
-    # image = image.resize((round(image.width / dx.dpi_ratio), round(image.height / dx.dpi_ratio)), Image.LANCZOS)
     image.show()
