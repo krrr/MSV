@@ -53,11 +53,11 @@ class PlayerController:
         self.skill_counter_time = 0
 
         self.last_yaksha_boss_time = 0
-        self.yaksha_boss_cooldown = 35
+        self.yaksha_boss_cooldown = 30
         self.yaksha_boss_delay = 1.6
 
         self.last_kishin_shoukan_time = 0
-        self.kishin_shoukan_cooldown = 70
+        self.kishin_shoukan_cooldown = 60
         self.kishin_shoukan_delay = 1.6
 
         self.rune_cooldown = 15
@@ -320,7 +320,7 @@ class PlayerController:
 
     def kishin_shoukan(self):
         for _ in range(2):
-            self.key_mgr.single_press(self.keymap["kishin_shoukan"], duration=0.2, additional_duration=abs(self.random_duration()))
+            self.key_mgr.single_press(self.keymap["kishin_shoukan"], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
         self.last_kishin_shoukan_time = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.kishin_shoukan_delay)
