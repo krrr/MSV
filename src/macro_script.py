@@ -212,8 +212,8 @@ class MacroController:
             return -1
         self.player_manager.update(player_minimap_pos[0], player_minimap_pos[1])
 
-        # Placeholder for Lie Detector Detector (sounds weird)
-        # End Placeholder
+        ### Placeholder for Lie Detector Detector (sounds weird)
+        ### End Placeholder
 
         # Check if player is on platform
         self.current_platform_hash = None
@@ -224,7 +224,6 @@ class MacroController:
             self.platform_fail_loops += 1
             if self.platform_fail_loops >= self.platform_fail_loop_threshold:
                 self.logger.debug("stuck. attempting unstick()...")
-                self.unstick_attempts += 1
                 self.unstick()
             if self.unstick_attempts >= self.unstick_attempts_threshold:
                 self.logger.debug("unstick() threshold reached. sending error code..")
@@ -257,18 +256,17 @@ class MacroController:
                     idx += 1
 
             self.navmap_reset_type *= -1
-            self.logger.debug("navigation map reset and randomized at loop #%d"%(self.loop_count))
+            self.logger.debug("navigation map reset and randomized at loop #%d" % self.loop_count)
 
-        # Rune Detector
-        self.player_manager.update()
+        ### Rune Detector
         rune_coords = self.screen_processor.find_rune_marker()
         rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
         if rune_platform_hash:
             self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
-            if rune_solve_time_offset >= self.player_manager.rune_cooldown or rune_solve_time_offset <= 30:
+            if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
                 self.navigate_to_platform(rune_platform_hash, rune_coords)
-                time.sleep(0.3)
+                time.sleep(0.2)
                 self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
                 self.player_manager.horizontal_move_goal(rune_coords[0])
                 time.sleep(0.1)
@@ -278,13 +276,12 @@ class MacroController:
                 self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
                 if solve_result == -1:
                     self.logger.debug("rune_solver.solve_auto failed to solve")
-                    for x in range(4):
-                        self.keyhandler.single_press(dc.DIK_LEFT)
+                    self.keyhandler.single_press(self.player_manager.keymap["interact"])
 
                 self.player_manager.last_rune_solve_time = time.time()
                 self.current_platform_hash = rune_platform_hash
                 time.sleep(0.5)
-        # End Rune Detector
+        ### End Rune Detector
 
         # We are on a platform. find an optimal way to clear platform.
         # If we know our next platform destination, we can make our path even more efficient
@@ -292,7 +289,7 @@ class MacroController:
         self.logger.debug("next destination: %s method: %s" % (next_platform_solution.to_hash, next_platform_solution.method))
         self.goal_platform_hash = next_platform_solution.to_hash
 
-        # lookahead pathing
+        ### lookahead pathing
         lookahead_platform_solution = self.terrain_analyzer.select_move(self.goal_platform_hash)
         lookahead_solution_lb = lookahead_platform_solution.lower_bound
         lookahead_solution_ub = lookahead_platform_solution.upper_bound
@@ -311,16 +308,16 @@ class MacroController:
         lookahead_lb += random.randint(0, 2)
         lookahead_ub -= random.randint(0, 2)
 
-        # end lookahead pathing
+        ### end lookahead pathing
 
-        # Start skill usage section
+        ### Start skill usage section
         if (abs(self.player_manager.x - next_platform_solution.lower_bound[0]) <
                 abs(self.player_manager.x - next_platform_solution.upper_bound[0])):
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
-        # End skill usage
+        ### End skill usage
 
         # Find coordinates to move to next platform
         if self.player_manager.x >= next_platform_solution.lower_bound[0] and self.player_manager.x <= next_platform_solution.upper_bound[0]:
@@ -366,13 +363,14 @@ class MacroController:
 
         #End inter-platform movement
 
-        # Other buffs
+        ### Other buffs
         self.player_manager.holy_symbol()
         self.player_manager.speed_infusion()
         self.player_manager.haku_reborn()
         time.sleep(0.05)
+        ### End other buffs
 
-        # set skills
+        ### Start set skills
         if (self.terrain_analyzer.kishin_shoukan_coord and
                 time.time() - self.player_manager.last_kishin_shoukan_time > self.player_manager.kishin_shoukan_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
@@ -381,6 +379,7 @@ class MacroController:
                 self.navigate_to_platform(platform, self.terrain_analyzer.kishin_shoukan_coord)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
+                time.sleep(0.1)
                 self.player_manager.kishin_shoukan()
                 self.player_manager.last_kishin_shoukan_time = time.time()
 
@@ -393,8 +392,10 @@ class MacroController:
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.keyhandler.single_press(dc.DIK_RIGHT)
+                time.sleep(0.1)
                 self.player_manager.yaksha_boss()
                 self.player_manager.last_yaksha_boss_time = time.time()
+        # End set skills
 
         # Finished
         self.loop_count += 1
@@ -406,26 +407,14 @@ class MacroController:
         Solution: try random stuff to attempt it to reposition it self
         :return: None
         """
-        # try to get off ladder
-        self.player_manager.jumpr()
-        time.sleep(1.2)
-        if self.find_current_platform():
-            return 0
-
-        self.player_manager.teleport_up()
-        time.sleep(0.7)
-        if self.find_current_platform():
-            return 0
-
-        self.player_manager.teleport_right()
-        time.sleep(0.7)
-        if self.find_current_platform():
-            return 0
-
-        self.player_manager.teleport_left()
-        time.sleep(0.7)
-        if self.find_current_platform():
-            return 0
+        self.unstick_attempts += 1
+        # jump right to try to get off ladder
+        for i in ['jumpr', 'teleport_up', 'teleport_left', 'teleport_right']:
+            getattr(self.player_manager, i)()
+            time.sleep(0.8)
+            self.player_manager.update()
+            if self.find_current_platform():
+                return
 
     def abort(self):
         self.keyhandler.reset()
