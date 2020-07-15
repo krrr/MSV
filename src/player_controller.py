@@ -32,8 +32,6 @@ class PlayerController:
         self.keymap = {}
         for key, value in keymap.items():
             self.keymap[key] = value[0]
-        self.jump_key = self.keymap["jump"]
-        self.teleport_key = self.keymap["teleport"]
         self.key_mgr = key_mgr
         self.screen_processor = screen_handler
         self.goal_x = self.goal_y = None
@@ -60,10 +58,10 @@ class PlayerController:
         self.kishin_shoukan_cooldown = 60
         self.kishin_shoukan_delay = 1.6
 
-        self.rune_cooldown = 15
+        self.rune_fail_cooldown = 5
         self.last_rune_solve_time = 0
 
-        self.v_buff_cd = 180 + 1  # common cool down for v buff
+        self.v_buff_cd = 180  # common cool down for v buff
         self.buff_common_delay = 2  # common delay for v buff
 
         self.last_holy_symbol_time = 0
@@ -265,11 +263,11 @@ class PlayerController:
         """Warining: is a blocking call"""
         self.key_mgr.direct_press(dir_key)
         time.sleep(0.05)
-        self.key_mgr.direct_press(self.teleport_key)
+        self.key_mgr.direct_press(self.keymap["teleport"])
         time.sleep(0.04)
         self.key_mgr.direct_release(dir_key)
         time.sleep(abs(self.random_duration(0.1)))
-        self.key_mgr.direct_release(self.teleport_key)
+        self.key_mgr.direct_release(self.keymap["teleport"])
 
         if retry_limit == 0:
             return
@@ -284,29 +282,29 @@ class PlayerController:
         """Blocking call"""
         self.key_mgr.direct_press(DIK_LEFT)
         time.sleep(0.1)
-        self.key_mgr.direct_press(self.jump_key)
+        self.key_mgr.direct_press(self.keymap["jump"])
         time.sleep(0.1)
         self.key_mgr.direct_release(DIK_LEFT)
         time.sleep(0.04 + abs(self.random_duration(0.1)))
-        self.key_mgr.direct_release(self.jump_key)
+        self.key_mgr.direct_release(self.keymap["jump"])
 
     def jumpr(self):
         """Blocking call"""
         self.key_mgr.direct_press(DIK_RIGHT)
         time.sleep(0.1)
-        self.key_mgr.direct_press(self.jump_key)
+        self.key_mgr.direct_press(self.keymap["jump"])
         time.sleep(0.1)
         self.key_mgr.direct_release(DIK_RIGHT)
         time.sleep(0.04 + abs(self.random_duration(0.1)))
-        self.key_mgr.direct_release(self.jump_key)
+        self.key_mgr.direct_release(self.keymap["jump"])
 
     def drop(self):
         """Blocking call"""
         self.key_mgr.direct_press(DIK_DOWN)
         time.sleep(0.05 + abs(self.random_duration()))
-        self.key_mgr.direct_press(self.jump_key)
+        self.key_mgr.direct_press(self.keymap["jump"])
         time.sleep(0.05 + abs(self.random_duration()))
-        self.key_mgr.direct_release(self.jump_key)
+        self.key_mgr.direct_release(self.keymap["jump"])
         time.sleep(0.1 + abs(self.random_duration()))
         self.key_mgr.direct_release(DIK_DOWN)
 
@@ -326,7 +324,7 @@ class PlayerController:
         time.sleep(self.kishin_shoukan_delay)
 
     def yaksha_boss(self):
-        self.key_mgr.single_press(self.keymap["yaksha_boss"], duration=0.15, additional_duration=abs(self.random_duration()))
+        self.key_mgr.single_press(self.keymap["yaksha_boss"], duration=0.3)
         self.last_yaksha_boss_time = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.yaksha_boss_delay)
