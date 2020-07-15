@@ -262,14 +262,14 @@ class PlayerController:
     def _do_teleport(self, dir_key, retry_limit=2):
         """Warining: is a blocking call"""
         self.key_mgr.direct_press(dir_key)
-        time.sleep(0.05)
+        time.sleep(0.03)
         self.key_mgr.direct_press(self.keymap["teleport"])
         time.sleep(0.04)
         self.key_mgr.direct_release(dir_key)
         time.sleep(abs(self.random_duration(0.1)))
         self.key_mgr.direct_release(self.keymap["teleport"])
 
-        if retry_limit == 0:
+        if retry_limit <= 0:
             return
         pos = (self.x, self.y)
         self.update()
@@ -352,6 +352,9 @@ class PlayerController:
             self.skill_cast_counter += 1
             self.last_haku_reborn_time = time.time()
             time.sleep(self.buff_common_delay)
+
+    def is_on_platform(self, platform, offset=0):
+        return self.y == platform.start_y and (platform.start_x - offset) <= self.x <= (platform.end_x + offset)
 
     def random_duration(self, gen_range=0.1, digits=2):
         """

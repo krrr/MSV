@@ -53,7 +53,7 @@ class MacroController:
 
         self.rune_model_path = rune_model_dir
         self.rune_solver = rs.RuneDetector(self.rune_model_path, screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
-        self.rune_platform_offset = 2
+        self.find_platform_offset = 2
 
         self.loop_count = 0  # How many loops did we loop over?
         self.reset_navmap_loop_count = 10  # every x times reset navigation map, scrambling pathing
@@ -90,18 +90,14 @@ class MacroController:
         current_platform_hash = None
 
         for key, platform in self.terrain_analyzer.platforms.items():
-            if self.player_manager.y == platform.start_y and \
-                    self.player_manager.x >= platform.start_x and \
-                    self.player_manager.x <= platform.end_x:
+            if self.player_manager.is_on_platform(platform):
                 current_platform_hash = platform.hash
                 break
 
         if current_platform_hash is None:
             #  Add additional check to take into account imperfect platform coordinates
             for key, platform in self.terrain_analyzer.platforms.items():
-                if self.player_manager.y == platform.start_y and \
-                        self.player_manager.x >= platform.start_x - self.platform_error and \
-                        self.player_manager.x <= platform.end_x + self.platform_error:
+                if self.player_manager.is_on_platform(platform, self.platform_error):
                     current_platform_hash = platform.hash
                     break
 
@@ -109,63 +105,60 @@ class MacroController:
 
     def find_coord_platform(self, coord):
         """
-        Checks if a rune exists on a platform and if exists, returns platform hash
-        :return: Platform hash if located, else None
+        Locate plateform by coordinate
         """
         self.player_manager.update()
-        if coord:
-            platform_hash = None
-            for key, platform in self.terrain_analyzer.platforms.items():
-                if coord[1] >= platform.start_y - self.rune_platform_offset and \
-                        coord[1] <= platform.start_y + self.rune_platform_offset and \
-                        coord[0] >= platform.start_x and \
-                        coord[0] <= platform.end_x:
-                    platform_hash = key
-
-            if platform_hash:
-                return platform_hash
+        if not coord:
+            return None
+        for key, platform in self.terrain_analyzer.platforms.items():
+            if (platform.start_y - self.find_platform_offset <= coord[1] <= platform.start_y + self.find_platform_offset and
+                    platform.start_x <= coord[0] <= platform.end_x):
+                return key
 
         return None
 
-    def navigate_to_platform(self, platform_hash, coord):
+    def navigate_to_platform(self, platform_hash):
         """
         """
-        if self.current_platform_hash != platform_hash:
-            solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
-            if solutions:
-                self.logger.debug("paths to platform %s: %s" % (platform_hash, " ".join(x.method for x in solutions)))
-                for solution in solutions:
-                    if self.player_manager.x < solution.lower_bound[0]:
-                        # We are left of solution bounds.
-                        self.player_manager.shikigami_haunting_sweep_move(solution.lower_bound[0])
-                        self.player_manager.horizontal_move_goal(solution.lower_bound[0])
-                    else:
-                        # We are right of solution bounds
-                        self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
-                        self.player_manager.horizontal_move_goal(solution.upper_bound[0])
-                    movement_type = solution.method
-                    if movement_type == ta.METHOD_DROP:
-                        self.player_manager.drop()
-                        time.sleep(1)
-                    elif movement_type == ta.METHOD_JUMPL:
-                        self.player_manager.jumpl()
-                        time.sleep(0.5)
-                    elif movement_type == ta.METHOD_JUMPR:
-                        self.player_manager.jumpr()
-                        time.sleep(0.5)
-                    elif movement_type == ta.METHOD_TELEPORTL:
-                        self.player_manager.teleport_left()
-                        time.sleep(0.3)
-                    elif movement_type == ta.METHOD_TELEPORTR:
-                        self.player_manager.teleport_right()
-                        time.sleep(0.3)
-                    elif movement_type == ta.METHOD_TELEPORTUP:
-                        self.player_manager.teleport_up()
-                        time.sleep(0.3)
-                time.sleep(0.3)
+        if self.current_platform_hash == platform_hash:
+            return
+
+        solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
+        if not solutions:
+            self.logger.debug("could not generate path to rune platform %s from starting platform %s" % (platform_hash, self.current_platform_hash))
+            return
+
+        self.logger.debug("paths to platform %s: %s" % (platform_hash, " ".join(x.method for x in solutions)))
+        for solution in solutions:
+            if self.player_manager.x < solution.lower_bound[0]:
+                # We are left of solution bounds.
+                self.player_manager.shikigami_haunting_sweep_move(solution.lower_bound[0])
+                self.player_manager.horizontal_move_goal(solution.lower_bound[0])
             else:
-                self.logger.debug("could not generate path to rune platform %s from starting platform %s" % (platform_hash, self.current_platform_hash))
-        return 0
+                # We are right of solution bounds
+                self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
+                self.player_manager.horizontal_move_goal(solution.upper_bound[0])
+
+            move_type = solution.method
+            if move_type == ta.METHOD_DROP:
+                self.player_manager.drop()
+                time.sleep(1)
+            elif move_type == ta.METHOD_JUMPL:
+                self.player_manager.jumpl()
+                time.sleep(0.5)
+            elif move_type == ta.METHOD_JUMPR:
+                self.player_manager.jumpr()
+                time.sleep(0.5)
+            elif move_type == ta.METHOD_TELEPORTL:
+                self.player_manager.teleport_left()
+                time.sleep(0.3)
+            elif move_type == ta.METHOD_TELEPORTR:
+                self.player_manager.teleport_right()
+                time.sleep(0.3)
+            elif move_type == ta.METHOD_TELEPORTUP:
+                self.player_manager.teleport_up()
+                time.sleep(0.3)
+        time.sleep(0.3)
 
     def log_skill_usage_statistics(self):
         """
@@ -175,7 +168,6 @@ class MacroController:
         if not self.player_manager.skill_counter_time:
             self.player_manager.skill_counter_time = time.time()
         if time.time() - self.player_manager.skill_counter_time > 60:
-
             self.logger.debug("skills casted in duration %d: %d skill/s: %f"%(int(time.time() - self.player_manager.skill_counter_time), self.player_manager.skill_cast_counter, self.player_manager.skill_cast_counter/int(time.time() - self.player_manager.skill_counter_time)))
             self.player_manager.skill_cast_counter = 0
             self.player_manager.skill_counter_time = time.time()
@@ -265,7 +257,7 @@ class MacroController:
             self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
-                self.navigate_to_platform(rune_platform_hash, rune_coords)
+                self.navigate_to_platform(rune_platform_hash)
                 time.sleep(0.2)
                 self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
                 self.player_manager.horizontal_move_goal(rune_coords[0])
@@ -376,7 +368,7 @@ class MacroController:
             platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
             if platform:
                 self.logger.debug('placing kishin shoukan')
-                self.navigate_to_platform(platform, self.terrain_analyzer.kishin_shoukan_coord)
+                self.navigate_to_platform(platform)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
                 time.sleep(0.1)
@@ -388,7 +380,7 @@ class MacroController:
             platform = self.find_coord_platform(self.terrain_analyzer.yaksha_boss_coord)
             if platform:
                 self.logger.debug('placing yaksha boss')
-                self.navigate_to_platform(platform, self.terrain_analyzer.yaksha_boss_coord)
+                self.navigate_to_platform(platform)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.keyhandler.single_press(dc.DIK_RIGHT)
