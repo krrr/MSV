@@ -5,6 +5,7 @@ import terrain_analyzer as ta
 import directinput_constants as dc
 import rune_solver as rs
 import logging, math, time, random
+import win32api, win32con
 
 
 class CustomLogger:
@@ -199,10 +200,14 @@ class MacroController:
         self.screen_processor.update_image(set_focus=False)
 
         # Update Constants
-        player_minimap_pos = self.screen_processor.find_player_minimap_marker()
-        if not player_minimap_pos:
+        player_pos = self.screen_processor.find_player_minimap_marker()
+        if not player_pos:
             return -1
-        self.player_manager.update(player_minimap_pos[0], player_minimap_pos[1])
+        self.player_manager.update(player_pos[0], player_pos[1])
+
+        # Other player sound notify
+        if self.screen_processor.find_other_player_marker():
+            self.alert_sound()
 
         ### Placeholder for Lie Detector Detector (sounds weird)
         ### End Placeholder
@@ -413,3 +418,8 @@ class MacroController:
         self.logger.debug("aborted")
         if self.log_queue:
             self.log_queue.put(["stopped", None])
+
+    def alert_sound(self):
+        for _ in range(4):
+            win32api.MessageBeep(win32con.MB_ICONWARNING)
+            time.sleep(0.3)

@@ -7,7 +7,7 @@ macro.terrain_analyzer.generate_solution_dict()
 
 macro.player_manager.update()
 macro.current_platform_hash = '6029314b'
-macro.navigate_to_platform('0f9c84c4', None)
+macro.navigate_to_platform('0f9c84c4')
 
 # while True:
 #     data = macro.loop()

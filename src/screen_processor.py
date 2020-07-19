@@ -258,7 +258,7 @@ class StaticImageProcessor:
             avg_x = int(avg_x / totalpoints)
             return avg_x, avg_y
 
-        return 0
+        return None
 
     def find_rune_marker(self, rect=None):
         """
@@ -305,4 +305,7 @@ if __name__ == "__main__":
     hwnd = dx.ms_get_screen_hwnd()
     rect = dx.ms_get_screen_rect(hwnd)
     image = dx.capture(rect=rect)
-    image.show()
+    # image.show()
+    processor = StaticImageProcessor(dx)
+    processor.update_image()
+    print(processor.find_player_minimap_marker())
