@@ -96,6 +96,8 @@ class PlatformDataCaptureWindow(tk.Toplevel):
 
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
+        self.other_attrs['kishin_shoukan_coord'] = self.terrain_analyzer.kishin_shoukan_coord
+        self.other_attrs['yaksha_boss_coord'] = self.terrain_analyzer.yaksha_boss_coord
         self.update_listbox()
 
     def on_close(self):
