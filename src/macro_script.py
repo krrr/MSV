@@ -1,11 +1,13 @@
+import os
+import datetime
+import logging, math, time, random
+import win32api, win32con
 import keystate_manager as km
 import player_controller as pc
 import screen_processor as sp
 import terrain_analyzer as ta
 import directinput_constants as dc
 import rune_solver as rs
-import logging, math, time, random
-import win32api, win32con
 
 
 class CustomLogger:
@@ -269,6 +271,7 @@ class MacroController:
                 time.sleep(0.1)
                 self.keyhandler.single_press(dc.DIK_PERIOD)
                 time.sleep(1.5)
+                self.save_current_screen('rune')  # save image to disk for future use
                 solve_result = self.rune_solver.solve_auto()
                 self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
                 if solve_result == -1:
@@ -423,3 +426,13 @@ class MacroController:
         for _ in range(4):
             win32api.MessageBeep(win32con.MB_ICONWARNING)
             time.sleep(0.3)
+
+    def save_current_screen(self, prefix):
+        img = self.screen_capturer.capture()
+
+        if not os.path.isdir('screenshots'):
+            os.mkdir('screenshots')
+        time_str = datetime.datetime.now().replace(microsecond=0).isoformat().replace(':', '_')
+        with open('screenshots/' + prefix + '_' + time_str + '.jpg', 'wb') as f:
+            img.save(f)
+
