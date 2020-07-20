@@ -96,7 +96,7 @@ class PathAnalyzer:
         self.minimum_ladder_length = 5  # Minimum y length of coordinated to be logged as a ladder by input()
 
         # below constants are used for generating solution graphs
-        self.teleport_vertical_range = 24
+        self.teleport_vertical_range = 25
         self.teleport_horizontal_range = 18
         self.teleport_horizontal_y_range = 4
         self.jump_range = 9  # horizontal jump distance is about 9~10

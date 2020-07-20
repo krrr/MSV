@@ -1,4 +1,6 @@
 .idea
 venv
 *.log
+*.platform
 config.json
+/src/screenshots/

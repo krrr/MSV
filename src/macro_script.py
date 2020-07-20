@@ -108,7 +108,7 @@ class MacroController:
 
     def find_coord_platform(self, coord):
         """
-        Locate plateform by coordinate
+        Locate platform by coordinate
         """
         self.player_manager.update()
         if not coord:
@@ -144,8 +144,13 @@ class MacroController:
 
             move_type = solution.method
             if move_type == ta.METHOD_DROP:
-                self.player_manager.drop()
-                time.sleep(1)
+                height_diff = abs(self.terrain_analyzer.platforms[solution.from_hash].start_y - self.terrain_analyzer.platforms[solution.to_hash].start_y)
+                if 12 < height_diff <= self.terrain_analyzer.teleport_vertical_range:
+                    self.player_manager.teleport_down()
+                    time.sleep(0.4)
+                else:
+                    self.player_manager.drop()
+                    time.sleep(1)
             elif move_type == ta.METHOD_JUMPL:
                 self.player_manager.jumpl()
                 time.sleep(0.5)
@@ -154,13 +159,17 @@ class MacroController:
                 time.sleep(0.5)
             elif move_type == ta.METHOD_TELEPORTL:
                 self.player_manager.teleport_left()
-                time.sleep(0.3)
+                time.sleep(0.4)
             elif move_type == ta.METHOD_TELEPORTR:
                 self.player_manager.teleport_right()
-                time.sleep(0.3)
+                time.sleep(0.4)
             elif move_type == ta.METHOD_TELEPORTUP:
                 self.player_manager.teleport_up()
-                time.sleep(0.3)
+                time.sleep(0.4)
+
+            self.player_manager.update()
+            if not self.find_current_platform():  # in case stuck in ladder
+                self.player_manager.jumpr()
         time.sleep(0.3)
 
     def log_skill_usage_statistics(self):
@@ -215,9 +224,8 @@ class MacroController:
         ### End Placeholder
 
         # Check if player is on platform
-        self.current_platform_hash = None
-        get_current_platform = self.find_current_platform()
-        if not get_current_platform:
+        self.current_platform_hash = self.find_current_platform()
+        if not self.current_platform_hash:
             # Move to nearest platform and redo loop
             # Failed to find platform.
             self.platform_fail_loops += 1
@@ -232,7 +240,6 @@ class MacroController:
         else:
             self.platform_fail_loops = 0
             self.unstick_attempts = 0
-            self.current_platform_hash = get_current_platform
 
         # Update navigation dictionary with last_platform and current_platform
         if self.goal_platform_hash and self.current_platform_hash == self.goal_platform_hash:
@@ -311,8 +318,19 @@ class MacroController:
         ### end lookahead pathing
 
         ### Start skill usage section
-        if (abs(self.player_manager.x - next_platform_solution.lower_bound[0]) <
-                abs(self.player_manager.x - next_platform_solution.upper_bound[0])):
+        closer_to_next_lower = (abs(self.player_manager.x - next_platform_solution.lower_bound[0]) <
+                                abs(self.player_manager.x - next_platform_solution.upper_bound[0]))
+        sweep = True
+        no_sweep_dist_x = next_platform_solution.lower_bound[0] + 3 if closer_to_next_lower else next_platform_solution.upper_bound[0] - 3
+        if (next_platform_solution.lower_bound[0] <= no_sweep_dist_x <= next_platform_solution.upper_bound[0] and
+            (next_platform_solution.upper_bound[0] - next_platform_solution.lower_bound[0]) <= 44):
+            self.player_manager.shikigami_haunting_sweep_move(no_sweep_dist_x)
+            self.player_manager.horizontal_move_goal(no_sweep_dist_x)
+            sweep = False
+            time.sleep(0.05)
+            self.logger.debug('no sweep, ' + str(closer_to_next_lower))
+
+        if closer_to_next_lower:
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
@@ -320,16 +338,16 @@ class MacroController:
         ### End skill usage
 
         # Find coordinates to move to next platform
-        if self.player_manager.x >= next_platform_solution.lower_bound[0] and self.player_manager.x <= next_platform_solution.upper_bound[0]:
+        if sweep and next_platform_solution.lower_bound[0] <= self.player_manager.x <= next_platform_solution.upper_bound[0]:
             # We are within the solution bounds. attack within solution range and move
-            if abs(self.player_manager.x - next_platform_solution.lower_bound[0]) < abs(self.player_manager.x - next_platform_solution.upper_bound[0]):
-                # We are closer to lower boound, so move to upper bound to maximize movement
+            if closer_to_next_lower:
+                # We are closer to lower bound, so move to upper bound to maximize movement
                 in_solution_movement_goal = lookahead_ub
             else:
                 in_solution_movement_goal = lookahead_lb
 
             self.player_manager.shikigami_haunting_sweep_move(in_solution_movement_goal, no_attack_distance=self.player_manager.shikigami_haunting_range)
-        else:
+        elif sweep:
             # We need to move within the solution bounds. First, find closest solution bound which can cover majority of current platform.
             if self.player_manager.x < next_platform_solution.lower_bound[0]:
                 # We are left of solution bounds.
@@ -371,11 +389,25 @@ class MacroController:
         ### End other buffs
 
         ### Start set skills
+        self.set_skills()
+        # End set skills
+
+        # Finished
+        self.loop_count += 1
+        return 0
+
+    def set_skills(self):
+        self.player_manager.update()
+        self.current_platform_hash = self.find_current_platform()
+        if self.current_platform_hash is None:
+            return
+
         if (self.terrain_analyzer.kishin_shoukan_coord and
                 time.time() - self.player_manager.last_kishin_shoukan_time > self.player_manager.kishin_shoukan_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
             if platform:
                 self.logger.debug('placing kishin shoukan')
+                self.screen_processor.update_image(set_focus=False)
                 self.navigate_to_platform(platform)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
@@ -383,11 +415,17 @@ class MacroController:
                 self.player_manager.kishin_shoukan()
                 self.player_manager.last_kishin_shoukan_time = time.time()
 
+                self.player_manager.update()
+                self.current_platform_hash = self.find_current_platform()
+                if self.current_platform_hash is None:
+                    return
+
         if (self.terrain_analyzer.yaksha_boss_coord and
                 time.time() - self.player_manager.last_yaksha_boss_time > self.player_manager.yaksha_boss_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.yaksha_boss_coord)
             if platform:
                 self.logger.debug('placing yaksha boss')
+                self.screen_processor.update_image(set_focus=False)
                 self.navigate_to_platform(platform)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.yaksha_boss_coord[0])
@@ -395,11 +433,8 @@ class MacroController:
                 time.sleep(0.1)
                 self.player_manager.yaksha_boss()
                 self.player_manager.last_yaksha_boss_time = time.time()
-        # End set skills
 
-        # Finished
         self.loop_count += 1
-        return 0
 
     def unstick(self):
         """
@@ -423,9 +458,9 @@ class MacroController:
             self.log_queue.put(["stopped", None])
 
     def alert_sound(self):
-        for _ in range(4):
+        for _ in range(3):
             win32api.MessageBeep(win32con.MB_ICONWARNING)
-            time.sleep(0.3)
+            time.sleep(0.5)
 
     def save_current_screen(self, prefix):
         img = self.screen_capturer.capture()

@@ -42,7 +42,7 @@ class PlayerController:
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
-        self.shikigami_haunting_range = 18  # exceed: moonlight slash's estimalte x hitbox RADIUS in minimap coords.
+        self.shikigami_haunting_range = 18
         self.shikigami_haunting_delay = 0.5  # delay after using shikigami haunting where character is not movable
 
         self.horizontal_movement_threshold = 18-2  # teleport instead of walk if distance greater than threshold
@@ -253,13 +253,16 @@ class PlayerController:
     def teleport_up(self):
         self._do_teleport(DIK_UP)
 
+    def teleport_down(self):
+        self._do_teleport(DIK_DOWN)
+
     def teleport_left(self):
         self._do_teleport(DIK_LEFT)
 
     def teleport_right(self):
         self._do_teleport(DIK_RIGHT)
 
-    def _do_teleport(self, dir_key, retry_limit=2):
+    def _do_teleport(self, dir_key):
         """Warining: is a blocking call"""
         self.key_mgr.direct_press(dir_key)
         time.sleep(0.03)
@@ -268,15 +271,6 @@ class PlayerController:
         self.key_mgr.direct_release(dir_key)
         time.sleep(abs(self.random_duration(0.1)))
         self.key_mgr.direct_release(self.keymap["teleport"])
-
-        if retry_limit <= 0:
-            return
-        pos = (self.x, self.y)
-        self.update()
-        new_pos = (self.x, self.y)
-        if abs(pos[0] - new_pos[0]) <= 2 and abs(pos[1] - new_pos[1]) <= 2:
-            time.sleep(0.3)
-            self._do_teleport(dir_key, retry_limit-1)
 
     def jumpl(self):
         """Blocking call"""
