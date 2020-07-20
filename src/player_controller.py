@@ -100,19 +100,21 @@ class PlayerController:
         """
         start_x = self.x
         loc_delta = self.x - goal_x
-        abs_loc_delta = abs(loc_delta)
+        total_dis = abs(loc_delta)
+        if total_dis < self.horizontal_goal_offset:
+            return
 
         if not no_attack_distance:
             self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to right direction
 
         if loc_delta > 0:  # left movement
-            if no_attack_distance and no_attack_distance < abs_loc_delta:
+            if no_attack_distance and no_attack_distance < total_dis:
                 self.optimized_horizontal_move(self.x-no_attack_distance+self.horizontal_goal_offset, teleport_once=True)
 
             self.update()
             loc_delta = self.x - goal_x
-            abs_loc_delta = abs(loc_delta)
-            if abs_loc_delta < self.horizontal_movement_threshold:
+            total_dis = abs(loc_delta)
+            if total_dis < self.horizontal_movement_threshold:
                 if not no_attack_distance:
                     self.shikigami_haunting()
                 self.horizontal_move_goal(goal_x)
@@ -131,12 +133,12 @@ class PlayerController:
                     else:
                         self.optimized_horizontal_move(self.x - self.shikigami_haunting_range, teleport_once=True)
         elif loc_delta < 0:  # right movement
-            if no_attack_distance and no_attack_distance < abs_loc_delta:
+            if no_attack_distance and no_attack_distance < total_dis:
                 self.optimized_horizontal_move(self.x+no_attack_distance-self.horizontal_goal_offset, teleport_once=True)
             self.update()
             loc_delta = self.x - goal_x
-            abs_loc_delta = abs(loc_delta)
-            if abs_loc_delta < self.horizontal_movement_threshold:
+            total_dis = abs(loc_delta)
+            if total_dis < self.horizontal_movement_threshold:
                 if not no_attack_distance:
                     self.shikigami_haunting()
                 self.horizontal_move_goal(goal_x)
