@@ -10,43 +10,34 @@ import directinput_constants as dc
 import rune_solver as rs
 
 
-class CustomLogger:
-    def __init__(self, logger_obj, logger_queue):
-        self.logger_obj = logger_obj
+class CustomLoggerHandler(logging.Handler):
+    def __init__(self, level, logger_queue):
+        super().__init__(level)
         self.logger_queue = logger_queue
 
-    def debug(self, *args):
-        self.logger_obj.debug(" ".join([str(x) for x in args]))
+    def emit(self, record):
         if self.logger_queue:
-            self.logger_queue.put(("log", " ".join([str(x) for x in args])))
-
-    def exception(self, *args):
-        self.logger_obj.exception(" ".join([str(x) for x in args]))
-        if self.logger_queue:
-            self.logger_queue.put(("log", " ".join([str(x) for x in args])))
+            self.logger_queue.put(("log", self.format(record)))
 
 
 class MacroController:
     def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None):
-        #sys.excepthook = self.exception_hook
-        self.screen_capturer = sp.MapleScreenCapturer()
-        logger = logging.getLogger(self.__class__.__name__)
-        logger.setLevel(logging.DEBUG)
         self.log_queue = log_queue
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
 
         fh = logging.FileHandler("logging.log")
         fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+        fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+        self.logger.addHandler(fh)
+        self.logger.info("%s init" % self.__class__.__name__)
 
-        self.logger = CustomLogger(logger, self.log_queue)
-        self.logger.debug("%s init" % self.__class__.__name__)
+        self.screen_capturer = sp.MapleScreenCapturer()
         self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = ta.PathAnalyzer()
         self.keyhandler = km.KeyboardInputManager()
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
-
 
         self.last_platform_hash = None
         self.current_platform_hash = None
@@ -76,13 +67,13 @@ class MacroController:
         self.unstick_attempts_threshold = 5
         # If unstick after this amount fails to get us on a known platform, abort abort.
 
-        self.logger.debug("%s init finished"%self.__class__.__name__)
+        self.logger.debug("%s init finished" % self.__class__.__name__)
 
     def load_and_process_platform_map(self, path):
         ret = self.terrain_analyzer.load(path)
         self.terrain_analyzer.generate_solution_dict()
         if ret != 0:
-            self.logger.debug("Loaded platform data %s" % path)
+            self.logger.info("Loaded platform data %s" % path)
         else:
             raise Exception("Failed to load platform data %s" % path)
 
@@ -128,10 +119,10 @@ class MacroController:
 
         solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
         if not solutions:
-            self.logger.debug("could not generate path to rune platform %s from starting platform %s" % (platform_hash, self.current_platform_hash))
+            self.logger.error("could not generate path to platform %s from platform %s" % (platform_hash, self.current_platform_hash))
             return
 
-        self.logger.debug("paths to platform %s: %s" % (platform_hash, " ".join(x.method for x in solutions)))
+        self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(x.method for x in solutions)))
         for solution in solutions:
             if self.player_manager.x < solution.lower_bound[0]:
                 # We are left of solution bounds.
@@ -157,7 +148,7 @@ class MacroController:
         if not self.player_manager.skill_counter_time:
             self.player_manager.skill_counter_time = time.time()
         if time.time() - self.player_manager.skill_counter_time > 60:
-            self.logger.debug("skills casted in duration %d: %d skill/s: %f"%(int(time.time() - self.player_manager.skill_counter_time), self.player_manager.skill_cast_counter, self.player_manager.skill_cast_counter/int(time.time() - self.player_manager.skill_counter_time)))
+            self.logger.info("skills casted in duration %d: %d skill/s: %f"%(int(time.time() - self.player_manager.skill_counter_time), self.player_manager.skill_cast_counter, self.player_manager.skill_cast_counter/int(time.time() - self.player_manager.skill_counter_time)))
             self.player_manager.skill_cast_counter = 0
             self.player_manager.skill_counter_time = time.time()
 
@@ -180,7 +171,7 @@ class MacroController:
         self.log_skill_usage_statistics()
 
         if not self.screen_capturer.ms_get_screen_hwnd():
-            self.logger.debug("Failed to get MS screen rect")
+            self.logger.error("Failed to get MS screen rect")
             self.abort()
             return -1
 
@@ -207,10 +198,10 @@ class MacroController:
             # Failed to find platform.
             self.platform_fail_loops += 1
             if self.platform_fail_loops >= self.platform_fail_loop_threshold:
-                self.logger.debug("stuck. attempting unstick()...")
+                self.logger.warning("stuck. attempting unstick()...")
                 self.unstick()
             if self.unstick_attempts >= self.unstick_attempts_threshold:
-                self.logger.debug("unstick() threshold reached. sending error code..")
+                self.logger.warning("unstick() threshold reached. sending error code..")
                 return -2
             else:
                 return 0
@@ -239,13 +230,13 @@ class MacroController:
                     idx += 1
 
             self.navmap_reset_type *= -1
-            self.logger.debug("navigation map reset and randomized at loop #%d" % self.loop_count)
+            self.logger.info("navigation map reset and randomized at loop #%d" % self.loop_count)
 
         ### Rune Detector
         rune_coords = self.screen_processor.find_rune_marker()
         rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
         if rune_platform_hash:
-            self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
+            self.logger.info("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
                 self.navigate_to_platform(rune_platform_hash)
@@ -259,7 +250,7 @@ class MacroController:
                 solve_result = self.rune_solver.solve_auto()
                 self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
                 if solve_result == -1:
-                    self.logger.debug("rune_solver.solve_auto failed to solve")
+                    self.logger.error("rune_solver.solve_auto failed to solve")
                     self.keyhandler.single_press(self.player_manager.keymap["interact"])
 
                 self.player_manager.last_rune_solve_time = time.time()
@@ -270,7 +261,7 @@ class MacroController:
         # We are on a platform. find an optimal way to clear platform.
         # If we know our next platform destination, we can make our path even more efficient
         next_platform_solution = self.terrain_analyzer.select_move(self.current_platform_hash)
-        self.logger.debug("next destination: %s method: %s" % (next_platform_solution.to_hash, next_platform_solution.method))
+        self.logger.info("next destination: %s method: %s" % (next_platform_solution.to_hash, next_platform_solution.method))
         self.goal_platform_hash = next_platform_solution.to_hash
 
         ### lookahead pathing
@@ -305,7 +296,6 @@ class MacroController:
             self.player_manager.horizontal_move_goal(no_sweep_dist_x)
             sweep = False
             time.sleep(0.05)
-            self.logger.debug('no sweep, ' + str(closer_to_next_lower))
 
         if closer_to_next_lower:
             self.keyhandler.single_press(dc.DIK_RIGHT)
@@ -391,7 +381,7 @@ class MacroController:
                 time.time() - self.player_manager.last_kishin_shoukan_time > self.player_manager.kishin_shoukan_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
             if platform:
-                self.logger.debug('placing kishin shoukan')
+                self.logger.info('placing kishin shoukan')
                 self.screen_processor.update_image(set_focus=False)
                 self.navigate_to_platform(platform)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
@@ -409,7 +399,7 @@ class MacroController:
                 time.time() - self.player_manager.last_yaksha_boss_time > self.player_manager.yaksha_boss_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.yaksha_boss_coord)
             if platform:
-                self.logger.debug('placing yaksha boss')
+                self.logger.info('placing yaksha boss')
                 self.screen_processor.update_image(set_focus=False)
                 self.navigate_to_platform(platform)
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
@@ -438,7 +428,7 @@ class MacroController:
 
     def abort(self):
         self.keyhandler.reset()
-        self.logger.debug("aborted")
+        self.logger.info("aborted")
         if self.log_queue:
             self.log_queue.put(["stopped", None])
 

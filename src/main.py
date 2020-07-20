@@ -40,12 +40,12 @@ def destroy_child_widgets(parent):
 def macro_loop(input_queue, output_queue):
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
     fh = logging.FileHandler("logging.log", encoding='utf-8')
     fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
+    fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(fh)
+
     try:
         while True:
             time.sleep(0.5)

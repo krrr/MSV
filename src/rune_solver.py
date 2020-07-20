@@ -30,15 +30,13 @@ class RuneDetector:
         :param labels: dictionary with class names as keys, integer as values
         example: {'down': 0, 'left': 1, 'right': 2, 'up': 3}
         """
-        self.logger = logging.getLogger("RuneDetector")
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG)
-
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
         fh = logging.FileHandler("logging.log")
         fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
+        fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
         self.logger.addHandler(fh)
+
         self.labels = labels if labels else {'down': 0, 'left': 1, 'right': 2, 'up': 3}
         self.model_path = model_path
         with device("/cpu:0"):  # Use cpu for evaluation
