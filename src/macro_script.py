@@ -142,30 +142,7 @@ class MacroController:
                 self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
                 self.player_manager.horizontal_move_goal(solution.upper_bound[0])
 
-            move_type = solution.method
-            if move_type == ta.METHOD_DROP:
-                height_diff = abs(self.terrain_analyzer.platforms[solution.from_hash].start_y - self.terrain_analyzer.platforms[solution.to_hash].start_y)
-                if 12 < height_diff <= self.terrain_analyzer.teleport_vertical_range:
-                    self.player_manager.teleport_down()
-                    time.sleep(0.4)
-                else:
-                    self.player_manager.drop()
-                    time.sleep(1)
-            elif move_type == ta.METHOD_JUMPL:
-                self.player_manager.jumpl()
-                time.sleep(0.5)
-            elif move_type == ta.METHOD_JUMPR:
-                self.player_manager.jumpr()
-                time.sleep(0.5)
-            elif move_type == ta.METHOD_TELEPORTL:
-                self.player_manager.teleport_left()
-                time.sleep(0.4)
-            elif move_type == ta.METHOD_TELEPORTR:
-                self.player_manager.teleport_right()
-                time.sleep(0.4)
-            elif move_type == ta.METHOD_TELEPORTUP:
-                self.player_manager.teleport_up()
-                time.sleep(0.4)
+            self._player_move(solution)
 
             self.player_manager.update()
             if not self.find_current_platform():  # in case stuck in ladder
@@ -359,26 +336,7 @@ class MacroController:
         time.sleep(0.1)
 
         # All movement and attacks finished. Now perform movement
-        movement_type = next_platform_solution.method
-        if movement_type == ta.METHOD_DROP:
-            self.player_manager.drop()
-            time.sleep(1)
-        elif movement_type == ta.METHOD_JUMPL:
-            self.player_manager.jumpl()
-            time.sleep(0.7)
-        elif movement_type == ta.METHOD_JUMPR:
-            self.player_manager.jumpr()
-            time.sleep(0.7)
-        elif movement_type == ta.METHOD_TELEPORTL:
-            self.player_manager.teleport_left()
-            time.sleep(0.5)
-        elif movement_type == ta.METHOD_TELEPORTR:
-            self.player_manager.teleport_right()
-            time.sleep(0.5)
-        elif movement_type == ta.METHOD_TELEPORTUP:
-            self.player_manager.teleport_up()
-            time.sleep(0.5)
-
+        self._player_move(next_platform_solution)
         #End inter-platform movement
 
         ### Other buffs
@@ -395,6 +353,33 @@ class MacroController:
         # Finished
         self.loop_count += 1
         return 0
+
+    def _player_move(self, solution):
+        move_method = solution.method
+        if move_method == ta.METHOD_DROP:
+            height_diff = abs(self.terrain_analyzer.platforms[solution.from_hash].start_y - self.terrain_analyzer.platforms[solution.to_hash].start_y)
+            # check lower bound in case there is another platform in the middle of current and destination
+            if 14 <= height_diff <= self.terrain_analyzer.teleport_vertical_range:
+                self.player_manager.teleport_down()
+                time.sleep(0.4)
+            else:
+                self.player_manager.drop()
+                time.sleep(1)
+        elif move_method == ta.METHOD_JUMPL:
+            self.player_manager.jumpl()
+            time.sleep(0.7)
+        elif move_method == ta.METHOD_JUMPR:
+            self.player_manager.jumpr()
+            time.sleep(0.7)
+        elif move_method == ta.METHOD_TELEPORTL:
+            self.player_manager.teleport_left()
+            time.sleep(0.5)
+        elif move_method == ta.METHOD_TELEPORTR:
+            self.player_manager.teleport_right()
+            time.sleep(0.5)
+        elif move_method == ta.METHOD_TELEPORTUP:
+            self.player_manager.teleport_up()
+            time.sleep(0.5)
 
     def set_skills(self):
         self.player_manager.update()
