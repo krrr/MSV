@@ -1,6 +1,6 @@
 # MSV-Kanna-Ver: OpenCV based MapleStory automation on Python3
 Kanna class version of original MS-Visionify (https://github.com/Dashadower/MS-Visionify) 
-
+![kanna](MapleStory-Kanna.png)
 
 ### *How does it work?*
  It's actually very simple. The bot uses image processing to extract player coordinates from the on-screen minimap. On
