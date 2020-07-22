@@ -117,28 +117,36 @@ class MacroController:
         if self.current_platform_hash == platform_hash:
             return
 
-        solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
-        if not solutions:
-            self.logger.error("could not generate path to platform %s from platform %s" % (platform_hash, self.current_platform_hash))
-            return
+        for _ in range(3):
+            solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
+            if not solutions:
+                self.logger.error("could not generate path to platform %s from platform %s" % (platform_hash, self.current_platform_hash))
+                return
 
-        self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(x.method for x in solutions)))
-        for solution in solutions:
-            if self.player_manager.x < solution.lower_bound[0]:
-                # We are left of solution bounds.
-                self.player_manager.shikigami_haunting_sweep_move(solution.lower_bound[0])
-                self.player_manager.horizontal_move_goal(solution.lower_bound[0])
-            else:
-                # We are right of solution bounds
-                self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
-                self.player_manager.horizontal_move_goal(solution.upper_bound[0])
+            self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(x.method for x in solutions)))
+            for solution in solutions:
+                if self.player_manager.x < solution.lower_bound[0]:
+                    # We are left of solution bounds.
+                    self.player_manager.shikigami_haunting_sweep_move(solution.lower_bound[0])
+                    self.player_manager.horizontal_move_goal(solution.lower_bound[0])
+                else:
+                    # We are right of solution bounds
+                    self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
+                    self.player_manager.horizontal_move_goal(solution.upper_bound[0])
 
-            self._player_move(solution)
+                self._player_move(solution)
 
-            self.player_manager.update()
-            if not self.find_current_platform():  # in case stuck in ladder
-                self.player_manager.jumpr()
-        time.sleep(0.3)
+                self.player_manager.update()
+                self.current_platform_hash = self.find_current_platform()
+
+                if self.current_platform_hash != solution.to_hash:  # should retry
+                    if self.current_platform_hash is None:  # in case stuck in ladder
+                        self.player_manager.jumpr()
+                    break
+
+            if platform_hash == self.current_platform_hash:
+                time.sleep(0.2)
+                return
 
     def log_skill_usage_statistics(self):
         """
@@ -351,7 +359,7 @@ class MacroController:
             # check lower bound in case there is another platform in the middle of current and destination
             if 14 <= height_diff <= self.terrain_analyzer.teleport_vertical_range:
                 self.player_manager.teleport_down()
-                time.sleep(0.4)
+                time.sleep(0.5)
             else:
                 self.player_manager.drop()
                 time.sleep(1)

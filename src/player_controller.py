@@ -320,7 +320,8 @@ class PlayerController:
         time.sleep(self.kishin_shoukan_delay)
 
     def yaksha_boss(self):
-        self.key_mgr.single_press(self.keymap["yaksha_boss"], duration=0.3)
+        for _ in range(2):
+            self.key_mgr.single_press(self.keymap["yaksha_boss"], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
         self.last_yaksha_boss_time = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.yaksha_boss_delay)
