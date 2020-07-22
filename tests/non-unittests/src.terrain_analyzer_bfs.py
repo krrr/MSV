@@ -2,7 +2,6 @@ import sys
 from terrain_analyzer import PathAnalyzer
 import terrain_analyzer
 
-sys.path.append("../../src")
 pathextractor = PathAnalyzer()
 
 pathextractor.load("../unittest_data/mirror_touched_sea2.platform")
@@ -22,9 +21,8 @@ solution = pathextractor.pathfind('6029314b', '0f9c84c4')
 assert solution and len(solution) == 2 and solution[0].method == terrain_analyzer.METHOD_TELEPORTUP and solution[1].method == terrain_analyzer.METHOD_TELEPORTUP
 
 solution = pathextractor.pathfind('a12ed5e3', '0f9c84c4')
-assert solution and len(solution) ==1 and solution[0].method == terrain_analyzer.METHOD_JUMPL
-
-solution = pathextractor.pathfind('31c36acc', '0f9c84c4')
 print(solution)
-# for solution in pathextractor.pathfind(start_hash, goal_hash):
-#     print(solution.method, solution.to_hash)
+assert solution and len(solution) == 1 and solution[0].method == terrain_analyzer.METHOD_JUMPL
+
+solution = pathextractor.pathfind('304c485d', '0f9c84c4')
+assert solution and len(solution) == 2 and solution[0].method == terrain_analyzer.METHOD_TELEPORTR and solution[1].method == terrain_analyzer.METHOD_TELEPORTUP

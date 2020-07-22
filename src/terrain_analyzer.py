@@ -191,20 +191,17 @@ class PathAnalyzer:
         start_platform = self.platforms[start_hash]
         calculated_paths = []
         bfs_queue = []
-        visited_platform_hashes = set()
         for solution in start_platform.solutions:
-            if solution.to_hash not in visited_platform_hashes:
-                bfs_queue.append([solution, [solution]])
+            bfs_queue.append([solution, [solution]])
 
         while bfs_queue:
             current_solution, paths = bfs_queue.pop()
-            visited_platform_hashes.add(current_solution.from_hash)
             if current_solution.to_hash == goal_hash:
                 calculated_paths.append(paths)
 
             next_solution = self.platforms[current_solution.to_hash].solutions
             for solution in next_solution:
-                if solution.to_hash not in visited_platform_hashes:
+                if not any(solution.to_hash == i.from_hash for i in paths):
                     cv = paths.copy()
                     cv.append(solution)
                     bfs_queue.append([solution, cv])
