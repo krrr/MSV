@@ -25,12 +25,12 @@ class MacroController:
         self.log_queue = log_queue
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG)
-        self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
-
-        fh = logging.FileHandler("logging.log")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        self.logger.addHandler(fh)
+        if not self.logger.hasHandlers():
+            self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
+            fh = logging.FileHandler("logging.log")
+            fh.setLevel(logging.DEBUG)
+            fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            self.logger.addHandler(fh)
         self.logger.info("%s init" % self.__class__.__name__)
 
         self.screen_capturer = sp.MapleScreenCapturer()
@@ -323,11 +323,7 @@ class MacroController:
                 # We are right of solution bounds
                 self.player_manager.shikigami_haunting_sweep_move(lookahead_lb, no_attack_distance=self.player_manager.shikigami_haunting_range)
 
-        time.sleep(0.1)
-
-        # All movement and attacks finished. Now perform movement
-        self._player_move(next_platform_solution)
-        #End inter-platform movement
+        # time.sleep(0.1)
 
         ### Other buffs
         self.player_manager.holy_symbol()
@@ -335,6 +331,10 @@ class MacroController:
         self.player_manager.haku_reborn()
         time.sleep(0.05)
         ### End other buffs
+
+        # All movement and attacks finished. Now perform movement
+        self._player_move(next_platform_solution)
+        #End inter-platform movement
 
         ### Start set skills
         self.set_skills()
