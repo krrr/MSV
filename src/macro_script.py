@@ -114,14 +114,17 @@ class MacroController:
     def navigate_to_platform(self, platform_hash):
         """
         """
-        if self.current_platform_hash == platform_hash:
-            return
 
         for _ in range(3):
+            if self.current_platform_hash == platform_hash:
+                return True
+            elif self.current_platform_hash is None:
+                return False
+
             solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
             if not solutions:
                 self.logger.error("could not generate path to platform %s from platform %s" % (platform_hash, self.current_platform_hash))
-                return
+                return False
 
             self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(x.method for x in solutions)))
             for solution in solutions:
@@ -142,11 +145,10 @@ class MacroController:
                 if self.current_platform_hash != solution.to_hash:  # should retry
                     if self.current_platform_hash is None:  # in case stuck in ladder
                         self.player_manager.jumpr()
+                        self.unstick()
                     break
 
-            if platform_hash == self.current_platform_hash:
-                time.sleep(0.2)
-                return
+        return False
 
     def log_skill_usage_statistics(self):
         """
@@ -248,7 +250,6 @@ class MacroController:
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
                 self.navigate_to_platform(rune_platform_hash)
-                time.sleep(0.2)
                 self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
                 self.player_manager.horizontal_move_goal(rune_coords[0])
                 time.sleep(0.1)
@@ -423,7 +424,7 @@ class MacroController:
         """
         Run when script can't find which platform we are at.
         Solution: try random stuff to attempt it to reposition it self
-        :return: None
+        :return:
         """
         self.unstick_attempts += 1
         # jump right to try to get off ladder
@@ -432,7 +433,8 @@ class MacroController:
             time.sleep(0.8)
             self.player_manager.update()
             if self.find_current_platform():
-                return
+                return True
+        return False
 
     def abort(self):
         self.keyhandler.reset()

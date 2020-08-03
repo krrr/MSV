@@ -52,11 +52,10 @@ class PlayerController:
 
         self.last_yaksha_boss_time = 0
         self.yaksha_boss_cooldown = 30
-        self.yaksha_boss_delay = 1.6
 
         self.last_kishin_shoukan_time = 0
         self.kishin_shoukan_cooldown = 60
-        self.kishin_shoukan_delay = 1.6
+        self.set_skill_common_delay = 1.4
 
         self.rune_fail_cooldown = 5
         self.last_rune_solve_time = 0
@@ -313,42 +312,34 @@ class PlayerController:
             time.sleep(self.shikigami_haunting_delay)
 
     def kishin_shoukan(self):
-        for _ in range(2):
-            self.key_mgr.single_press(self.keymap["kishin_shoukan"], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
-        self.last_kishin_shoukan_time = time.time()
-        self.skill_cast_counter += 1
-        time.sleep(self.kishin_shoukan_delay)
+        self._use_set_skill('kishin_shoukan')
 
     def yaksha_boss(self):
+        self._use_set_skill('yaksha_boss')
+
+    def _use_set_skill(self, skill_name):
         for _ in range(2):
-            self.key_mgr.single_press(self.keymap["yaksha_boss"], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
-        self.last_yaksha_boss_time = time.time()
+            self.key_mgr.single_press(self.keymap[skill_name], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
+        setattr(self, 'last_'+skill_name+'_time', time.time())
         self.skill_cast_counter += 1
-        time.sleep(self.yaksha_boss_delay)
+        time.sleep(self.set_skill_common_delay)
+
+    def _use_buff_skill(self, skill_name, skill_cd):
+        if time.time() - getattr(self, 'last_'+skill_name+'_time') > skill_cd + random.randint(0, 14):
+            for _ in range(2):
+                self.key_mgr.single_press(self.keymap[skill_name], additional_duration=abs(self.random_duration()))
+            self.skill_cast_counter += 1
+            setattr(self, 'last_'+skill_name+'_time', time.time())
+            time.sleep(self.buff_common_delay)
 
     def holy_symbol(self):
-        if time.time() - self.last_holy_symbol_time > self.v_buff_cd + random.randint(0, 14):
-            for _ in range(2):
-                self.key_mgr.single_press(self.keymap["holy_symbol"], additional_duration=abs(self.random_duration()))
-            self.skill_cast_counter += 1
-            self.last_holy_symbol_time = time.time()
-            time.sleep(self.buff_common_delay)
+        self._use_buff_skill('holy_symbol', self.v_buff_cd)
 
     def speed_infusion(self):
-        if time.time() - self.last_speed_infusion_time > self.v_buff_cd + random.randint(0, 14):
-            for _ in range(2):
-                self.key_mgr.single_press(self.keymap["speed_infusion"], additional_duration=abs(self.random_duration()))
-            self.skill_cast_counter += 1
-            self.last_speed_infusion_time = time.time()
-            time.sleep(self.buff_common_delay)
+        self._use_buff_skill('speed_infusion', self.v_buff_cd)
 
     def haku_reborn(self):
-        if time.time() - self.last_haku_reborn_time > 500 + random.randint(0, 14):
-            for _ in range(2):
-                self.key_mgr.single_press(self.keymap["haku_reborn"], additional_duration=abs(self.random_duration()))
-            self.skill_cast_counter += 1
-            self.last_haku_reborn_time = time.time()
-            time.sleep(self.buff_common_delay)
+        self._use_buff_skill('haku_reborn', 500)
 
     def is_on_platform(self, platform, offset=0):
         return self.y == platform.start_y and (platform.start_x - offset) <= self.x <= (platform.end_x + offset)
