@@ -115,7 +115,7 @@ class MacroController:
         """
         """
 
-        for _ in range(3):
+        for i in range(3):
             if self.current_platform_hash == platform_hash:
                 return True
             elif self.current_platform_hash is None:
@@ -147,6 +147,9 @@ class MacroController:
                         self.player_manager.jumpr()
                         self.unstick()
                     break
+
+            if i != 0:
+                time.sleep(0.5)  # wait before try again
 
         return False
 
@@ -249,22 +252,24 @@ class MacroController:
             self.logger.info("need to solve rune at platform {0}".format(rune_platform_hash))
             rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
             if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
-                self.navigate_to_platform(rune_platform_hash)
-                self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
-                self.player_manager.horizontal_move_goal(rune_coords[0])
-                time.sleep(0.1)
-                self.keyhandler.single_press(dc.DIK_PERIOD)
-                time.sleep(1.5)
-                self.save_current_screen('rune')  # save image to disk for future use
-                solve_result = self.rune_solver.solve_auto()
-                self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
-                if solve_result == -1:
-                    self.logger.error("rune_solver.solve_auto failed to solve")
-                    self.keyhandler.single_press(self.player_manager.keymap["interact"])
+                if self.navigate_to_platform(rune_platform_hash):
+                    self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
+                    self.player_manager.horizontal_move_goal(rune_coords[0])
+                    time.sleep(0.1)
+                    self.keyhandler.single_press(dc.DIK_PERIOD)
+                    time.sleep(1.5)
+                    self.save_current_screen('rune')  # save image to disk for future use
+                    solve_result = self.rune_solver.solve_auto()
+                    self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
+                    if solve_result == -1:
+                        self.logger.error("rune_solver.solve_auto failed to solve")
+                        self.keyhandler.single_press(self.player_manager.keymap["interact"])
 
-                self.player_manager.last_rune_solve_time = time.time()
-                self.current_platform_hash = rune_platform_hash
-                time.sleep(0.5)
+                    self.player_manager.last_rune_solve_time = time.time()
+                    self.current_platform_hash = rune_platform_hash
+                    time.sleep(0.5)
+                else:
+                    self.logger.warning('failed to navigate to rune platform')
         ### End Rune Detector
 
         # We are on a platform. find an optimal way to clear platform.

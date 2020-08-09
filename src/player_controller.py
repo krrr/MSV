@@ -268,9 +268,9 @@ class PlayerController:
         self.key_mgr.direct_press(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_press(self.keymap["teleport"])
-        time.sleep(0.04)
+        time.sleep(0.03 + abs(self.random_duration(0.05)))
         self.key_mgr.direct_release(dir_key)
-        time.sleep(abs(self.random_duration(0.1)))
+        time.sleep(0.03)
         self.key_mgr.direct_release(self.keymap["teleport"])
 
     def jumpl(self):
