@@ -3,6 +3,7 @@
 # If keyboard input does not work, run as admin
 # http://www.flint.jp/misc/?q=dik&lang=en DirectInput Key Codes
 
+DIK_ESCAPE = 0x01
 
 DIK_1 = 0x02
 DIK_2 = 0x03
@@ -67,7 +68,8 @@ DIK_END = 0xCF
 DIK_RETURN = 0x1C
 
 keysym_map = {  # tkinter event keysym to dik key code coversion table
-    "ALT_L":DIK_ALT,
+    "escape": DIK_ESCAPE,
+    "ALT_L": DIK_ALT,
     "CONTROL_L": DIK_LCTRL,
     "CONTROL_R": DIK_RCTRL,
     "space": DIK_SPACE,

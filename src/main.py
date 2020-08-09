@@ -80,7 +80,7 @@ class MainScreen(tk.Frame):
 
         self._menubar = tk.Menu()
         self._terrain_menu = tk.Menu(tearoff=False)
-        self._terrain_menu.add_command(label="Create terrain file", command=lambda: PlatformDataCaptureWindow())
+        self._terrain_menu.add_command(label="Create terrain file", command=lambda: PlatformDataCaptureWindow(self.master))
         self._terrain_menu.add_command(label="Edit current terrain file", command=lambda: self._on_edit_terrain())
         self._menubar.add_cascade(label="Terrain", menu=self._terrain_menu)
         self._menubar.add_command(label="Set Keys", command=lambda: SetKeyMap(self.master))
@@ -273,7 +273,7 @@ class MainScreen(tk.Frame):
         if not self.platform_file_path.get():
             showerror(APP_TITLE, 'No terrain file opened')
         else:
-            PlatformDataCaptureWindow(self.platform_file_path.get())
+            PlatformDataCaptureWindow(self.master, self.platform_file_path.get())
 
 
 if __name__ == "__main__":

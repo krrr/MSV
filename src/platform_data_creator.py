@@ -11,9 +11,11 @@ from tkinter.messagebox import askyesno
 
 
 class PlatformDataCaptureWindow(tk.Toplevel):
-    def __init__(self, open_file_path=None):
-        tk.Toplevel.__init__(self)
+    def __init__(self, master=None, open_file_path=None):
+        tk.Toplevel.__init__(self, master)
         self.wm_minsize(100, 30)
+        if master is not None:
+            self.geometry('+%d+%d' % (master.winfo_x(), master.winfo_y()))
         self.resizable(0, 0)
         self.focus_get()
         self.grab_set()
