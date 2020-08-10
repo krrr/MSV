@@ -178,7 +178,7 @@ class StaticImageProcessor:
                 else:
                     pass
 
-        return 0
+        return None
 
     def reset_minimap_area(self):
         """
@@ -225,13 +225,13 @@ class StaticImageProcessor:
                     totalpoints += 1
 
             if totalpoints == 0:
-                return 0
+                return None
 
             avg_y = int(avg_y / totalpoints)
             avg_x = int(avg_x / totalpoints)
             return avg_x, avg_y
 
-        return 0
+        return None
 
     def find_other_player_marker(self, rect=None):
         """
@@ -246,19 +246,26 @@ class StaticImageProcessor:
             rect = self.minimap_rect
         assert rect, "Invalid minimap coordinates"
         cropped = self.bgr_img[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
-        mask = cv2.inRange(cropped, (0, 0, 255), (0, 0, 255))
-        td = np.transpose(np.where(mask > 0)).tolist()
-        if len(td) > 0:
-            avg_x = 0
-            avg_y = 0
-            totalpoints = 0
-            for coord in td:
-                avg_y += coord[0]
-                avg_x += coord[1]
-                totalpoints += 1
-            avg_y = int(avg_y / totalpoints)
-            avg_x = int(avg_x / totalpoints)
-            return avg_x, avg_y
+
+        stranger = (np.array((0, 0, 255)), np.array((0, 0, 255)))
+        guild = (np.array((255, 102, 102)), np.array((255, 153, 153)))
+        friend = (np.array((238, 204, 0)), np.array((255, 221, 17)))
+
+        for i in (stranger, guild, friend):
+            mask = cv2.inRange(cropped, i[0], i[1])
+            td = np.transpose(np.where(mask > 0)).tolist()
+
+            if len(td) >= 5:
+                avg_x = 0
+                avg_y = 0
+                totalpoints = 0
+                for coord in td:
+                    avg_y += coord[0]
+                    avg_x += coord[1]
+                    totalpoints += 1
+                avg_y = int(avg_y / totalpoints)
+                avg_x = int(avg_x / totalpoints)
+                return avg_x, avg_y
 
         return None
 
