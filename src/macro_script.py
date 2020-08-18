@@ -270,8 +270,9 @@ class MacroController:
                     time.sleep(0.5)
                 else:
                     self.logger.warning('failed to navigate to rune platform')
-                    if not self.current_platform_hash:  # skip rest logic, go unstick fast
-                        return
+
+                if not self.current_platform_hash:  # skip rest logic, go unstick fast
+                    return
         ### End Rune Detector
 
         # We are on a platform. find an optimal way to clear platform.

@@ -138,7 +138,11 @@ class RuneDetector:
         if len(processed_imgs) != 4:
             return -1
         #cv2.imwrite("roi.png", img)
-        tensor = self.images2tensor(processed_imgs)
+        try:
+            tensor = self.images2tensor(processed_imgs)
+        except ValueError as e:
+            self.logger.error(e)
+            return -1
         result = self.classify(tensor)
         if GetKeyState(VK_NUMLOCK):
             self.key_mgr.single_press(DIK_NUMLOCK)
@@ -165,7 +169,11 @@ class RuneDetector:
         processed_imgs = self.preprocess(img)
         if len(processed_imgs) != 4:
             return -1
-        tensor = self.images2tensor(processed_imgs)
+        try:
+            tensor = self.images2tensor(processed_imgs)
+        except ValueError as e:
+            self.logger.error(e)
+            return -1
         result = self.classify(tensor)
 
         return result
