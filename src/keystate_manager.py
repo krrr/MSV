@@ -157,7 +157,7 @@ class KeyboardInputManager:
 DEFAULT_KEY_MAP = {
     "jump": [dic.DIK_RSHIFT, "Jump"],
     "teleport": [dic.DIK_SPACE, "Teleport"],
-    "shikigami_haunting": [dic.DIK_RCTRL, "Shikigami Haunting"],
+    "shikigami_haunting": [dic.DIK_RCONTROL, "Shikigami Haunting"],
     "kishin_shoukan": [dic.DIK_Q, "Kishin Shoukan"],
     "yaksha_boss": [dic.DIK_O, "Yaksha Boss"],
     "holy_symbol": [dic.DIK_HOME, "Holy Symbol"],

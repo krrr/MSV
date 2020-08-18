@@ -61,7 +61,7 @@ class SetKeyMap(tk.Toplevel):
     def on_press(self, event,  key_name):
         found = False
         for key, value in keysym_map.items():
-            if event.keysym == key or str(event.keysym).upper() == key:
+            if event.keysym == key or str(event.keysym).lower() == key:
                 self.keymap_data[key_name] = [value, self.keymap_data[key_name][1]]
                 self.labels[key_name].set(key)
                 found = True
