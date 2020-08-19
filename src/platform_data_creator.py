@@ -3,6 +3,7 @@ from screen_processor import StaticImageProcessor, MapleScreenCapturer
 from terrain_analyzer import PathAnalyzer
 import cv2, threading, os
 import tkinter as tk
+import time
 from tkinter.constants import *
 from PIL import Image, ImageTk
 from tkinter.messagebox import showinfo, showerror, showwarning
@@ -74,7 +75,7 @@ class PlatformDataCaptureWindow(tk.Toplevel):
 
         self.platform_listbox_menu = tk.Menu(self, tearoff=0)
         self.platform_listbox_menu.add_command(label="Delete selected item", command=self.on_listbox_delete)
-        self.platform_listbox_menu.add_command(label="Mark selected no monster", command=self._on_mark_no_monster)
+        self.platform_listbox_menu.add_command(label="Toggle selected no monster", command=self._on_toggle_no_monster)
 
         self.image_processor.update_image(set_focus=False)
         self.minimap_rect = self.image_processor.get_minimap_rect()
@@ -127,18 +128,27 @@ class PlatformDataCaptureWindow(tk.Toplevel):
                             del self.terrain_analyzer.platforms[hash]
                 self.update_listbox()
 
-    def _on_mark_no_monster(self):
+    def _on_toggle_no_monster(self):
         selected = self.platform_listbox.curselection()
         for idx in selected:
             hash = self.platform_listbox_platform_index[idx]
-            self.terrain_analyzer.platforms[hash].no_monster = True
+            platform = self.terrain_analyzer.platforms[hash]
+            platform.no_monster = not platform.no_monster
+
+        self.update_listbox()
 
     def update_listbox(self):
         self.platform_listbox_platform_index = {}
         self.platform_listbox.delete(0, END)
         cindex = 0
         for key, platform in self.terrain_analyzer.platforms.items():
-            self.platform_listbox.insert(END, "(%d,%d), (%d,%d) platform" % (platform.start_x, platform.start_y, platform.end_x, platform.end_y))
+            label = "(%d,%d), (%d,%d) platform" % (platform.start_x, platform.start_y, platform.end_x, platform.end_y)
+            other_attrs = []
+            if platform.no_monster:
+                other_attrs.append('N')
+            if other_attrs:
+                label += ' (' + ', '.join(other_attrs) + ')'
+            self.platform_listbox.insert(END, label)
             self.platform_listbox_platform_index[cindex] = key
             self.platform_listbox.itemconfigure(cindex, fg="green")
             cindex += 1
@@ -235,6 +245,7 @@ class PlatformDataCaptureWindow(tk.Toplevel):
             self.image_label.configure(image=img_tk)
 
             self.update()
+            time.sleep(0.04)
 
 
 if __name__ == "__main__":
