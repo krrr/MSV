@@ -4,6 +4,7 @@ import random
 TEST_VALID_PLATFORM__DIR = r"unittest_data/test_valid_data.platform"
 TEST_CORRUPT_PLATFORM_DIR = r"unittest_data/test_corrupt_data.platform"
 
+
 class TestPathAnalyzer(TestCase):
     def test_load(self):
         with self.subTest():

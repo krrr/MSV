@@ -98,7 +98,7 @@ class PathAnalyzer:
         # below constants are used for generating solution graphs
         self.teleport_vertical_range = 25
         self.teleport_horizontal_range = 18
-        self.teleport_horizontal_y_range = 4
+        self.teleport_horizontal_y_range = 8
         self.jump_range = 9  # horizontal jump distance is about 9~10
 
         # below constants are used for path related algorithms.
@@ -365,7 +365,7 @@ class PathAnalyzer:
                     # We can jump from the left end of the platform to goal
                     solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_JUMPL, False)
                     platform.solutions.append(solution)
-                elif front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis < self.teleport_horizontal_y_range:
+                elif front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis <= self.teleport_horizontal_y_range:
                     solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_TELEPORTL, False)
                     platform.solutions.append(solution)
             else:  # other platform is on the right side
@@ -376,7 +376,7 @@ class PathAnalyzer:
                     # We can jump form the right end of the platform to goal platform
                     solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_JUMPR, False)
                     platform.solutions.append(solution)
-                elif back_point_distance <= self.teleport_horizontal_range and back_point_y_dis < self.teleport_horizontal_y_range:
+                elif back_point_distance <= self.teleport_horizontal_range and back_point_y_dis <= self.teleport_horizontal_y_range:
                     solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_TELEPORTR, False)
                     platform.solutions.append(solution)
 
