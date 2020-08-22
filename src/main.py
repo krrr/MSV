@@ -2,6 +2,21 @@
 import logging
 import ctypes
 from util import get_config, save_config
+from macro_script import MacroController
+import mapscripts
+from keybind_setup_window import SetKeyMap
+import multiprocessing, tkinter as tk, time, os, signal, pickle, sys, argparse
+
+from tkinter.constants import *
+from tkinter.messagebox import showerror, showwarning
+from tkinter.filedialog import askopenfilename
+from tkinter.scrolledtext import ScrolledText
+
+from platform_data_creator import PlatformDataCaptureWindow
+from screen_processor import MapleScreenCapturer
+# from macro_script_astar import MacroControllerAStar as MacroController
+
+
 default_logger = logging.getLogger("main")
 default_logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -10,23 +25,7 @@ fh = logging.FileHandler("logging.log")
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 default_logger.addHandler(fh)
-try:
-    import multiprocessing, tkinter as tk, time, webbrowser, os, signal, pickle, sys, argparse
 
-    from tkinter.constants import *
-    from tkinter.messagebox import showinfo, showerror, showwarning
-    from tkinter.filedialog import askopenfilename, asksaveasfilename
-    from tkinter.scrolledtext import ScrolledText
-
-    from platform_data_creator import PlatformDataCaptureWindow
-    from screen_processor import MapleScreenCapturer
-    from keystate_manager import DEFAULT_KEY_MAP
-    from directinput_constants import keysym_map
-    from macro_script import MacroController
-    #from macro_script_astar import MacroControllerAStar as MacroController
-    from keybind_setup_window import SetKeyMap
-except:
-    default_logger.exception("error during import")
 
 APP_TITLE = "MSV Kanna Ver"
 VERSION = 0.1
@@ -48,24 +47,30 @@ def macro_loop(input_queue, output_queue):
 
     try:
         while True:
-            time.sleep(0.5)
-            if not input_queue.empty():
-                command = input_queue.get()
-                logger.debug("received command {}".format(command))
-                if command[0] == "start":
-                    logger.debug("starting MacroController...")
-                    keymap = command[1]
-                    platform_file_dir = command[2]
-                    macro = MacroController(keymap, log_queue=output_queue)
-                    macro.load_and_process_platform_map(platform_file_dir)
+            if input_queue.empty():
+                time.sleep(0.5)
+                continue
 
-                    while True:
-                        macro.loop()
-                        if not input_queue.empty():
-                            command = input_queue.get()
-                            if command[0] == "stop":
-                                macro.abort()
-                                break
+            command = input_queue.get()
+            logger.debug("received command {}".format(command))
+            if command[0] == "start":
+                logger.debug("starting MacroController...")
+                keymap = command[1]
+                platform_file_dir = command[2]
+                if platform_file_dir.find('mapscripts/') != -1:
+                    name = os.path.splitext(os.path.basename(platform_file_dir))[0]
+                    macro = mapscripts.map_scripts[name](keymap, output_queue)
+                else:
+                    macro = MacroController(keymap, log_queue=output_queue)
+                macro.load_and_process_platform_map(platform_file_dir)
+
+                while True:
+                    macro.loop()
+                    if not input_queue.empty():
+                        command = input_queue.get()
+                        if command[0] == "stop":
+                            macro.abort()
+                            break
     except Exception:
         logger.exception("Exception during loop execution:")
         output_queue.put(["exception", "exception"])
@@ -79,11 +84,16 @@ class MainScreen(tk.Frame):
         self.pack(expand=YES, fill=BOTH)
 
         self._menubar = tk.Menu()
-        self._terrain_menu = tk.Menu(tearoff=False)
-        self._terrain_menu.add_command(label="Create terrain file", command=lambda: PlatformDataCaptureWindow(self.master))
-        self._terrain_menu.add_command(label="Edit current terrain file", command=lambda: self._on_edit_terrain())
-        self._menubar.add_cascade(label="Terrain", menu=self._terrain_menu)
-        self._menubar.add_command(label="Set Keys", command=lambda: SetKeyMap(self.master))
+        terrain_menu = tk.Menu(tearoff=False)
+        terrain_menu.add_command(label="Create terrain file", command=lambda: PlatformDataCaptureWindow(self.master))
+        terrain_menu.add_command(label="Edit current terrain file", command=lambda: self._on_edit_terrain())
+        self._menubar.add_cascade(label="Terrain", menu=terrain_menu)
+        options_menu = tk.Menu(tearoff=False)
+        options_menu.add_command(label="Set Keys", command=lambda: SetKeyMap(self.master))
+        self._menubar.add_cascade(label="Options", menu=options_menu)
+        help_menu = tk.Menu(tearoff=False)
+        self._menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label='About', command=self._popup_about)
 
         self.master.config(menu=self._menubar)
 
@@ -100,7 +110,7 @@ class MainScreen(tk.Frame):
         self.macro_pid_infotext = tk.StringVar()
         self.macro_pid_infotext.set("Not executed")
 
-        self.log_text_area = ScrolledText(self, height = 10, width = 20)
+        self.log_text_area = ScrolledText(self, height=10, width=20)
         self.log_text_area.pack(side=BOTTOM, expand=YES, fill=BOTH)
         self.log_text_area.bind("<Key>", lambda e: "break")
         self.macro_info_frame = tk.Frame(self, borderwidth=1, relief=GROOVE)
@@ -115,8 +125,10 @@ class MainScreen(tk.Frame):
 
         tk.Label(self.macro_info_frame, text="Terrain file:").grid(row=1, column=0, sticky=N+S+E+W)
         tk.Label(self.macro_info_frame, textvariable=self.platform_file_name).grid(row=1, column=1, sticky=N+S+E+W)
-        self.platform_file_button = tk.Button(self.macro_info_frame, text="Select...", command=self.on_platform_file_select)
+        self.platform_file_button = tk.Button(self.macro_info_frame, text="Open...", command=self.on_platform_file_select)
         self.platform_file_button.grid(row=1, column=2, sticky=N+S+E+W)
+        self.internal_platform_button = tk.Button(self.macro_info_frame, text="Presets", command=self.on_internal_platform_select)
+        self.internal_platform_button.grid(row=1, column=3, sticky=N+S+E+W)
 
         self.macro_start_button = tk.Button(self.macro_info_frame, text="Start botting", fg="green", command=self.start_macro)
         self.macro_start_button.grid(row=2, column=0, sticky=N+S+E+W)
@@ -126,8 +138,6 @@ class MainScreen(tk.Frame):
         for x in range(5):
             self.macro_info_frame.grid_columnconfigure(x, weight=1)
         self.log("MS-Visionify Kanna Ver v" + str(VERSION))
-        # self.log("source code: https://github.com/Dashadower/MS-Visionify")
-        # self.log("Please be known that using this bot may get your account banned. By using this software, you acknowledge that the developers are not liable for any damages caused to you or your account.")
         self.log('\n')
 
         last_opened_platform_file = get_config().get('platform_file')
@@ -256,6 +266,18 @@ class MainScreen(tk.Frame):
             self.set_platform_file(platform_file_path)
             get_config()['platform_file'] = platform_file_path
 
+    def on_internal_platform_select(self):
+        menu = tk.Menu(self.master, tearoff=0)
+        for i in mapscripts.map_scripts:
+            menu.add_command(label=i, command=lambda: self._on_preset_platform_set(i))
+
+        menu.post(self.internal_platform_button.winfo_rootx(), self.internal_platform_button.winfo_rooty() + self.internal_platform_button.winfo_height())
+
+    def _on_preset_platform_set(self, name):
+        path = 'mapscripts/' + name + '.platform'
+        self.set_platform_file(path)
+        get_config()['platform_file'] = path
+
     def set_platform_file(self, path):
         with open(path, "rb") as f:
             try:
@@ -274,6 +296,15 @@ class MainScreen(tk.Frame):
             showerror(APP_TITLE, 'No terrain file opened')
         else:
             PlatformDataCaptureWindow(self.master, self.platform_file_path.get())
+
+    def _popup_about(self):
+        tk.messagebox.showinfo('About', '''\
+Version: v%s
+Source code: https://github.com/krrr/MSV-Kanna-Ver
+
+Please be known that using this bot may get your account banned. By using this software,
+you acknowledge that the developers are not liable for any damages caused to you or your account.
+''' % (VERSION,))
 
 
 if __name__ == "__main__":
