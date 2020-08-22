@@ -67,13 +67,13 @@ class Solution:
 
 
 class AstarNode:
-    def __init__(self, x=None, y=None, g=None, h=None, path=[]):
+    def __init__(self, x=None, y=None, g=None, h=None, path=None):
         self.x = x
         self.y = y
         self.g = g
         self.h = h
         self.f = 0
-        self.path = path
+        self.path = [] if path is None else path
         if self.g:
             self.f = self.g + self.h
 
