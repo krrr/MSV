@@ -56,10 +56,10 @@ class PlatformDataCaptureWindow(tk.Toplevel):
 
         self.tool_frame_4 = tk.Frame(self.master_tool_frame)
         self.tool_frame_4.pack(fill=X)
-        self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Set yaksha boss coord",
+        self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Toggle yaksha boss coord",
                                                  command=lambda: self._set_place_skill_coord('yaksha_boss'))
         self.set_yaksha_coord_button.pack(side=LEFT, expand=YES, fill=X)
-        self.set_kishin_coord_button = tk.Button(self.tool_frame_4, text="Set kishin shoukan coord",
+        self.set_kishin_coord_button = tk.Button(self.tool_frame_4, text="Toggle kishin shoukan coord",
                                                  command=lambda: self._set_place_skill_coord('kishin_shoukan'))
         self.set_kishin_coord_button.pack(side=RIGHT, expand=YES, fill=X)
 
@@ -95,7 +95,11 @@ class PlatformDataCaptureWindow(tk.Toplevel):
             self.load_platform_file(open_file_path)
 
     def _set_place_skill_coord(self, skill_name):
-        self.other_attrs[skill_name + '_coord'] = (self.last_coord_x, self.last_coord_y)
+        old = self.other_attrs.get(skill_name + '_coord')
+        if old == (self.last_coord_x, self.last_coord_y):
+            del self.other_attrs[skill_name + '_coord']
+        else:
+            self.other_attrs[skill_name + '_coord'] = (self.last_coord_x, self.last_coord_y)
 
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
@@ -238,6 +242,13 @@ class PlatformDataCaptureWindow(tk.Toplevel):
             else:
                 for key, platform in self.terrain_analyzer.platforms.items():
                     cv2.line(cropped_img, (platform.start_x, platform.start_y), (platform.end_x, platform.end_y), (0,255,0), 2)
+
+            for k in ['kishin_shoukan_coord', 'yaksha_boss_coord']:
+                coord = self.other_attrs.get(k)
+                if coord:
+                    color = (107, 50, 135) if k == 'kishin_shoukan_coord' else (196, 0, 0)
+                    cv2.circle(cropped_img, (coord[0], coord[1]), 4, (255, 255, 255), -1)  # white border
+                    cv2.circle(cropped_img, (coord[0], coord[1]), 3, color, -1)
 
             img = Image.fromarray(cropped_img)
             img_tk = ImageTk.PhotoImage(image=img)
