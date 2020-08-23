@@ -1,10 +1,6 @@
 # -*- coding:utf-8 -*-
 import logging
 import ctypes
-from util import get_config, save_config
-from macro_script import MacroController
-import mapscripts
-from keybind_setup_window import SetKeyMap
 import multiprocessing, tkinter as tk, time, os, signal, pickle, sys, argparse
 
 from tkinter.constants import *
@@ -12,6 +8,10 @@ from tkinter.messagebox import showerror, showwarning
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
+from macro_script import MacroController
+import mapscripts
+from util import get_config, save_config
+from keybind_setup_window import SetKeyMap
 from platform_data_creator import PlatformDataCaptureWindow
 from screen_processor import MapleScreenCapturer
 # from macro_script_astar import MacroControllerAStar as MacroController
