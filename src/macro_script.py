@@ -411,7 +411,8 @@ class MacroController:
             if platform:
                 self.logger.info('placing kishin shoukan')
                 self.screen_processor.update_image(set_focus=False)
-                self.navigate_to_platform(platform)
+                if not self.navigate_to_platform(platform):
+                    return is_set
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
                 time.sleep(0.1)
@@ -430,7 +431,9 @@ class MacroController:
             if platform:
                 self.logger.info('placing yaksha boss')
                 self.screen_processor.update_image(set_focus=False)
-                self.navigate_to_platform(platform)
+                if not self.navigate_to_platform(platform):
+                    return is_set
+
                 self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.yaksha_boss_coord[0])
                 self.keyhandler.single_press(dc.DIK_RIGHT)

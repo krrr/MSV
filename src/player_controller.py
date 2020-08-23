@@ -42,7 +42,7 @@ class PlayerController:
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
-        self.shikigami_haunting_delay = 0.5  # delay after using shikigami haunting where character is not movable
+        self.shikigami_haunting_delay = 0.37  # delay after using shikigami haunting where character is not movable
 
         self.horizontal_movement_threshold = 18-2  # teleport instead of walk if distance greater than threshold
 

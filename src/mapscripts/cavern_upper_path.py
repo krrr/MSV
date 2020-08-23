@@ -1,12 +1,13 @@
 import time
 from macro_script import MacroController
+import directinput_constants as dc
 
 
 # cavern upper path script
 class CupMacroController(MacroController):
     def __init__(self, keymap, logger_queue):
         super().__init__(keymap=keymap, log_queue=logger_queue)
-        self.last_pickup_money_time = time.time() + 80
+        self.last_pickup_money_time = time.time() + 30
         self.money_picked = False
 
     def loop(self):
@@ -17,7 +18,7 @@ class CupMacroController(MacroController):
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
             return
 
-        if self.current_platform_hash in ('543f340d', '4b5aa172'):
+        if self.current_platform_hash in ('543f340d', '4b5aa172'):  # at center bottom or left bottom
             # will goto center bottom
             if self.set_skills():
                 return
@@ -55,12 +56,14 @@ class CupMacroController(MacroController):
         elif self.current_platform_hash == '4768c4f7':  # left left top
             self.player_manager.horizontal_move_goal(31)
             self.player_manager.teleport_down()
-            time.sleep(0.4 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
         elif self.current_platform_hash == 'c99d319c':  # left left middle
+            self.keyhandler.single_press(dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
+            self.player_manager.horizontal_move_goal(21)
             time.sleep(0.4 + abs(self.player_manager.random_duration(0.1)))
             self.player_manager.teleport_down()
-            time.sleep(0.3 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
             self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '4b5aa172':  # left bottom
             self.player_manager.shikigami_haunting_sweep_move(79)
@@ -84,7 +87,7 @@ class CupMacroController(MacroController):
         self.logger.info('pick up money')
         self.navigate_to_platform('f8358df9')  # right bottom
 
-        self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['f8358df9'].end_x - 9)
+        self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['f8358df9'].end_x - 13)
         time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['bb5c96fa'].end_x - 5)  # right top
         self.player_manager.teleport_up()
