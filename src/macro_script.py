@@ -128,14 +128,16 @@ class MacroController:
 
             self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(x.method for x in solutions)))
             for solution in solutions:
-                if self.player_manager.x < solution.lower_bound[0]:
-                    # We are left of solution bounds.
-                    self.player_manager.shikigami_haunting_sweep_move(solution.lower_bound[0])
-                    self.player_manager.horizontal_move_goal(solution.lower_bound[0])
-                else:
-                    # We are right of solution bounds
-                    self.player_manager.shikigami_haunting_sweep_move(solution.upper_bound[0])
-                    self.player_manager.horizontal_move_goal(solution.upper_bound[0])
+                curr_platform = self.terrain_analyzer.platforms[self.current_platform_hash]
+
+                if self.player_manager.x < solution.lower_bound[0]:  # We are left of solution bounds.
+                    x = curr_platform.end_x - random.randint(2, 3)
+                    self.player_manager.shikigami_haunting_sweep_move(x)
+                    self.player_manager.horizontal_move_goal(x)
+                else:  # We are right of solution bounds
+                    x = curr_platform.start_x + random.randint(2, 3)
+                    self.player_manager.shikigami_haunting_sweep_move(x)
+                    self.player_manager.horizontal_move_goal(x)
 
                 self._player_move(solution)
 
@@ -165,19 +167,8 @@ class MacroController:
             self.player_manager.skill_cast_counter = 0
             self.player_manager.skill_counter_time = time.time()
 
-    def loop(self):
-        """
-        Main event loop for Macro
-        Important note: Since this function uses PathAnalyzer's pathing algorithm, when this function moves to a new
-        platform, it will invoke PathAnalyzer.move_platform. HOWEVER, in an attempt to make the system error-proof,
-        platform movement and solution flagging is done on the loop call succeeding the loop call where the actual
-        movement is made. self.goal_platform is used for such purpose.
-        :return: loop exit code
-        exit code information:
-            0: all good
-            -1: problem in image processing
-            -2: problem in navigation/pathing
-        """
+    def _loop_common_job(self):
+        """Must be done job"""
         # Check if MapleStory window is alive
         random.seed((time.time() * 10**4) % 10 **3)
 
@@ -222,6 +213,23 @@ class MacroController:
             self.platform_fail_loops = 0
             self.unstick_attempts = 0
 
+    def loop(self):
+        """
+        Main event loop for Macro
+        Important note: Since this function uses PathAnalyzer's pathing algorithm, when this function moves to a new
+        platform, it will invoke PathAnalyzer.move_platform. HOWEVER, in an attempt to make the system error-proof,
+        platform movement and solution flagging is done on the loop call succeeding the loop call where the actual
+        movement is made. self.goal_platform is used for such purpose.
+        :return: loop exit code
+        exit code information:
+            0: all good
+            -1: problem in image processing
+            -2: problem in navigation/pathing
+        """
+        ret = self._loop_common_job()
+        if ret != 0:
+            return ret
+
         # Update navigation dictionary with last_platform and current_platform
         if self.goal_platform_hash and self.current_platform_hash == self.goal_platform_hash:
             self.terrain_analyzer.move_platform(self.last_platform_hash, self.current_platform_hash)
@@ -246,33 +254,9 @@ class MacroController:
             self.logger.info("navigation map reset and randomized at loop #%d" % self.loop_count)
 
         ### Rune Detector
-        rune_coords = self.screen_processor.find_rune_marker()
-        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
-        if rune_platform_hash:
-            self.logger.info("need to solve rune at platform {0}".format(rune_platform_hash))
-            rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
-            if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
-                if self.navigate_to_platform(rune_platform_hash):
-                    self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
-                    self.player_manager.horizontal_move_goal(rune_coords[0])
-                    time.sleep(0.1)
-                    self.keyhandler.single_press(dc.DIK_PERIOD)
-                    time.sleep(1.5)
-                    self.save_current_screen('rune')  # save image to disk for future use
-                    solve_result = self.rune_solver.solve_auto()
-                    self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
-                    if solve_result == -1:
-                        self.logger.error("rune_solver.solve_auto failed to solve")
-                        self.keyhandler.single_press(self.player_manager.keymap["interact"])
-
-                    self.player_manager.last_rune_solve_time = time.time()
-                    self.current_platform_hash = rune_platform_hash
-                    time.sleep(0.5)
-                else:
-                    self.logger.warning('failed to navigate to rune platform')
-
-                if not self.current_platform_hash:  # skip rest logic, go unstick fast
-                    return
+        self._rune_detect_solve()
+        if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
+            return
         ### End Rune Detector
 
         # We are on a platform. find an optimal way to clear platform.
@@ -297,8 +281,8 @@ class MacroController:
             lookahead_lb = next_platform_solution.lower_bound[0]
             lookahead_ub = next_platform_solution.upper_bound[0]
 
-        lookahead_lb += random.randint(0, 2)
-        lookahead_ub -= random.randint(0, 2)
+        lookahead_lb += random.randint(2, 3)
+        lookahead_ub -= random.randint(2, 3)
 
         ### end lookahead pathing
 
@@ -361,6 +345,32 @@ class MacroController:
         self.loop_count += 1
         return 0
 
+    def _rune_detect_solve(self):
+        rune_coords = self.screen_processor.find_rune_marker()
+        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
+        if rune_platform_hash:
+            self.logger.info("need to solve rune at platform {0}".format(rune_platform_hash))
+            rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
+            if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
+                if self.navigate_to_platform(rune_platform_hash):
+                    self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
+                    self.player_manager.horizontal_move_goal(rune_coords[0])
+                    time.sleep(0.1)
+                    self.keyhandler.single_press(dc.DIK_PERIOD)
+                    time.sleep(1.5)
+                    self.save_current_screen('rune')  # save image to disk for future use
+                    solve_result = self.rune_solver.solve_auto()
+                    self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
+                    if solve_result == -1:
+                        self.logger.error("rune_solver.solve_auto failed to solve")
+                        self.keyhandler.single_press(self.player_manager.keymap["interact"])
+
+                    self.player_manager.last_rune_solve_time = time.time()
+                    self.current_platform_hash = rune_platform_hash
+                    time.sleep(0.5)
+                else:
+                    self.logger.warning('failed to navigate to rune platform')
+
     def _player_move(self, solution):
         move_method = solution.method
         if move_method == ta.METHOD_DROP:
@@ -389,10 +399,11 @@ class MacroController:
             time.sleep(0.5)
 
     def set_skills(self):
+        is_set = False
         self.player_manager.update()
         self.current_platform_hash = self.find_current_platform()
         if self.current_platform_hash is None:
-            return
+            return is_set
 
         if (self.terrain_analyzer.kishin_shoukan_coord and
                 time.time() - self.player_manager.last_kishin_shoukan_time > self.player_manager.kishin_shoukan_cooldown):
@@ -409,8 +420,9 @@ class MacroController:
 
                 self.player_manager.update()
                 self.current_platform_hash = self.find_current_platform()
+                is_set = True
                 if self.current_platform_hash is None:
-                    return
+                    return is_set
 
         if (self.terrain_analyzer.yaksha_boss_coord and
                 time.time() - self.player_manager.last_yaksha_boss_time > self.player_manager.yaksha_boss_cooldown):
@@ -425,8 +437,10 @@ class MacroController:
                 time.sleep(0.1)
                 self.player_manager.yaksha_boss()
                 self.player_manager.last_yaksha_boss_time = time.time()
+                is_set = True
 
         self.loop_count += 1
+        return is_set
 
     def unstick(self):
         """

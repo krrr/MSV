@@ -12,7 +12,7 @@ class TestScreenProcessor(TestCase):
     def test_cup(self):
         self._load("../src/mapscripts/cavern_upper_path.platform")
 
-        solution = self.pathextractor.pathfind('bc23bcf5', 'eb7baf4e')
+        solution = self.pathextractor.pathfind('9769210f', '4768c4f7')
         # teleport between platforms with high y position diff
         self.assertTrue(solution and len(solution) == 1 and solution[0].method == terrain_analyzer.METHOD_TELEPORTL)
 

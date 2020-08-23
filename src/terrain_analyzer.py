@@ -99,7 +99,7 @@ class PathAnalyzer:
         self.teleport_vertical_range = 25
         self.teleport_horizontal_range = 18
         self.teleport_horizontal_y_range = 8
-        self.jump_range = 9  # horizontal jump distance is about 9~10
+        self.jump_range = 8  # horizontal jump distance is about 9~10
 
         # below constants are used for path related algorithms.
         self.subplatform_length = 2  # length of subdivided platform
@@ -361,23 +361,23 @@ class PathAnalyzer:
                 front_point_y_dis = abs(platform.start_y - other_platform.end_y)
                 # Calculate euclidean distance between each platform endpoints
                 front_point_distance = math.sqrt(front_point_x_dis**2 + front_point_y_dis**2)
-                if front_point_distance <= self.jump_range or (platform.start_y <= other_platform.end_y and front_point_x_dis < self.jump_range):
+                if front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis <= self.teleport_horizontal_y_range:
+                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_TELEPORTL, False)
+                    platform.solutions.append(solution)
+                elif front_point_distance <= self.jump_range or (platform.start_y <= other_platform.end_y and front_point_x_dis < self.jump_range):
                     # We can jump from the left end of the platform to goal
                     solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_JUMPL, False)
-                    platform.solutions.append(solution)
-                elif front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis <= self.teleport_horizontal_y_range:
-                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_TELEPORTL, False)
                     platform.solutions.append(solution)
             else:  # other platform is on the right side
                 back_point_x_dis = abs(platform.end_x - other_platform.start_x)
                 back_point_y_dis = abs(platform.end_y - other_platform.start_y)
                 back_point_distance = math.sqrt(back_point_x_dis**2 + back_point_y_dis**2)
-                if back_point_distance <= self.jump_range or (platform.end_y <= other_platform.start_y and back_point_x_dis < self.jump_range):
+                if back_point_distance <= self.teleport_horizontal_range and back_point_y_dis <= self.teleport_horizontal_y_range:
+                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_TELEPORTR, False)
+                    platform.solutions.append(solution)
+                elif back_point_distance <= self.jump_range or (platform.end_y <= other_platform.start_y and back_point_x_dis < self.jump_range):
                     # We can jump form the right end of the platform to goal platform
                     solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_JUMPR, False)
-                    platform.solutions.append(solution)
-                elif back_point_distance <= self.teleport_horizontal_range and back_point_y_dis <= self.teleport_horizontal_y_range:
-                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_TELEPORTR, False)
                     platform.solutions.append(solution)
 
     def astar_pathfind(self, start_coord, goal_coords):

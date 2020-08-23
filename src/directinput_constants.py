@@ -142,6 +142,7 @@ keysym_map = {  # tkinter event keysym to dik key code coversion table
     "shift_r": DIK_RSHIFT,
     "prior": DIK_PRIOR,
     "next": DIK_NEXT,
+    "semicolon": DIK_SEMICOLON,
     "a": DIK_A,
     "b": DIK_B,
     "c": DIK_C,

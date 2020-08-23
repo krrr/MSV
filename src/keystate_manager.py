@@ -160,9 +160,10 @@ DEFAULT_KEY_MAP = {
     "shikigami_haunting": [dic.DIK_RCONTROL, "Shikigami Haunting"],
     "kishin_shoukan": [dic.DIK_Q, "Kishin Shoukan"],
     "yaksha_boss": [dic.DIK_O, "Yaksha Boss"],
-    "holy_symbol": [dic.DIK_HOME, "Holy Symbol"],
-    "speed_infusion": [dic.DIK_X, "Speed Infusion"],
+    "holy_symbol": [dic.DIK_PRIOR, "Holy Symbol"],
+    "speed_infusion": [dic.DIK_HOME, "Speed Infusion"],
     "haku_reborn": [dic.DIK_END, "Haku Reborn"],
-    "interact": [dic.DIK_PERIOD, "Interact / Harvest"]
+    "interact": [dic.DIK_PERIOD, "Interact / Harvest"],
+    "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"]
 }
 

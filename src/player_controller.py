@@ -42,7 +42,6 @@ class PlayerController:
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
-        self.shikigami_haunting_range = 18
         self.shikigami_haunting_delay = 0.5  # delay after using shikigami haunting where character is not movable
 
         self.horizontal_movement_threshold = 18-2  # teleport instead of walk if distance greater than threshold
@@ -127,10 +126,10 @@ class PlayerController:
                     if abs(self.x - start_x) >= no_attack_distance:
                         self.shikigami_haunting()
 
-                    if abs(self.x - goal_x) < self.shikigami_haunting_range:
-                        self.optimized_horizontal_move(goal_x, teleport_once=True)
+                    if abs(self.x - goal_x) < self.horizontal_movement_threshold:
+                        self.horizontal_move_goal(goal_x)
                     else:
-                        self.optimized_horizontal_move(self.x - self.shikigami_haunting_range, teleport_once=True)
+                        self.optimized_horizontal_move(self.x - self.horizontal_movement_threshold - 1, teleport_once=True)
         elif loc_delta < 0:  # right movement
             if no_attack_distance and no_attack_distance < total_dis:
                 self.optimized_horizontal_move(self.x+no_attack_distance-self.horizontal_goal_offset, teleport_once=True)
@@ -151,10 +150,10 @@ class PlayerController:
                     if abs(self.x - start_x) >= no_attack_distance:
                         self.shikigami_haunting()
 
-                    if abs(goal_x - self.x) < self.shikigami_haunting_range:
+                    if abs(goal_x - self.x) < self.horizontal_movement_threshold:
                         self.optimized_horizontal_move(goal_x, teleport_once=True)
                     else:
-                        self.optimized_horizontal_move(self.x + self.shikigami_haunting_range, teleport_once=True)
+                        self.optimized_horizontal_move(self.x + self.horizontal_movement_threshold + 1, teleport_once=True)
 
     def optimized_horizontal_move(self, goal_x, teleport_once=False, enforce_time=True):
         """
@@ -223,30 +222,27 @@ class PlayerController:
         :param goal_x: goal x coordinates
         :return: None
         """
-        current_x = self.x
-        if goal_x - current_x > 0:  # need to go right:
-            mode = "r"
-        elif goal_x - current_x < 0:  # need to go left:
-            mode = "l"
+        if goal_x - self.x > 0:  # need to go right:
+            right = True
+        elif goal_x - self.x < 0:  # need to go left:
+            right = False
         else:
             return 0
 
-        if mode == "r":
-            # need to go right:
+        if right:
             self.key_mgr.direct_press(DIK_RIGHT)
-        elif mode == "l":
-            # need to go left:
+        else:
             self.key_mgr.direct_press(DIK_LEFT)
         while True:
             self.update()
             if not self.x:
                 assert 1 == 0, "horizontal_move goal: failed to recognize coordinates"
 
-            if mode == "r":
+            if right:
                 if self.x >= goal_x-self.horizontal_goal_offset:
                     self.key_mgr.direct_release(DIK_RIGHT)
                     break
-            elif mode == "l":
+            else:
                 if self.x <= goal_x+self.horizontal_goal_offset:
                     self.key_mgr.direct_release(DIK_LEFT)
                     break
@@ -272,6 +268,12 @@ class PlayerController:
         self.key_mgr.direct_release(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_release(self.keymap["teleport"])
+
+    def shikigami_charm(self):
+        self.key_mgr.single_press(self.keymap["shikigami_charm"])
+
+    def jump(self):
+        self.key_mgr.single_press(self.keymap["jump"])
 
     def jumpl(self):
         """Blocking call"""
