@@ -89,70 +89,48 @@ class PlayerController:
 
     def shikigami_haunting_sweep_move(self, goal_x, no_attack_distance=0):
         """
-        This function will, while moving towards goal_x, constantly use exceed: moonlight slash and not overlapping
-        This function currently does not have an time enforce implementation, meaning it may fall into an infinite loop
-        if player coordinates are not read correctly.
+        This function will, while moving towards goal_x, constantly use shikigami haunting and not overlapping
         X coordinate max error on flat surface: +- 5 pixels
         :param goal_x: minimap x goal coordinate.
         :param no_attack_distance: Distance in x pixels where any attack skill would not be used and just move
         """
+        self.update()
         start_x = self.x
         loc_delta = self.x - goal_x
-        total_dis = abs(loc_delta)
-        if total_dis < self.horizontal_goal_offset:
-            return
+        if abs(loc_delta) < self.horizontal_goal_offset:
+            return True
 
         if not no_attack_distance:
-            self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to right direction
+            self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT, 0.05)  # turn to correct direction
 
-        if loc_delta > 0:  # left movement
-            self.update()
-            loc_delta = self.x - goal_x
-            total_dis = abs(loc_delta)
-            if total_dis <= self.horizontal_movement_threshold:
-                if not no_attack_distance:
-                    self.shikigami_haunting()
+        start_time = time.time()
+        time_limit = math.ceil(abs(loc_delta) / self.x_movement_enforce_rate)
+
+        last_teleport_x = None
+        while True:
+            dis = abs(self.x - goal_x)
+            if dis <= self.horizontal_goal_offset:
+                return True
+
+            # skip shikigami if last teleport failed
+            if abs(self.x - start_x) >= no_attack_distance and \
+                    (last_teleport_x is None or abs(last_teleport_x-self.x) > self.horizontal_goal_offset):
+                self.shikigami_haunting(False)
+
+            if dis <= self.horizontal_movement_threshold:
                 self.horizontal_move_goal(goal_x)
             else:
-                while True:
-                    self.update()
+                time.sleep(0.02)
+                if loc_delta > 0:
+                    self.teleport_left()
+                else:
+                    self.teleport_right()
+                last_teleport_x = self.x
+                time.sleep(0.32)
 
-                    if self.x <= goal_x + self.horizontal_goal_offset:
-                        break
-
-                    if abs(self.x - start_x) >= no_attack_distance:
-                        self.shikigami_haunting(False)
-
-                    if abs(self.x - goal_x) <= self.horizontal_movement_threshold:
-                        self.horizontal_move_goal(goal_x)
-                    else:
-                        time.sleep(0.02)
-                        self.teleport_left()
-                        time.sleep(0.32)
-        elif loc_delta < 0:  # right movement
             self.update()
-            loc_delta = self.x - goal_x
-            total_dis = abs(loc_delta)
-            if total_dis <= self.horizontal_movement_threshold:
-                if not no_attack_distance:
-                    self.shikigami_haunting()
-                self.horizontal_move_goal(goal_x)
-            else:
-                while True:
-                    self.update()
-
-                    if self.x >= goal_x - self.horizontal_goal_offset:
-                        break
-
-                    if abs(self.x - start_x) >= no_attack_distance:
-                        self.shikigami_haunting(False)  # teleport not affected by delay
-
-                    if abs(goal_x - self.x) <= self.horizontal_movement_threshold:
-                        self.horizontal_move_goal(goal_x)
-                    else:
-                        time.sleep(0.02)
-                        self.teleport_right()
-                        time.sleep(0.32)
+            if time.time() - start_time > time_limit:
+                return False
 
     def optimized_horizontal_move(self, goal_x, teleport_once=False, enforce_time=True):
         """
