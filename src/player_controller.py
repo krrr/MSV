@@ -42,6 +42,7 @@ class PlayerController:
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
+        self.shikigami_haunting_range = 18
         self.shikigami_haunting_delay = 0.37  # delay after using shikigami haunting where character is not movable
 
         self.horizontal_movement_threshold = 18-2  # teleport instead of walk if distance greater than threshold
@@ -104,7 +105,7 @@ class PlayerController:
             self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT, 0.05)  # turn to correct direction
 
         start_time = time.time()
-        time_limit = math.ceil(abs(loc_delta) / self.x_movement_enforce_rate)
+        time_limit = math.ceil(abs(loc_delta) / self.x_movement_enforce_rate) + 3
 
         last_teleport_x = None
         while True:
@@ -120,31 +121,31 @@ class PlayerController:
             if dis <= self.horizontal_movement_threshold:
                 self.horizontal_move_goal(goal_x)
             else:
+                last_teleport_x = self.x
                 time.sleep(0.02)
                 if loc_delta > 0:
                     self.teleport_left()
                 else:
                     self.teleport_right()
-                last_teleport_x = self.x
                 time.sleep(0.32)
 
             self.update()
             if time.time() - start_time > time_limit:
                 return False
 
-    def optimized_horizontal_move(self, goal_x, teleport_once=False, enforce_time=True):
+    def optimized_horizontal_move(self, goal_x):
         """
-        Move from self.x to goal_x in as little time as possible. Uses multiple movement solutions for efficient paths. Blocking call
-        :param goal_x: x coordinate to move to. This function only takes into account x coordinate movements.
-        :param ledge: If true, goal_x is an end of a platform, and additional movement solutions can be used. If not, precise movement is required.
-        :param enforce_time: If true, the function will stop moving after a time threshold is met and still haven't
+        Move from self.x to goal_x in as little time as possible. Uses multiple movement solutions for efficient paths.
+        Blocking call. This function will stop moving after a time threshold is met and still haven't
         met the goal. Default threshold is 15 minimap pixels per second.
+        :param goal_x: x coordinate to move to. This function only takes into account x coordinate movements.
+        # :param ledge: If true, goal_x is an end of a platform, and additional movement solutions can be used. If not, precise movement is required.
         :return: None
         """
         loc_delta = self.x - goal_x
         abs_loc_delta = abs(loc_delta)
         start_time = time.time()
-        time_limit = math.ceil(abs_loc_delta/self.x_movement_enforce_rate)
+        time_limit = math.ceil(abs_loc_delta/self.x_movement_enforce_rate) + 3
         if loc_delta < 0:  # we need to move right
             if abs_loc_delta <= self.horizontal_movement_threshold:
                 # Just walk if distance is less than threshold
@@ -166,8 +167,7 @@ class PlayerController:
             else:
                 # Distance is quite big, so we teleport
                 self.teleport_right()
-                if not teleport_once:
-                    self.horizontal_move_goal(goal_x)
+                self.horizontal_move_goal(goal_x)
         elif loc_delta > 0:  # we are moving to the left
             if abs_loc_delta <= self.horizontal_movement_threshold:
                 self.key_mgr.direct_press(DIK_LEFT)
@@ -188,8 +188,7 @@ class PlayerController:
             else:
                 # Distance is quite big, so we teleport
                 self.teleport_left()
-                if not teleport_once:
-                    self.horizontal_move_goal(goal_x)
+                self.horizontal_move_goal(goal_x)
 
     def horizontal_move_goal(self, goal_x):
         """
@@ -198,30 +197,29 @@ class PlayerController:
         :param goal_x: goal x coordinates
         :return: None
         """
-        if goal_x - self.x > 0:  # need to go right:
-            right = True
-        elif goal_x - self.x < 0:  # need to go left:
-            right = False
-        else:
-            return 0
+        dis = abs(self.x - goal_x)
+        if dis <= self.horizontal_goal_offset:
+            return True
 
-        if right:
-            self.key_mgr.direct_press(DIK_RIGHT)
-        else:
-            self.key_mgr.direct_press(DIK_LEFT)
+        start_time = time.time()
+        time_limit = math.ceil(dis / self.x_movement_enforce_rate) + 3
+        right = goal_x - self.x > 0  # need to go right:
+
+        self.key_mgr.direct_press(DIK_RIGHT if right else DIK_LEFT)
         while True:
+            time.sleep(0.02)
+
             self.update()
             if not self.x:
-                assert 1 == 0, "horizontal_move goal: failed to recognize coordinates"
+                raise Exception("horizontal_move goal: failed to recognize coordinates")
 
-            if right:
-                if self.x >= goal_x-self.horizontal_goal_offset:
-                    self.key_mgr.direct_release(DIK_RIGHT)
-                    break
-            else:
-                if self.x <= goal_x+self.horizontal_goal_offset:
-                    self.key_mgr.direct_release(DIK_LEFT)
-                    break
+            if abs(self.x - goal_x) <= self.horizontal_goal_offset:
+                self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
+                return True
+
+            if time.time() - start_time > time_limit:
+                self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
+                return False
 
     def teleport_up(self):
         self._do_teleport(DIK_UP)

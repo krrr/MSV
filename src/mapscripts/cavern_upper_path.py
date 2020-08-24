@@ -43,7 +43,7 @@ class CupMacroController(MacroController):
                     break
                 time.sleep(1)
         elif self.current_platform_hash == '9769210f':  # left top
-            if abs(self.player_manager.x - 51) < self.player_manager.horizontal_goal_offset:
+            if self.player_manager.x <= 51 + self.player_manager.horizontal_goal_offset:
                 self.keyhandler.single_press(dc.DIK_LEFT)
             else:
                 self.player_manager.shikigami_haunting_sweep_move(51)

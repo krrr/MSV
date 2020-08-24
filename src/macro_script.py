@@ -146,7 +146,7 @@ class MacroController:
 
                 if self.current_platform_hash != solution.to_hash:  # should retry
                     if self.current_platform_hash is None:  # in case stuck in ladder
-                        self.player_manager.jumpr()
+                        self.logger.warning("stuck. attempting unstick()...")
                         self.unstick()
                     break
 
