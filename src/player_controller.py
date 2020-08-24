@@ -106,13 +106,10 @@ class PlayerController:
             self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to right direction
 
         if loc_delta > 0:  # left movement
-            if no_attack_distance and no_attack_distance < total_dis:
-                self.optimized_horizontal_move(self.x-no_attack_distance+self.horizontal_goal_offset, teleport_once=True)
-
             self.update()
             loc_delta = self.x - goal_x
             total_dis = abs(loc_delta)
-            if total_dis < self.horizontal_movement_threshold:
+            if total_dis <= self.horizontal_movement_threshold:
                 if not no_attack_distance:
                     self.shikigami_haunting()
                 self.horizontal_move_goal(goal_x)
@@ -124,19 +121,19 @@ class PlayerController:
                         break
 
                     if abs(self.x - start_x) >= no_attack_distance:
-                        self.shikigami_haunting()
+                        self.shikigami_haunting(False)
 
-                    if abs(self.x - goal_x) < self.horizontal_movement_threshold:
+                    if abs(self.x - goal_x) <= self.horizontal_movement_threshold:
                         self.horizontal_move_goal(goal_x)
                     else:
-                        self.optimized_horizontal_move(self.x - self.horizontal_movement_threshold - 1, teleport_once=True)
+                        time.sleep(0.02)
+                        self.teleport_left()
+                        time.sleep(0.32)
         elif loc_delta < 0:  # right movement
-            if no_attack_distance and no_attack_distance < total_dis:
-                self.optimized_horizontal_move(self.x+no_attack_distance-self.horizontal_goal_offset, teleport_once=True)
             self.update()
             loc_delta = self.x - goal_x
             total_dis = abs(loc_delta)
-            if total_dis < self.horizontal_movement_threshold:
+            if total_dis <= self.horizontal_movement_threshold:
                 if not no_attack_distance:
                     self.shikigami_haunting()
                 self.horizontal_move_goal(goal_x)
@@ -148,12 +145,14 @@ class PlayerController:
                         break
 
                     if abs(self.x - start_x) >= no_attack_distance:
-                        self.shikigami_haunting()
+                        self.shikigami_haunting(False)  # teleport not affected by delay
 
-                    if abs(goal_x - self.x) < self.horizontal_movement_threshold:
-                        self.optimized_horizontal_move(goal_x, teleport_once=True)
+                    if abs(goal_x - self.x) <= self.horizontal_movement_threshold:
+                        self.horizontal_move_goal(goal_x)
                     else:
-                        self.optimized_horizontal_move(self.x + self.horizontal_movement_threshold + 1, teleport_once=True)
+                        time.sleep(0.02)
+                        self.teleport_right()
+                        time.sleep(0.32)
 
     def optimized_horizontal_move(self, goal_x, teleport_once=False, enforce_time=True):
         """
@@ -193,7 +192,6 @@ class PlayerController:
                     self.horizontal_move_goal(goal_x)
         elif loc_delta > 0:  # we are moving to the left
             if abs_loc_delta <= self.horizontal_movement_threshold:
-                # Just walk if distance is less than 10
                 self.key_mgr.direct_press(DIK_LEFT)
 
                 # Below: use a loop to continously press left until goal is reached or time is up
@@ -306,9 +304,9 @@ class PlayerController:
         self.key_mgr.direct_release(DIK_DOWN)
 
     def shikigami_haunting(self, wait_delay=True):
-        for _ in range(4):
+        for _ in range(3):
             self.key_mgr.single_press(self.keymap["shikigami_haunting"])
-            time.sleep(0.05 + abs(self.random_duration(0.01)))
+            time.sleep(0.06 + abs(self.random_duration(0.005)))
         self.skill_cast_counter += 1
         if wait_delay:
             time.sleep(self.shikigami_haunting_delay)

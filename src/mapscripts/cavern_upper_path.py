@@ -30,7 +30,7 @@ class CupMacroController(MacroController):
                 self.last_pickup_money_time = time.time()
                 return
 
-            self.player_manager.optimized_horizontal_move(106)
+            self.player_manager.optimized_horizontal_move(109)
             time.sleep(0.1)
             for _ in range(3):
                 self.player_manager.jump()
@@ -51,7 +51,7 @@ class CupMacroController(MacroController):
                 self.player_manager.jumpl()
                 time.sleep(0.04)
                 self.player_manager.shikigami_haunting()
-                time.sleep(0.04)
+                time.sleep(0.058)
                 self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '4768c4f7':  # left left top
             self.player_manager.horizontal_move_goal(31)
@@ -66,9 +66,10 @@ class CupMacroController(MacroController):
             time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
             self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '4b5aa172':  # left bottom
-            self.player_manager.shikigami_haunting_sweep_move(79)
+            self.player_manager.shikigami_haunting_sweep_move(60)
             self.player_manager.drop()
-            time.sleep(0.7 + abs(self.player_manager.random_duration(0.1)))
+            self.player_manager.shikigami_haunting()
+            time.sleep(0.71)
             self.player_manager.shikigami_haunting()
         else:
             self.navigate_to_platform('543f340d')
@@ -88,10 +89,10 @@ class CupMacroController(MacroController):
         self.navigate_to_platform('f8358df9')  # right bottom
 
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['f8358df9'].end_x - 13)
-        time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['bb5c96fa'].end_x - 5)  # right top
         self.player_manager.teleport_up()
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['bb5c96fa'].start_x + 3)
-        time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.teleport_left()
         self.money_picked = True
