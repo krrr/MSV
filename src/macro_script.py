@@ -130,14 +130,17 @@ class MacroController:
             for solution in solutions:
                 curr_platform = self.terrain_analyzer.platforms[self.current_platform_hash]
 
-                if self.player_manager.x < solution.lower_bound[0]:  # We are left of solution bounds.
+                if solution.method == ta.METHOD_TELEPORTR or solution.method == ta.METHOD_JUMPR:
                     x = curr_platform.end_x - random.randint(2, 3)
-                    self.player_manager.shikigami_haunting_sweep_move(x)
-                    self.player_manager.horizontal_move_goal(x)
-                else:  # We are right of solution bounds
+                elif solution.method == ta.METHOD_TELEPORTL or solution.method == ta.METHOD_JUMPL:
                     x = curr_platform.start_x + random.randint(2, 3)
-                    self.player_manager.shikigami_haunting_sweep_move(x)
-                    self.player_manager.horizontal_move_goal(x)
+                else:  # overlap platform
+                    closer_to_next_lower = (abs(self.player_manager.x - solution.lower_bound[0]) <
+                                            abs(self.player_manager.x - solution.upper_bound[0]))
+                    x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
+
+                self.player_manager.shikigami_haunting_sweep_move(x)
+                self.player_manager.horizontal_move_goal(x)
 
                 self._player_move(solution)
 

@@ -30,18 +30,12 @@ class CupMacroController(MacroController):
                 self.last_pickup_money_time = time.time()
                 return
 
-            self.player_manager.optimized_horizontal_move(108)
-            time.sleep(0.1)
-            for _ in range(3):
-                self.player_manager.jump()
-                time.sleep(0.09 + abs(self.player_manager.random_duration(0.01)))
-                self.player_manager.teleport_up()
-                time.sleep(0.2)
-                self.screen_processor.update_image(set_focus=False)
-                player_pos = self.screen_processor.find_player_minimap_marker()
-                if player_pos[1] < 30:
-                    break
-                time.sleep(1)
+            if self.player_manager.x >= 108:
+                self.player_manager.optimized_horizontal_move(108)
+            self.player_manager.drop()
+            time.sleep(0.35 + abs(self.player_manager.random_duration(0.08)))
+            self.keyhandler.single_press(dc.DIK_RIGHT)
+            self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '9769210f':  # left top
             if self.player_manager.x <= 51 + self.player_manager.horizontal_goal_offset:
                 self.keyhandler.single_press(dc.DIK_LEFT)
@@ -73,7 +67,7 @@ class CupMacroController(MacroController):
             self.player_manager.shikigami_haunting_sweep_move(60)
             self.player_manager.drop()
             self.player_manager.shikigami_haunting()
-            time.sleep(0.5)
+            time.sleep(0.3 + abs(self.player_manager.random_duration(0.08)))
             self.player_manager.shikigami_haunting()
         else:
             self.navigate_to_platform('543f340d')
