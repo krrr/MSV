@@ -481,6 +481,6 @@ class MacroController:
         if not os.path.isdir('screenshots'):
             os.mkdir('screenshots')
         time_str = datetime.datetime.now().replace(microsecond=0).isoformat().replace(':', '_')
-        with open('screenshots/' + prefix + '_' + time_str + '.jpg', 'wb') as f:
+        with open('screenshots/' + prefix + '_' + time_str + '.png', 'wb') as f:
             img.save(f)
 
