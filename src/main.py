@@ -85,11 +85,15 @@ class MainScreen(tk.Frame):
 
         self._menubar = tk.Menu()
         terrain_menu = tk.Menu(tearoff=False)
-        terrain_menu.add_command(label="Create terrain file", command=lambda: PlatformDataCaptureWindow(self.master))
-        terrain_menu.add_command(label="Edit current terrain file", command=lambda: self._on_edit_terrain())
+        terrain_menu.add_command(label="Create", command=lambda: PlatformDataCaptureWindow(self.master))
+        terrain_menu.add_command(label="Edit Current", command=lambda: self._on_edit_terrain())
         self._menubar.add_cascade(label="Terrain", menu=terrain_menu)
         options_menu = tk.Menu(tearoff=False)
         options_menu.add_command(label="Set Keys", command=lambda: SetKeyMap(self.master))
+        self.auto_solve_rune = tk.BooleanVar()
+        self.auto_solve_rune.set(get_config().get('auto_solve_rune', True))
+        options_menu.add_checkbutton(label="Auto Solve Rune", onvalue=True, offvalue=False,
+                                     variable=self.auto_solve_rune, command=self._on_auto_solve_rune_check)
         self._menubar.add_cascade(label="Options", menu=options_menu)
         help_menu = tk.Menu(tearoff=False)
         self._menubar.add_cascade(label="Help", menu=help_menu)
@@ -296,6 +300,9 @@ class MainScreen(tk.Frame):
             showerror(APP_TITLE, 'No terrain file opened')
         else:
             PlatformDataCaptureWindow(self.master, self.platform_file_path.get())
+
+    def _on_auto_solve_rune_check(self):
+        get_config()['auto_solve_rune'] = self.auto_solve_rune.get()
 
     def _popup_about(self):
         tk.messagebox.showinfo('About', '''\

@@ -8,6 +8,7 @@ import screen_processor as sp
 import terrain_analyzer as ta
 import directinput_constants as dc
 import rune_solver as rs
+from util import get_config
 
 
 class CustomLoggerHandler(logging.Handler):
@@ -33,6 +34,7 @@ class MacroController:
             self.logger.addHandler(fh)
         self.logger.info("%s init" % self.__class__.__name__)
 
+        self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
         self.screen_capturer = sp.MapleScreenCapturer()
         self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = ta.PathAnalyzer()
@@ -338,7 +340,7 @@ class MacroController:
 
         # All movement and attacks finished. Now perform movement
         self._player_move(next_platform_solution)
-        #End inter-platform movement
+        # End inter-platform movement
 
         ### Start set skills
         self.set_skills()
@@ -350,29 +352,36 @@ class MacroController:
 
     def _rune_detect_solve(self):
         rune_coords = self.screen_processor.find_rune_marker()
-        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
-        if rune_platform_hash:
-            self.logger.info("need to solve rune at platform {0}".format(rune_platform_hash))
-            rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
-            if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
-                if self.navigate_to_platform(rune_platform_hash):
-                    self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
-                    self.player_manager.horizontal_move_goal(rune_coords[0])
-                    time.sleep(0.1)
-                    self.keyhandler.single_press(dc.DIK_PERIOD)
-                    time.sleep(1.5)
-                    self.save_current_screen('rune')  # save image to disk for future use
-                    solve_result = self.rune_solver.solve_auto()
-                    self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
-                    if solve_result == -1:
-                        self.logger.error("rune_solver.solve_auto failed to solve")
-                        self.keyhandler.single_press(self.player_manager.keymap["interact"])
+        if not self.auto_resolve_rune:
+            if rune_coords:
+                self.alert_sound(1)
+            return
 
-                    self.player_manager.last_rune_solve_time = time.time()
-                    self.current_platform_hash = rune_platform_hash
-                    time.sleep(0.5)
-                else:
-                    self.logger.warning('failed to navigate to rune platform')
+        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
+        if not rune_platform_hash:
+            return
+
+        self.logger.info("need to solve rune at platform {0}".format(rune_platform_hash))
+        rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
+        if rune_solve_time_offset >= self.player_manager.rune_fail_cooldown:
+            if self.navigate_to_platform(rune_platform_hash):
+                self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
+                self.player_manager.horizontal_move_goal(rune_coords[0])
+                time.sleep(0.1)
+                self.keyhandler.single_press(dc.DIK_PERIOD)
+                time.sleep(1.5)
+                self.save_current_screen('rune')  # save image to disk for future use
+                solve_result = self.rune_solver.solve_auto()
+                self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
+                if solve_result == -1:
+                    self.logger.error("rune_solver.solve_auto failed to solve")
+                    self.keyhandler.single_press(self.player_manager.keymap["interact"])
+
+                self.player_manager.last_rune_solve_time = time.time()
+                self.current_platform_hash = rune_platform_hash
+                time.sleep(0.5)
+            else:
+                self.logger.warning('failed to navigate to rune platform')
 
     def _player_move(self, solution):
         move_method = solution.method
@@ -470,8 +479,8 @@ class MacroController:
         if self.log_queue:
             self.log_queue.put(["stopped", None])
 
-    def alert_sound(self):
-        for _ in range(3):
+    def alert_sound(self, times=3):
+        for _ in range(times):
             win32api.MessageBeep(win32con.MB_ICONWARNING)
             time.sleep(0.5)
 
