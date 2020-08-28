@@ -45,7 +45,7 @@ class PlayerController:
         self.shikigami_haunting_range = 18
         self.shikigami_haunting_delay = 0.37  # delay after using shikigami haunting where character is not movable
 
-        self.horizontal_movement_threshold = 18-2  # teleport instead of walk if distance greater than threshold
+        self.horizontal_movement_threshold = 18  # teleport instead of walk if distance greater than threshold
 
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
@@ -300,16 +300,19 @@ class PlayerController:
         self.skill_cast_counter += 1
         time.sleep(self.set_skill_common_delay)
 
-    def _use_buff_skill(self, skill_name, skill_cd):
+    def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
         if time.time() - getattr(self, 'last_'+skill_name+'_time') > skill_cd + random.randint(0, 14):
+            if wait_before:
+                time.sleep(wait_before)
             for _ in range(2):
-                self.key_mgr.single_press(self.keymap[skill_name], additional_duration=abs(self.random_duration()))
+                self.key_mgr.single_press(self.keymap[skill_name], duration=0.25)
             self.skill_cast_counter += 1
             setattr(self, 'last_'+skill_name+'_time', time.time())
             time.sleep(self.buff_common_delay)
 
     def holy_symbol(self):
-        self._use_buff_skill('holy_symbol', self.v_buff_cd)
+        # first buff skill to use, add extra delay
+        self._use_buff_skill('holy_symbol', self.v_buff_cd, 0.35)
 
     def speed_infusion(self):
         self._use_buff_skill('speed_infusion', self.v_buff_cd)
