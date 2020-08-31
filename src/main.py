@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 import logging
 import ctypes
-import multiprocessing, tkinter as tk, time, os, signal, pickle, sys, argparse
+import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
 
 from tkinter.constants import *
 from tkinter.messagebox import showerror, showwarning
@@ -28,7 +28,7 @@ default_logger.addHandler(fh)
 
 
 APP_TITLE = "MSV Kanna Ver"
-VERSION = 0.1
+VERSION = 0.2
 
 
 def destroy_child_widgets(parent):
@@ -162,7 +162,8 @@ class MainScreen(tk.Frame):
 
         get_config()['geometry'] = self.master.geometry()
         save_config()
-        sys.exit(0)
+
+        self.master.destroy()
 
     def check_input_queue(self):
         while not self.macro_process_in_queue.empty():
