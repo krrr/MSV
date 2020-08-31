@@ -324,6 +324,10 @@ if __name__ == "__main__":
     root = tk.Tk()
 
     root.title(args["title"] if args["title"] else APP_TITLE)
+    try:
+        root.iconbitmap('appicon.ico')
+    except tk.TclError:
+        pass
     root.wm_minsize(400, 600)
     geo = get_config().get('geometry')
     if geo:
