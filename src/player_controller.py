@@ -306,6 +306,7 @@ class PlayerController:
                 time.sleep(wait_before)
             for _ in range(2):
                 self.key_mgr.single_press(self.keymap[skill_name], duration=0.25)
+                time.sleep(0.1)
             self.skill_cast_counter += 1
             setattr(self, 'last_'+skill_name+'_time', time.time())
             time.sleep(self.buff_common_delay)

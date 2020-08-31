@@ -329,9 +329,10 @@ if __name__ == "__main__":
     except tk.TclError:
         pass
     root.wm_minsize(400, 600)
+
+    MainScreen(root)
+
     geo = get_config().get('geometry')
     if geo:
         root.geometry(geo)
-
-    MainScreen(root)
     root.mainloop()
