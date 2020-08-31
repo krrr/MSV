@@ -11,8 +11,8 @@ from tkinter.scrolledtext import ScrolledText
 from macro_script import MacroController
 import mapscripts
 from util import get_config, save_config
-from keybind_setup_window import SetKeyMap
-from platform_data_creator import PlatformDataCaptureWindow
+from keybind_setup_window import KeyBindSetupWindow
+from terrain_editor import TerrainEditorWindow
 from screen_processor import MapleScreenCapturer
 # from macro_script_astar import MacroControllerAStar as MacroController
 
@@ -85,11 +85,11 @@ class MainScreen(tk.Frame):
 
         self._menubar = tk.Menu()
         terrain_menu = tk.Menu(tearoff=False)
-        terrain_menu.add_command(label="Create", command=lambda: PlatformDataCaptureWindow(self.master))
+        terrain_menu.add_command(label="Create", command=lambda: TerrainEditorWindow(self.master))
         terrain_menu.add_command(label="Edit Current", command=lambda: self._on_edit_terrain())
         self._menubar.add_cascade(label="Terrain", menu=terrain_menu)
         options_menu = tk.Menu(tearoff=False)
-        options_menu.add_command(label="Set Keys", command=lambda: SetKeyMap(self.master))
+        options_menu.add_command(label="Set Keys", command=lambda: KeyBindSetupWindow(self.master))
         self.auto_solve_rune = tk.BooleanVar()
         self.auto_solve_rune.set(get_config().get('auto_solve_rune', True))
         options_menu.add_checkbutton(label="Auto Solve Rune", onvalue=True, offvalue=False,
@@ -300,7 +300,7 @@ class MainScreen(tk.Frame):
         if not self.platform_file_path.get():
             showerror(APP_TITLE, 'No terrain file opened')
         else:
-            PlatformDataCaptureWindow(self.master, self.platform_file_path.get())
+            TerrainEditorWindow(self.master, self.platform_file_path.get())
 
     def _on_auto_solve_rune_check(self):
         get_config()['auto_solve_rune'] = self.auto_solve_rune.get()

@@ -7,7 +7,7 @@ from directinput_constants import keysym_map
 from keystate_manager import DEFAULT_KEY_MAP
 
 
-class SetKeyMap(tk.Toplevel):
+class KeyBindSetupWindow(tk.Toplevel):
     def __init__(self, master):
         tk.Toplevel.__init__(self, master)
         self.wm_minsize(200, 30)

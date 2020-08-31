@@ -11,7 +11,7 @@ from tkinter.filedialog import asksaveasfilename
 from tkinter.messagebox import askyesno
 
 
-class PlatformDataCaptureWindow(tk.Toplevel):
+class TerrainEditorWindow(tk.Toplevel):
     def __init__(self, master=None, open_file_path=None):
         tk.Toplevel.__init__(self, master)
         self.wm_minsize(100, 30)
@@ -261,5 +261,5 @@ class PlatformDataCaptureWindow(tk.Toplevel):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    PlatformDataCaptureWindow()
+    TerrainEditorWindow()
     root.mainloop()
