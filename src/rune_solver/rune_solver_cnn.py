@@ -1,13 +1,14 @@
 # -*- coding:utf-8 -*-
 """Classifier model verifier"""
 import logging
-import random
 
 logger = logging.getLogger("log")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
-fh = logging.FileHandler("logging.log", encoding="utf-8")
+fh = logging.FileHandler("../logging.log", encoding="utf-8")
 logger.addHandler(fh)
+
+from .rune_solver_base import RuneSolverBase
 try:
     from screen_processor import MapleScreenCapturer
     import cv2, time, os
@@ -22,7 +23,7 @@ except:
     logger.exception("EXCEPTION FROM IMPORTS")
 
 
-class RuneDetector:
+class RuneSolverCnn(RuneSolverBase):
     def __init__(self, model_path, labels=None, screen_capturer=None, key_mgr=None):
         """
         Run just Once to initialize
@@ -30,12 +31,7 @@ class RuneDetector:
         :param labels: dictionary with class names as keys, integer as values
         example: {'down': 0, 'left': 1, 'right': 2, 'up': 3}
         """
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler("logging.log")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        self.logger.addHandler(fh)
+        super().__init__(screen_capturer, key_mgr)
 
         self.labels = labels if labels else {'down': 0, 'left': 1, 'right': 2, 'up': 3}
         self.model_path = model_path
@@ -45,32 +41,6 @@ class RuneDetector:
             model.load_weights(self.model_path)
 
         self.model = model
-
-        self.rune_roi_1366 = [450, 180, 500, 130]  # x, y, w, h
-        self.rune_roi_1024 = [295, 180, 500, 133]
-        self.rune_roi_800 = [170,200, 440, 135]
-        self.rune_roi = self.rune_roi_800  # set as default rune roi
-        self.screen_processor = MapleScreenCapturer() if not screen_capturer else screen_capturer
-        self.key_mgr = KeyboardInputManager() if not key_mgr else key_mgr
-
-    def capture_roi(self):
-        screen_rect = self.screen_processor.ms_get_screen_rect(self.screen_processor.ms_get_screen_hwnd())
-        screen_width = screen_rect[2]-screen_rect[0]
-
-        if screen_width > 1300:
-            self.rune_roi = self.rune_roi_1366
-        elif screen_width > 1000:
-            self.rune_roi = self.rune_roi_1024
-        elif screen_width > 800:
-            self.rune_roi = self.rune_roi_800
-
-        captured_image = self.screen_processor.capture(set_focus=False, rect=screen_rect)
-
-        captured_roi = cv2.cvtColor(np.array(captured_image), cv2.COLOR_RGB2BGR)
-
-        captured_roi = captured_roi[self.rune_roi[1]:self.rune_roi[1]+self.rune_roi[3], self.rune_roi[0]:self.rune_roi[0]+self.rune_roi[2]]
-
-        return captured_roi
 
     def preprocess(self, img):
         """
@@ -128,52 +98,21 @@ class RuneDetector:
 
         return return_list
 
-    def solve_auto(self):
-        """
-        Solves rune if present and sends key presses.
-        :return: -1 if rune not detected, result of classify() if successful
-        """
-        img = self.capture_roi()
-        processed_imgs = self.preprocess(img)
-        if len(processed_imgs) != 4:
-            return -1
-        #cv2.imwrite("roi.png", img)
-        try:
-            tensor = self.images2tensor(processed_imgs)
-        except ValueError as e:
-            self.logger.error(e)
-            return -1
-        result = self.classify(tensor)
-        if GetKeyState(VK_NUMLOCK):
-            self.key_mgr.single_press(DIK_NUMLOCK)
-            time.sleep(0.2)
-        self.logger.debug("Solved rune with solution %s" % str(result))
-        for inp in result:
-            if inp == "up":
-                self.key_mgr.single_press(DIK_UP)
-            elif inp == "down":
-                self.key_mgr.single_press(DIK_DOWN)
-            elif inp == "left":
-                self.key_mgr.single_press(DIK_LEFT)
-            elif inp == "right":
-                self.key_mgr.single_press(DIK_RIGHT)
-            time.sleep(0.17 + random.uniform(0, 0.1))
-        return len(processed_imgs)
-
     def solve(self):
         """
         Solves rune if present and just returns solution.
-        :return: -1 if rune not detected, result of classify() if successful
+        :return: None if rune not detected, result of classify() if successful
         """
         img = self.capture_roi()
         processed_imgs = self.preprocess(img)
         if len(processed_imgs) != 4:
-            return -1
+            return None
+
         try:
             tensor = self.images2tensor(processed_imgs)
         except ValueError as e:
             self.logger.error(e)
-            return -1
+            return None
         result = self.classify(tensor)
 
         return result
@@ -183,7 +122,7 @@ if __name__ == "__main__":
     try:
         label = {'down': 0, 'left': 1, 'right': 2, 'up': 3}
 
-        solver = RuneDetector("arrow_classifier_keras_gray.h5", label)
+        solver = RuneSolverCnn("../arrow_classifier_keras_gray.h5", label)
         logger.debug("Log start")
         logger.debug("screen handle: " + str(solver.screen_processor.ms_get_screen_hwnd()))
         logger.debug("screen rect: " + str(solver.screen_processor.ms_get_screen_rect(solver.screen_processor.ms_get_screen_hwnd())))

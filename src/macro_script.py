@@ -7,7 +7,7 @@ import player_controller as pc
 import screen_processor as sp
 import terrain_analyzer as ta
 import directinput_constants as dc
-import rune_solver as rs
+from rune_solver.rune_solver_simple import RuneSolverSimple
 from util import get_config
 
 
@@ -48,7 +48,8 @@ class MacroController:
         self.platform_error = 3  # If y value is same as a platform and within 3 pixels of platform border, consider to be on said platform
 
         self.rune_model_path = rune_model_dir
-        self.rune_solver = rs.RuneDetector(self.rune_model_path, screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
+        # self.rune_solver = rs.RuneDetectorSimple(self.rune_model_path, screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
+        self.rune_solver = RuneSolverSimple(screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
         self.find_platform_offset = 2
 
         self.loop_count = 0  # How many loops did we loop over?
@@ -372,10 +373,11 @@ class MacroController:
                 time.sleep(1.5)
                 self.save_current_screen('rune')  # save image to disk for future use
                 solve_result = self.rune_solver.solve_auto()
-                self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
-                if solve_result == -1:
+                if solve_result is None:
                     self.logger.error("rune_solver.solve_auto failed to solve")
                     self.keyhandler.single_press(self.player_manager.keymap["interact"])
+                else:
+                    self.logger.debug("rune_solver.solve_auto results: %s" % (solve_result))
 
                 self.player_manager.last_rune_solve_time = time.time()
                 self.current_platform_hash = rune_platform_hash
