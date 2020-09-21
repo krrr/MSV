@@ -5,7 +5,8 @@ import win32api, win32con
 import keystate_manager as km
 import player_controller as pc
 import screen_processor as sp
-import terrain_analyzer as ta
+import terrain_analyzer
+from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 from rune_solver.rune_solver_simple import RuneSolverSimple
 from util import get_config
@@ -37,7 +38,7 @@ class MacroController:
         self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
         self.screen_capturer = sp.MapleScreenCapturer()
         self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
-        self.terrain_analyzer = ta.PathAnalyzer()
+        self.terrain_analyzer = terrain_analyzer.PathAnalyzer()
         self.keyhandler = km.KeyboardInputManager()
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
 
@@ -129,13 +130,13 @@ class MacroController:
                 self.logger.error("could not generate path to platform %s from platform %s" % (platform_hash, self.current_platform_hash))
                 return False
 
-            self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(x.method for x in solutions)))
+            self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(str(x.method) for x in solutions)))
             for solution in solutions:
                 curr_platform = self.terrain_analyzer.platforms[self.current_platform_hash]
 
-                if solution.method == ta.METHOD_TELEPORTR or solution.method == ta.METHOD_JUMPR:
+                if solution.method == MoveMethod.TELEPORTR or solution.method == MoveMethod.JUMPR:
                     x = curr_platform.end_x - random.randint(2, 3)
-                elif solution.method == ta.METHOD_TELEPORTL or solution.method == ta.METHOD_JUMPL:
+                elif solution.method == MoveMethod.TELEPORTL or solution.method == MoveMethod.JUMPL:
                     x = curr_platform.start_x + random.randint(2, 3)
                 else:  # overlap platform
                     closer_to_next_lower = (abs(self.player_manager.x - solution.lower_bound[0]) <
@@ -387,25 +388,25 @@ class MacroController:
 
     def _player_move(self, solution):
         move_method = solution.method
-        if move_method == ta.METHOD_DROP:
+        if move_method == MoveMethod.DROP:
             self.player_manager.drop()
             time.sleep(1)
-        elif move_method == ta.METHOD_TELEPORTDOWN:
+        elif move_method == MoveMethod.TELEPORTDOWN:
             self.player_manager.teleport_down()
             time.sleep(0.5)
-        elif move_method == ta.METHOD_JUMPL:
+        elif move_method == MoveMethod.JUMPL:
             self.player_manager.jumpl()
             time.sleep(0.7)
-        elif move_method == ta.METHOD_JUMPR:
+        elif move_method == MoveMethod.JUMPR:
             self.player_manager.jumpr()
             time.sleep(0.7)
-        elif move_method == ta.METHOD_TELEPORTL:
+        elif move_method == MoveMethod.TELEPORTL:
             self.player_manager.teleport_left()
             time.sleep(0.5)
-        elif move_method == ta.METHOD_TELEPORTR:
+        elif move_method == MoveMethod.TELEPORTR:
             self.player_manager.teleport_right()
             time.sleep(0.5)
-        elif move_method == ta.METHOD_TELEPORTUP:
+        elif move_method == MoveMethod.TELEPORTUP:
             self.player_manager.teleport_up()
             time.sleep(0.5)
 

@@ -1,8 +1,8 @@
-import terrain_analyzer as ta
-from terrain_analyzer import METHOD_DROP, METHOD_MOVEL, METHOD_MOVER, METHOD_TELEPORTUP
+from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import macro_script
 import logging, math, time, random
+
 
 class CustomLogger:
     def __init__(self, logger_obj, logger_queue):
@@ -18,6 +18,7 @@ class CustomLogger:
         self.logger_obj.exception(" ".join([str(x) for x in args]))
         if self.logger_queue:
             self.logger_queue.put(("log", " ".join([str(x) for x in args])))
+
 
 class MacroControllerAStar(macro_script.MacroController):
     """
@@ -113,13 +114,13 @@ class MacroControllerAStar(macro_script.MacroController):
         for mid_coord, method in pathlist:
             self.player_manager.update()
             print(mid_coord, method)
-            if method == METHOD_MOVER or method == METHOD_MOVEL:
+            if method == MoveMethod.MOVER or method == MoveMethod.MOVEL:
                 self.player_manager.optimized_horizontal_move(mid_coord[0])
-            elif method == METHOD_TELEPORTUP:
+            elif method == MoveMethod.TELEPORTUP:
                 # interdelay = self.terrain_analyzer.calculate_vertical_doublejump_delay(self.player_manager.y, mid_coord[1])
                 # print(interdelay)
                 self.player_manager.teleport_up()
-            elif method == METHOD_DROP:
+            elif method == MoveMethod.DROP:
                 self.player_manager.drop()
             time.sleep(1)
         # End inter-platform movement

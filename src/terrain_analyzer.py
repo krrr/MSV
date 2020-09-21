@@ -2,6 +2,7 @@ import hashlib
 import math
 import os
 import pickle
+import enum
 import random
 
 """
@@ -28,15 +29,17 @@ function select(current_node):
             return vert
 """
 
-METHOD_DROP = "drop"
-METHOD_TELEPORTUP = "teleportup"
-METHOD_TELEPORTDOWN = "teleportdown"
-METHOD_JUMPR = "jumpr"
-METHOD_JUMPL = "jumpl"
-METHOD_TELEPORTR = "teleportr"
-METHOD_TELEPORTL = "teleportl"
-METHOD_MOVER = "movr"
-METHOD_MOVEL = "movl"
+
+class MoveMethod(enum.Enum):
+    DROP = 1
+    JUMPR = 2
+    JUMPL = 3
+    TELEPORTR = 4
+    TELEPORTL = 5
+    TELEPORTUP = 6
+    TELEPORTDOWN = 7
+    MOVER = 8
+    MOVEL = 9
 
 
 class Platform:
@@ -350,14 +353,14 @@ class PathAnalyzer:
                 if platform.start_y < other_platform.end_y:  # Platform is higher than current_platform. Thus we can just drop
                     height_diff = abs(platform.start_y - other_platform.start_y)
                     # check lower bound in case there is another platform in the middle of current and destination
-                    method = METHOD_DROP
+                    method = MoveMethod.DROP
                     if 14 <= height_diff <= self.teleport_vertical_range:
-                        method = METHOD_TELEPORTDOWN
-                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method, False)
+                        method = MoveMethod.TELEPORTDOWN
+                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method)
                     platform.solutions.append(solution)
                 else:  # We need to use teleport to get there, but first check if within teleport range
                     if abs(platform.start_y - other_platform.start_y) <= self.teleport_vertical_range:
-                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_TELEPORTUP, False)
+                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.TELEPORTUP)
                         platform.solutions.append(solution)
             # No vertical overlaps.
             elif platform.start_x >= other_platform.end_x:  # other platform is on the left side
@@ -366,22 +369,22 @@ class PathAnalyzer:
                 # Calculate euclidean distance between each platform endpoints
                 front_point_distance = math.sqrt(front_point_x_dis**2 + front_point_y_dis**2)
                 if front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis <= self.teleport_horizontal_y_range:
-                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_TELEPORTL, False)
+                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), MoveMethod.TELEPORTL)
                     platform.solutions.append(solution)
                 elif front_point_distance <= self.jump_range or (platform.start_y <= other_platform.end_y and front_point_x_dis < self.jump_range):
                     # We can jump from the left end of the platform to goal
-                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), METHOD_JUMPL, False)
+                    solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), MoveMethod.JUMPL)
                     platform.solutions.append(solution)
             else:  # other platform is on the right side
                 back_point_x_dis = abs(platform.end_x - other_platform.start_x)
                 back_point_y_dis = abs(platform.end_y - other_platform.start_y)
                 back_point_distance = math.sqrt(back_point_x_dis**2 + back_point_y_dis**2)
                 if back_point_distance <= self.teleport_horizontal_range and back_point_y_dis <= self.teleport_horizontal_y_range:
-                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_TELEPORTR, False)
+                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), MoveMethod.TELEPORTR)
                     platform.solutions.append(solution)
                 elif back_point_distance <= self.jump_range or (platform.end_y <= other_platform.start_y and back_point_x_dis < self.jump_range):
                     # We can jump form the right end of the platform to goal platform
-                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), METHOD_JUMPR, False)
+                    solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), MoveMethod.JUMPR)
                     platform.solutions.append(solution)
 
     def astar_pathfind(self, start_coord, goal_coords):
@@ -449,7 +452,7 @@ class PathAnalyzer:
         current_index = 0
         while current_index <= len(path)-1:
             c_coords, c_method = path[current_index]
-            if c_method == METHOD_MOVEL or c_method == METHOD_MOVER:
+            if c_method == MoveMethod.MOVEL or c_method == MoveMethod.MOVER:
                 increment = 0  # current_index + increment of intem we are sure needs to be optimized
                 while current_index+increment < len(path)-1:
                     n_coords, n_method = path[current_index+increment+1]
@@ -481,7 +484,7 @@ class PathAnalyzer:
             return abs(current_x-goal_x)
         else:
             if current_y < goal_y:
-                if method == METHOD_DROP:
+                if method == MoveMethod.DROP:
                     return abs(current_y - goal_y) * 0.8
                 if method == "horjmp":
                     return abs(current_y - goal_y) * 5
@@ -511,19 +514,19 @@ class PathAnalyzer:
             contiunue_check = True
             while contiunue_check:
                 if x + x_increment == 0:
-                    return_list.append(((x + x_increment - 1, y), METHOD_MOVER if x_increment > 0 else "l"))
+                    return_list.append(((x + x_increment - 1, y), MoveMethod.MOVER if x_increment > 0 else "l"))
                     break
                 if (x + x_increment, y) == goal_coordinate:
-                    return_list.append(((x + x_increment, y), METHOD_MOVER if x_increment > 0 else METHOD_MOVEL))
+                    return_list.append(((x + x_increment, y), MoveMethod.MOVER if x_increment > 0 else MoveMethod.MOVEL))
                     break
                 if x+x_increment > map_width:
-                    return_list.append(((x + x_increment, y), METHOD_MOVER if x_increment > 0 else METHOD_MOVEL))
+                    return_list.append(((x + x_increment, y), MoveMethod.MOVER if x_increment > 0 else MoveMethod.MOVEL))
                     break
                 if self.astar_map_grid[y][x + x_increment] == 1:
                     drop_distance = 1
                     while y+drop_distance <= map_height:
                         if self.astar_map_grid[y + drop_distance][x] == 1:
-                            return_list.append(((x + x_increment, y), METHOD_MOVER if x_increment > 0 else METHOD_MOVEL))
+                            return_list.append(((x + x_increment, y), MoveMethod.MOVER if x_increment > 0 else MoveMethod.MOVEL))
                             contiunue_check = False
                             break
                         drop_distance += 1
@@ -532,12 +535,12 @@ class PathAnalyzer:
                         if y - jmpheight <= 0:
                             break
                         if self.astar_map_grid[y - jmpheight][x + x_increment] == 1:
-                            return_list.append(((x + x_increment, y), METHOD_MOVER if x_increment > 0 else METHOD_MOVEL))
+                            return_list.append(((x + x_increment, y), MoveMethod.MOVER if x_increment > 0 else MoveMethod.MOVEL))
                             contiunue_check = False
                             break
                 else:
                     if x_increment != 1:
-                        return_list.append(((x + x_increment, y), METHOD_MOVER if x_increment > 0 else METHOD_MOVEL))
+                        return_list.append(((x + x_increment, y), MoveMethod.MOVER if x_increment > 0 else MoveMethod.MOVEL))
                     break
 
                 if x_increment < 0:
@@ -549,14 +552,14 @@ class PathAnalyzer:
             if y - jmpheight == 0:
                 break
             if self.astar_map_grid[y - jmpheight][x] == 1:
-                return_list.append(((x, y - jmpheight), METHOD_TELEPORTUP))
+                return_list.append(((x, y - jmpheight), MoveMethod.TELEPORTUP))
 
         drop_distance = 1
         while True:
             if y + drop_distance > map_height:
                 break
             if self.astar_map_grid[y + drop_distance][x] == 1:
-                return_list.append(((x, y + drop_distance), METHOD_DROP))
+                return_list.append(((x, y + drop_distance), MoveMethod.DROP))
                 break
 
             drop_distance += 1

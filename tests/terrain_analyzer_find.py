@@ -1,6 +1,5 @@
 from unittest import TestCase
-import terrain_analyzer
-from terrain_analyzer import PathAnalyzer
+from terrain_analyzer import PathAnalyzer, MoveMethod
 
 
 class TestScreenProcessor(TestCase):
@@ -17,19 +16,19 @@ class TestScreenProcessor(TestCase):
 
         solution = self.pathextractor.pathfind('9769210f', '4768c4f7')
         # teleport between platforms with high y position diff
-        self.assertTrue(solution and len(solution) == 1 and solution[0].method == terrain_analyzer.METHOD_TELEPORTL)
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.TELEPORTL)
 
     def test_mirror_touched_sea2(self):
         self._load("unittest_data/mirror_touched_sea2.platform")
 
         solution = self.pathextractor.pathfind('6029314b', '0f9c84c4')
-        self.assertTrue(solution and len(solution) == 2 and solution[0].method == terrain_analyzer.METHOD_TELEPORTUP and solution[1].method == terrain_analyzer.METHOD_TELEPORTUP)
+        self.assertTrue(solution and len(solution) == 2 and solution[0].method == MoveMethod.TELEPORTUP and solution[1].method == MoveMethod.TELEPORTUP)
 
         solution = self.pathextractor.pathfind('a12ed5e3', '0f9c84c4')
-        self.assertTrue(solution and len(solution) == 1 and solution[0].method == terrain_analyzer.METHOD_JUMPL)
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.JUMPL)
 
         solution = self.pathextractor.pathfind('304c485d', '0f9c84c4')
-        self.assertTrue(solution and len(solution) == 2 and solution[0].method == terrain_analyzer.METHOD_TELEPORTR and solution[1].method == terrain_analyzer.METHOD_TELEPORTUP)
+        self.assertTrue(solution and len(solution) == 2 and solution[0].method == MoveMethod.TELEPORTR and solution[1].method == MoveMethod.TELEPORTUP)
 
     def _load(self, path):
         self.pathextractor.load(path)
