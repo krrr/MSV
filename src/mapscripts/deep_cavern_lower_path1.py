@@ -3,8 +3,8 @@ from macro_script import MacroController
 import directinput_constants as dc
 
 
-# cavern upper path script
-class Dcup1MacroController(MacroController):
+# deep cavern lower path 1 script
+class Dclp1MacroController(MacroController):
     def __init__(self, keymap, logger_queue):
         super().__init__(keymap=keymap, log_queue=logger_queue)
         self.last_pickup_money_time = time.time() + 30
@@ -23,8 +23,8 @@ class Dcup1MacroController(MacroController):
 
         if self.current_platform_hash == '600f8ed9':  # center bottom
             if self.player_manager.x <= 83 + self.player_manager.horizontal_goal_offset:
-                self.player_manager.shikigami_haunting_sweep_move(110)
-                self.player_manager.shikigami_haunting_sweep_move(83)
+                self.player_manager.shikigami_haunting_sweep_move(107)
+                self.player_manager.shikigami_haunting_sweep_move(83, 20)
             else:
                 self.player_manager.shikigami_haunting_sweep_move(83)
 
