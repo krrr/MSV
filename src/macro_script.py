@@ -388,14 +388,11 @@ class MacroController:
     def _player_move(self, solution):
         move_method = solution.method
         if move_method == ta.METHOD_DROP:
-            height_diff = abs(self.terrain_analyzer.platforms[solution.from_hash].start_y - self.terrain_analyzer.platforms[solution.to_hash].start_y)
-            # check lower bound in case there is another platform in the middle of current and destination
-            if 14 <= height_diff <= self.terrain_analyzer.teleport_vertical_range:
-                self.player_manager.teleport_down()
-                time.sleep(0.5)
-            else:
-                self.player_manager.drop()
-                time.sleep(1)
+            self.player_manager.drop()
+            time.sleep(1)
+        elif move_method == ta.METHOD_TELEPORTDOWN:
+            self.player_manager.teleport_down()
+            time.sleep(0.5)
         elif move_method == ta.METHOD_JUMPL:
             self.player_manager.jumpl()
             time.sleep(0.7)

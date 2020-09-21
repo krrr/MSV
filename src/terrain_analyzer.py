@@ -30,6 +30,7 @@ function select(current_node):
 
 METHOD_DROP = "drop"
 METHOD_TELEPORTUP = "teleportup"
+METHOD_TELEPORTDOWN = "teleportdown"
 METHOD_JUMPR = "jumpr"
 METHOD_JUMPL = "jumpl"
 METHOD_TELEPORTR = "teleportr"
@@ -343,13 +344,16 @@ class PathAnalyzer:
                 continue
             # Has vertical overlaps
             if platform.start_x < other_platform.end_x and platform.end_x > other_platform.start_x or \
-                    platform.start_x > other_platform.start_x and platform.start_x < other_platform.end_x:
+                    other_platform.start_x < platform.start_x < other_platform.end_x:
                 lower_bound_x = max(platform.start_x, other_platform.start_x)
                 upper_bound_x = min(platform.end_x, other_platform.end_x)
-                if platform.start_y < other_platform.end_y:
-                    # Platform is higher than current_platform. Thus we can just drop
-                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), METHOD_DROP, False)
-                    # Changed to using classes for readability
+                if platform.start_y < other_platform.end_y:  # Platform is higher than current_platform. Thus we can just drop
+                    height_diff = abs(platform.start_y - other_platform.start_y)
+                    # check lower bound in case there is another platform in the middle of current and destination
+                    method = METHOD_DROP
+                    if 14 <= height_diff <= self.teleport_vertical_range:
+                        method = METHOD_TELEPORTDOWN
+                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method, False)
                     platform.solutions.append(solution)
                 else:  # We need to use teleport to get there, but first check if within teleport range
                     if abs(platform.start_y - other_platform.start_y) <= self.teleport_vertical_range:
