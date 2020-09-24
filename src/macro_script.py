@@ -134,14 +134,17 @@ class MacroController:
             for solution in solutions:
                 curr_platform = self.terrain_analyzer.platforms[self.current_platform_hash]
 
-                if solution.method == MoveMethod.TELEPORTR or solution.method == MoveMethod.JUMPR:
+                if solution.method == MoveMethod.TELEPORTR or solution.method == MoveMethod.JUMPR or solution.method == MoveMethod.MOVER:
                     x = curr_platform.end_x - random.randint(2, 3)
-                elif solution.method == MoveMethod.TELEPORTL or solution.method == MoveMethod.JUMPL:
+                elif solution.method == MoveMethod.TELEPORTL or solution.method == MoveMethod.JUMPL or solution.method == MoveMethod.MOVEL:
                     x = curr_platform.start_x + random.randint(2, 3)
-                else:  # overlap platform
-                    closer_to_next_lower = (abs(self.player_manager.x - solution.lower_bound[0]) <
-                                            abs(self.player_manager.x - solution.upper_bound[0]))
-                    x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
+                else:  # overlap platform (teleport up/down or drop)
+                    if solution.lower_bound[0] < self.player_manager.x < solution.upper_bound[0]:
+                        x = self.player_manager.x
+                    else:
+                        closer_to_next_lower = (abs(self.player_manager.x - solution.lower_bound[0]) <
+                                                abs(self.player_manager.x - solution.upper_bound[0]))
+                        x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
 
                 self.player_manager.shikigami_haunting_sweep_move(x)
                 self.player_manager.horizontal_move_goal(x)
