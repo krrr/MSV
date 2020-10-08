@@ -300,7 +300,7 @@ class PlayerController:
         time.sleep(self.set_skill_common_delay)
 
     def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
-        if time.time() - self.last_skill_use_time[skill_name] > skill_cd + random.randint(0, 14):
+        if time.time() - self.last_skill_use_time[skill_name] > skill_cd + random.randint(0, 6):
             if wait_before:
                 time.sleep(wait_before)
             for _ in range(2):
