@@ -337,9 +337,7 @@ class MacroController:
         # time.sleep(0.1)
 
         ### Other buffs
-        self.player_manager.holy_symbol()
-        self.player_manager.speed_infusion()
-        self.player_manager.haku_reborn()
+        self.buff_skills()
         time.sleep(0.05)
         ### End other buffs
 
@@ -354,6 +352,12 @@ class MacroController:
         # Finished
         self.loop_count += 1
         return 0
+
+    def buff_skills(self):
+        self.player_manager.holy_symbol()
+        self.player_manager.speed_infusion()
+        self.player_manager.haku_reborn()
+        self.player_manager.yuki_musume()
 
     def _rune_detect_solve(self):
         rune_coords = self.screen_processor.find_rune_marker()
@@ -421,7 +425,7 @@ class MacroController:
             return is_set
 
         if (self.terrain_analyzer.kishin_shoukan_coord and
-                time.time() - self.player_manager.last_kishin_shoukan_time > self.player_manager.kishin_shoukan_cooldown):
+                time.time() - self.player_manager.last_skill_use_time['kishin_shoukan'] > self.player_manager.kishin_shoukan_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
             if platform:
                 self.logger.info('placing kishin shoukan')
@@ -432,7 +436,7 @@ class MacroController:
                 self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
                 time.sleep(0.1)
                 self.player_manager.kishin_shoukan()
-                self.player_manager.last_kishin_shoukan_time = time.time()
+                self.player_manager.last_skill_use_time['kishin_shoukan'] = time.time()
 
                 self.player_manager.update()
                 self.current_platform_hash = self.find_current_platform()
@@ -441,7 +445,7 @@ class MacroController:
                     return is_set
 
         if (self.terrain_analyzer.yaksha_boss_coord and
-                time.time() - self.player_manager.last_yaksha_boss_time > self.player_manager.yaksha_boss_cooldown):
+                time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] > self.player_manager.yaksha_boss_cooldown):
             platform = self.find_coord_platform(self.terrain_analyzer.yaksha_boss_coord)
             if platform:
                 self.logger.info('placing yaksha boss')
@@ -454,7 +458,7 @@ class MacroController:
                 self.keyhandler.single_press(dc.DIK_RIGHT)
                 time.sleep(0.1)
                 self.player_manager.yaksha_boss()
-                self.player_manager.last_yaksha_boss_time = time.time()
+                self.player_manager.last_skill_use_time['yaksha_boss'] = time.time()
                 is_set = True
 
         self.loop_count += 1

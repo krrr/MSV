@@ -163,6 +163,7 @@ DEFAULT_KEY_MAP = {
     "holy_symbol": [dic.DIK_PRIOR, "Holy Symbol"],
     "speed_infusion": [dic.DIK_HOME, "Speed Infusion"],
     "haku_reborn": [dic.DIK_END, "Haku Reborn"],
+    "yuki_musume": [dic.DIK_1, "Yuki-musume Shoukan"],
     "interact": [dic.DIK_PERIOD, "Interact / Harvest"],
     "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"]
 }

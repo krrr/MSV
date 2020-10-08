@@ -50,10 +50,8 @@ class PlayerController:
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
 
-        self.last_yaksha_boss_time = 0
         self.yaksha_boss_cooldown = 30
 
-        self.last_kishin_shoukan_time = 0
         self.kishin_shoukan_cooldown = 60
         self.set_skill_common_delay = 1.4
 
@@ -63,9 +61,10 @@ class PlayerController:
         self.v_buff_cd = 180  # common cool down for v buff
         self.buff_common_delay = 2  # common delay for v buff
 
-        self.last_holy_symbol_time = 0
-        self.last_speed_infusion_time = 0
-        self.last_haku_reborn_time = 0
+        self.last_skill_use_time = {
+            'yaksha_boss': 0, 'kishin_shoukan': 0,
+            'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0
+        }
 
     def update(self, player_coords_x=None, player_coords_y=None):
         """
@@ -296,19 +295,19 @@ class PlayerController:
     def _use_set_skill(self, skill_name):
         for _ in range(2):
             self.key_mgr.single_press(self.keymap[skill_name], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
-        setattr(self, 'last_'+skill_name+'_time', time.time())
+        self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.set_skill_common_delay)
 
     def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
-        if time.time() - getattr(self, 'last_'+skill_name+'_time') > skill_cd + random.randint(0, 14):
+        if time.time() - self.last_skill_use_time[skill_name] > skill_cd + random.randint(0, 14):
             if wait_before:
                 time.sleep(wait_before)
             for _ in range(2):
                 self.key_mgr.single_press(self.keymap[skill_name], duration=0.25)
                 time.sleep(0.1)
             self.skill_cast_counter += 1
-            setattr(self, 'last_'+skill_name+'_time', time.time())
+            self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.buff_common_delay)
 
     def holy_symbol(self):
@@ -320,6 +319,9 @@ class PlayerController:
 
     def haku_reborn(self):
         self._use_buff_skill('haku_reborn', 500)
+
+    def yuki_musume(self):
+        self._use_buff_skill('yuki_musume', 75)
 
     def is_on_platform(self, platform, offset=0):
         return self.y == platform.start_y and (platform.start_x - offset) <= self.x <= (platform.end_x + offset)

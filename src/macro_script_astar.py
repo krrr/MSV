@@ -1,7 +1,7 @@
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import macro_script
-import logging, math, time, random
+import time, random
 
 
 class CustomLogger:
@@ -126,9 +126,7 @@ class MacroControllerAStar(macro_script.MacroController):
         # End inter-platform movement
 
         # Other buffs
-        self.player_manager.holy_symbol()
-        self.player_manager.speed_infusion()
-        self.player_manager.haku_reborn()
+        self.buff_skills()
         time.sleep(0.05)
 
         # set skills
@@ -138,8 +136,7 @@ class MacroControllerAStar(macro_script.MacroController):
         self.loop_count += 1
         return 0
 
-
-    def navigate_to_platform(self, platform_hash, rune_coords):
+    def navigate_to_platform(self, platform_hash):
         """
         Uses A* pathfinding to navigate to rune coord
         :return: None

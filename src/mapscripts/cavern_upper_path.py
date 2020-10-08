@@ -73,9 +73,7 @@ class CupMacroController(MacroController):
             self.navigate_to_platform('543f340d')
 
         ### Other buffs
-        self.player_manager.holy_symbol()
-        self.player_manager.speed_infusion()
-        self.player_manager.haku_reborn()
+        self.buff_skills()
         time.sleep(0.05)
 
         # Finished

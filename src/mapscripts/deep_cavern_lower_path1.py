@@ -52,9 +52,7 @@ class Dclp1MacroController(MacroController):
             self.navigate_to_platform('600f8ed9')  # center bottom
 
         ### Other buffs
-        self.player_manager.holy_symbol()
-        self.player_manager.speed_infusion()
-        self.player_manager.haku_reborn()
+        self.buff_skills()
         time.sleep(0.05)
 
         # Finished
