@@ -19,30 +19,16 @@ class MapleScreenCapturer:
 
     def ms_get_screen_rect(self, hwnd):
         """
-        Added compatibility code from
-        https://stackoverflow.com/questions/51786794/using-imagegrab-with-bbox-from-pywin32s-getwindowrect
+        Get client rect of game window
         :param hwnd: window handle from self.ms_get_screen_hwnd
         :return: window rect (x1, y1, x2, y2) of MS rect.
         """
-        try:
-            f = ctypes.windll.dwmapi.DwmGetWindowAttribute
-        except WindowsError:
-            f = None
+        rect = win32gui.GetClientRect(hwnd)
+        if rect[2] == 0:  # (0, 0, width, height)
+            return None
+        pos = win32gui.ClientToScreen(hwnd, (0, 0))
 
-        if f:  # Vista & 7 stuff
-            rect = ctypes.wintypes.RECT()
-            DWMWA_EXTENDED_FRAME_BOUNDS = 9
-            f(ctypes.wintypes.HWND(self.ms_get_screen_hwnd()),
-              ctypes.wintypes.DWORD(DWMWA_EXTENDED_FRAME_BOUNDS),
-              ctypes.byref(rect),
-              ctypes.sizeof(rect)
-              )
-            size = (rect.left, rect.top, rect.right, rect.bottom)
-        else:
-            if not hwnd:
-                hwnd = self.ms_get_screen_hwnd()
-            size = win32gui.GetWindowRect(hwnd)
-        return size  # returns x1, y1, x2, y2
+        return pos[0], pos[1], pos[0]+rect[2], pos[1]+rect[3]  # returns x1, y1, x2, y2
 
     def capture(self, set_focus=True, hwnd=None, rect=None):
         """Returns Maplestory window screenshot handle(not np.array!)
@@ -115,19 +101,19 @@ class StaticImageProcessor:
 
         self.maximum_minimap_area = 40000
 
-        self.default_minimap_scan_area = [0, 60, 400, 300]  # x1, y1, x2, y2
+        self.default_minimap_scan_area = [0, 50, 420, 260]  # x1, y1, x2, y2
 
         # Minimap player marker original BGR: 68, 221, 255
         self.lower_player_marker = np.array([67, 220, 254])  # B G R
         self.upper_player_marker = np.array([69, 222, 256])
-        self.lower_rune_marker = np.array([254, 101, 220]) # B G R
+        self.lower_rune_marker = np.array([254, 101, 220])  # B G R
         self.upper_rune_marker = np.array([255, 103, 222])
 
         self.hwnd = self.img_handle.ms_get_screen_hwnd()
         self.ms_screen_rect = None
+
         if self.hwnd:
             self.ms_screen_rect = self.img_handle.ms_get_screen_rect(self.hwnd)
-
         else:
             raise Exception("Could not find MapleStory window!!")
 
@@ -158,14 +144,11 @@ class StaticImageProcessor:
         cropped = self.gray_img[self.default_minimap_scan_area[1]:self.default_minimap_scan_area[3], self.default_minimap_scan_area[0]:self.default_minimap_scan_area[2]]
         blurred_img = cv2.GaussianBlur(cropped, (3,3), 3)
         morphed_img = cv2.erode(blurred_img, (7,7))
-        canny = cv2.Canny(morphed_img, threshold1=180, threshold2=255)
-        try:
-            im2, contours, hierachy = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        except:
-            contours, hierachy = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        canny = cv2.Canny(morphed_img, threshold1=180, threshold2=255)  # canny edge detect
+        contours, hierachy = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
-            biggest_contour = max(contours, key = cv2.contourArea)
-            if cv2.contourArea(biggest_contour) >= 100 and cv2.contourArea(biggest_contour) >= self.minimap_area and cv2.contourArea(biggest_contour) <= self.maximum_minimap_area:
+            biggest_contour = max(contours, key=cv2.contourArea)
+            if 100 <= cv2.contourArea(biggest_contour) <= self.maximum_minimap_area and cv2.contourArea(biggest_contour) >= self.minimap_area:
                 minimap_coords = cv2.boundingRect(biggest_contour)
                 if minimap_coords[0] > 0 and minimap_coords[1] > 0 and minimap_coords[2] > 0 and minimap_coords[2] > 0:
                     contour_area = cv2.contourArea(biggest_contour)
@@ -313,8 +296,10 @@ if __name__ == "__main__":
     dx = MapleScreenCapturer()
     hwnd = dx.ms_get_screen_hwnd()
     rect = dx.ms_get_screen_rect(hwnd)
+    print('ms rect:', rect)
     image = dx.capture(rect=rect)
     # image.show()
     processor = StaticImageProcessor(dx)
     processor.update_image()
-    print(processor.find_player_minimap_marker())
+    print('minimap rect:', processor.get_minimap_rect())
+    print('player_pos:', processor.find_player_minimap_marker())
