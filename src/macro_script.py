@@ -71,6 +71,8 @@ class MacroController:
         self.unstick_attempts_threshold = 5
         # If unstick after this amount fails to get us on a known platform, abort abort.
 
+        self.pickup_money_interval = 90
+
         self.logger.debug("%s init finished" % self.__class__.__name__)
 
     def load_and_process_platform_map(self, path):

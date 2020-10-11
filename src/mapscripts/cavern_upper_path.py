@@ -7,7 +7,7 @@ import directinput_constants as dc
 class CupMacroController(MacroController):
     def __init__(self, keymap, logger_queue):
         super().__init__(keymap=keymap, log_queue=logger_queue)
-        self.last_pickup_money_time = time.time() + 30
+        self.last_pickup_money_time = time.time()
         self.money_picked = False
 
     def loop(self):
@@ -25,7 +25,7 @@ class CupMacroController(MacroController):
 
         if self.current_platform_hash == '543f340d':  # center bottom
             # pickup money and go back
-            if time.time() - self.last_pickup_money_time > 80:
+            if time.time() - self.last_pickup_money_time > self.pickup_money_interval:
                 self.pickup_money()
                 self.last_pickup_money_time = time.time()
                 return

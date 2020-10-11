@@ -7,7 +7,7 @@ import directinput_constants as dc
 class Dclp1MacroController(MacroController):
     def __init__(self, keymap, logger_queue):
         super().__init__(keymap=keymap, log_queue=logger_queue)
-        self.last_pickup_money_time = time.time() + 30
+        self.last_pickup_money_time = time.time()
 
     def loop(self):
         self._loop_common_job()
@@ -33,7 +33,7 @@ class Dclp1MacroController(MacroController):
             self.player_manager.teleport_up()
         elif self.current_platform_hash == 'ab2972bd':  # center top
             # pickup money
-            if time.time() - self.last_pickup_money_time > 80:
+            if time.time() - self.last_pickup_money_time > self.pickup_money_interval:
                 self.pickup_money()
                 self.last_pickup_money_time = time.time()
                 return
