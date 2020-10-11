@@ -354,10 +354,14 @@ class MacroController:
         return 0
 
     def buff_skills(self):
-        self.player_manager.holy_symbol()
-        self.player_manager.speed_infusion()
-        self.player_manager.haku_reborn()
-        self.player_manager.yuki_musume()
+        delay = 0.35
+        # first buff skill to use, add extra delay
+        used = self.player_manager.holy_symbol(wait_before=delay)
+        # following skill should not add delay if already used any skill (any() for avoiding short-circuit)
+        used = any((used, self.player_manager.speed_infusion(wait_before=0 if used else delay)))
+        used = any((used, self.player_manager.haku_reborn(wait_before=0 if used else delay)))
+        used = any((used, self.player_manager.yuki_musume(wait_before=0 if used else delay)))
+        return used
 
     def _rune_detect_solve(self):
         rune_coords = self.screen_processor.find_rune_marker()

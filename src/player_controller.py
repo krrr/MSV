@@ -309,19 +309,21 @@ class PlayerController:
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.buff_common_delay)
+            return True
 
-    def holy_symbol(self):
-        # first buff skill to use, add extra delay
-        self._use_buff_skill('holy_symbol', self.v_buff_cd, 0.35)
+        return False
 
-    def speed_infusion(self):
-        self._use_buff_skill('speed_infusion', self.v_buff_cd)
+    def holy_symbol(self, wait_before=0):
+        return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
 
-    def haku_reborn(self):
-        self._use_buff_skill('haku_reborn', 500)
+    def speed_infusion(self, wait_before=0):
+        return self._use_buff_skill('speed_infusion', self.v_buff_cd, wait_before)
 
-    def yuki_musume(self):
-        self._use_buff_skill('yuki_musume', 75)
+    def haku_reborn(self, wait_before=0):
+        return self._use_buff_skill('haku_reborn', 500, wait_before)
+
+    def yuki_musume(self, wait_before=0):
+        return self._use_buff_skill('yuki_musume', 75, wait_before)
 
     def is_on_platform(self, platform, offset=0):
         return self.y == platform.start_y and (platform.start_x - offset) <= self.x <= (platform.end_x + offset)
