@@ -7,7 +7,7 @@ import directinput_constants as dc
 class Dclp1MacroController(MacroController):
     def __init__(self, keymap, logger_queue):
         super().__init__(keymap=keymap, log_queue=logger_queue)
-        self.last_pickup_money_time = time.time()
+        self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
         self._loop_common_job()
