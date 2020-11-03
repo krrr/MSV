@@ -41,6 +41,9 @@ class MoveMethod(enum.Enum):
     MOVER = 8
     MOVEL = 9
 
+    def __str__(self):
+        return self._name_
+
 
 class Platform:
     def __init__(self, start_x=None, start_y=None, end_x=None, end_y=None, hash=None):
