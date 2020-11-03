@@ -63,7 +63,7 @@ class KeyBindSetupWindow(tk.Toplevel):
         for key, value in keysym_map.items():
             if event.keysym == key or str(event.keysym).lower() == key:
                 self.keymap_data[key_name] = [value, self.keymap_data[key_name][1]]
-                self.labels[key_name].set(key)
+                self.labels[key_name].set(key.upper())
                 found = True
                 break
         if not found:
@@ -81,7 +81,7 @@ class KeyBindSetupWindow(tk.Toplevel):
     def dik2keysym(self, dik):
         for keysym, _dik in keysym_map.items():
             if dik == _dik:
-                return keysym
+                return keysym.upper()
 
     def read_keymap_file(self):
         return get_config().get('keymap') or DEFAULT_KEY_MAP.copy()
