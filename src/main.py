@@ -7,7 +7,7 @@ import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
 
 from tkinter.constants import *
-from tkinter.messagebox import showerror, showwarning
+from tkinter.messagebox import showerror
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
@@ -184,33 +184,41 @@ class MainScreen(tk.Frame):
         self.after(1000, self.check_input_queue)
 
     def start_macro(self):
+        if not ctypes.windll.shell32.IsUserAnAdmin():
+            showerror(APP_TITLE, 'Please run as administrator')
+            return
+
         if not self.macro_process:
             self.toggle_macro_process()
         keymap = get_config().get('keymap')
         if not keymap:
             showerror(APP_TITLE, "The key setting could not be read. Please reset the key.")
-        else:
-            if not self.platform_file_path.get():
-                showwarning(APP_TITLE, "Please select a terrain file.")
-            else:
-                if not MapleScreenCapturer().ms_get_screen_hwnd():
-                    showwarning(APP_TITLE, "MapleStory window not found")
-                else:
-                    cap = MapleScreenCapturer()
-                    hwnd = cap.ms_get_screen_hwnd()
-                    rect = cap.ms_get_screen_rect(hwnd)
-                    self.log("MS hwnd", hwnd)
-                    self.log("MS rect", rect)
-                    self.log("Out Queue put:", self.platform_file_path.get())
-                    if rect[0] < 0 or rect[1] < 0:
-                        showwarning(APP_TITLE, "Failed to get Maple Window location.\nMove MapleStory window so"
-                                               "that the top left corner of the window is within the screen.")
-                    else:
-                        cap.capture()
-                        self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get()))
-                        self.macro_start_button.configure(state=DISABLED)
-                        self.macro_end_button.configure(state=NORMAL)
-                        self.platform_file_button.configure(state=DISABLED)
+            return
+
+        if not self.platform_file_path.get():
+            showerror(APP_TITLE, "Please select a terrain file.")
+            return
+
+        cap = MapleScreenCapturer()
+        cap.hwnd = cap.ms_get_screen_hwnd()
+        if not cap.hwnd:
+            showerror(APP_TITLE, "MapleStory window not found")
+            return
+
+        rect = cap.ms_get_screen_rect(cap.hwnd)
+        self.log("MS hwnd", cap.hwnd)
+        self.log("MS rect", rect)
+        self.log("Out Queue put:", self.platform_file_path.get())
+        if rect[0] < 0 or rect[1] < 0:
+            showerror(APP_TITLE, "Failed to get Maple Window location.\nMove MapleStory window so"
+                                 "that the top left corner of the window is within the screen.")
+            return
+
+        cap.capture()
+        self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get()))
+        self.macro_start_button.configure(state=DISABLED)
+        self.macro_end_button.configure(state=NORMAL)
+        self.platform_file_button.configure(state=DISABLED)
 
     def stop_macro(self):
         self.macro_process_out_queue.put(("stop",))
