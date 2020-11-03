@@ -1,4 +1,7 @@
-# -*- coding:utf-8 -*-
+import sys
+if sys.path[0].endswith('.zip'):  # python embeddable version
+    sys.path.insert(0, '')
+
 import logging
 import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
@@ -29,11 +32,6 @@ default_logger.addHandler(fh)
 
 APP_TITLE = "MSV Kanna Ver"
 VERSION = 0.2
-
-
-def destroy_child_widgets(parent):
-    for child in parent.winfo_children():
-        child.destroy()
 
 
 def macro_loop(input_queue, output_queue):
@@ -78,9 +76,8 @@ def macro_loop(input_queue, output_queue):
 
 class MainScreen(tk.Frame):
     def __init__(self, master):
+        super().__init__(master)
         self.master = master
-        destroy_child_widgets(self.master)
-        tk.Frame.__init__(self, master)
         self.pack(expand=YES, fill=BOTH)
 
         self._menubar = tk.Menu()
@@ -315,7 +312,7 @@ you acknowledge that the developers are not liable for any damages caused to you
 ''' % (VERSION,))
 
 
-if __name__ == "__main__":
+def main():
     ctypes.windll.user32.SetProcessDPIAware()
 
     multiprocessing.freeze_support()
@@ -337,3 +334,7 @@ if __name__ == "__main__":
     if geo:
         root.geometry(geo)
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
