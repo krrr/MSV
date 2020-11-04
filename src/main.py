@@ -136,9 +136,11 @@ class MainScreen(ttk.Frame):
         ttk.Label(self.macro_info_frame, textvariable=self.platform_file_name).grid(row=1, column=1, sticky=W, padx=5)
         self.platform_file_button = ttk.Button(self.macro_info_frame, text="Open...", command=self.on_platform_file_select)
         self.platform_file_button.grid(row=1, column=2, sticky=N+S+E+W)
+        self.platform_file_button.config(width=8)
         self.internal_platform_button = ttk.Button(self.macro_info_frame, text="Presets", command=self.on_internal_platform_select)
         self.internal_platform_button.grid(row=1, column=3, sticky=N+S+E+W)
-
+        for i in (self.macro_process_toggle_button, self.platform_file_button, self.internal_platform_button):
+            i.config(width=8)
 
         self.macro_info_frame.grid_columnconfigure(1, weight=1)
 
@@ -177,6 +179,7 @@ class MainScreen(ttk.Frame):
                 self.macro_running = False
                 self.macro_toggle_button.configure(text="Start Macro")
                 self.platform_file_button.configure(state=NORMAL)
+                self.internal_platform_button.configure(state=NORMAL)
                 self.macro_process = None
                 self.macro_pid = 0
                 self.macro_process_toggle_button.configure(state=NORMAL)
@@ -223,6 +226,7 @@ class MainScreen(ttk.Frame):
         self.macro_running = True
         self.macro_toggle_button.configure(text="Stop Macro")
         self.platform_file_button.configure(state=DISABLED)
+        self.internal_platform_button.configure(state=DISABLED)
 
     def stop_macro(self):
         self.macro_process_out_queue.put(("stop",))
@@ -230,6 +234,7 @@ class MainScreen(ttk.Frame):
         self.macro_running = False
         self.macro_toggle_button.configure(text="Start Macro")
         self.platform_file_button.configure(state=NORMAL)
+        self.internal_platform_button.configure(state=NORMAL)
 
     def log(self, *args):
         res_txt = []
