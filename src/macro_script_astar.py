@@ -79,28 +79,12 @@ class MacroControllerAStar(macro_script.MacroController):
             self.unstick_attempts = 0
             self.current_platform_hash = get_current_platform
 
-        # Rune Detector
         self.player_manager.update()
-        rune_coords = self.screen_processor.find_rune_marker()
-        rune_platform_hash = self.find_coord_platform(rune_coords) if rune_coords else None
-        if rune_platform_hash:
-            self.logger.debug("need to solve rune at platform {0}".format(rune_platform_hash))
-            rune_solve_time_offset = (time.time() - self.player_manager.last_rune_solve_time)
-            if rune_solve_time_offset >= self.player_manager.rune_cooldown or rune_solve_time_offset <= 30:
-                self.navigate_to_platform(rune_platform_hash, rune_coords)
-                time.sleep(1)
-                self.keyhandler.single_press(dc.DIK_PERIOD)
-                time.sleep(1.5)
-                solve_result = self.rune_solver.solve_auto()
-                self.logger.debug("rune_solver.solve_auto results: %d" % (solve_result))
-                if solve_result == -1:
-                    self.logger.debug("rune_solver.solve_auto failed to solve")
-                    for x in range(4):
-                        self.keyhandler.single_press(dc.DIK_LEFT)
 
-                self.player_manager.last_rune_solve_time = time.time()
-                self.current_platform_hash = rune_platform_hash
-                time.sleep(0.5)
+        # Rune Detector
+        self._rune_detect_solve()
+        if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
+            return
         # End Rune Detector
 
         # Start inter-platform movement
