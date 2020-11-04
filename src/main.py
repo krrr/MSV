@@ -103,6 +103,7 @@ class MainScreen(tk.Frame):
 
         self.keymap = None
 
+        self.macro_running = False
         self.macro_pid = 0
         self.macro_process = None
         self.macro_process_out_queue = multiprocessing.Queue()
@@ -131,10 +132,9 @@ class MainScreen(tk.Frame):
         self.internal_platform_button = tk.Button(self.macro_info_frame, text="Presets", command=self.on_internal_platform_select)
         self.internal_platform_button.grid(row=1, column=3, sticky=N+S+E+W)
 
-        self.macro_start_button = tk.Button(self.macro_info_frame, text="Start botting", fg="green", command=self.start_macro)
-        self.macro_start_button.grid(row=2, column=0, sticky=N+S+E+W)
-        self.macro_end_button = tk.Button(self.macro_info_frame, text="Stop botting", fg="red", command=self.stop_macro, state=DISABLED)
-        self.macro_end_button.grid(row=2, column=1, sticky=N + S + E + W)
+        self.macro_toggle_button = tk.Button(self.macro_info_frame, text="Start macro",
+                                             command=lambda: self.stop_macro() if self.macro_running else self.start_macro())
+        self.macro_toggle_button.grid(row=2, column=0, sticky=N + S + E + W)
 
         for x in range(5):
             self.macro_info_frame.grid_columnconfigure(x, weight=1)
@@ -170,8 +170,8 @@ class MainScreen(tk.Frame):
             elif output[0] == "stopped":
                 self.log("Bot process has ended.")
             elif output[0] == "exception":
-                self.macro_end_button.configure(state=DISABLED)
-                self.macro_start_button.configure(state=NORMAL)
+                self.macro_running = False
+                self.macro_toggle_button.configure(text="Start macro")
                 self.platform_file_button.configure(state=NORMAL)
                 self.macro_process = None
                 self.macro_pid = 0
@@ -216,15 +216,15 @@ class MainScreen(tk.Frame):
 
         cap.capture()
         self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get()))
-        self.macro_start_button.configure(state=DISABLED)
-        self.macro_end_button.configure(state=NORMAL)
+        self.macro_running = True
+        self.macro_toggle_button.configure(text="Stop macro")
         self.platform_file_button.configure(state=DISABLED)
 
     def stop_macro(self):
         self.macro_process_out_queue.put(("stop",))
         self.log("Bot stop request completed. Please wait for a while.")
-        self.macro_end_button.configure(state=DISABLED)
-        self.macro_start_button.configure(state=NORMAL)
+        self.macro_running = False
+        self.macro_toggle_button.configure(text="Start macro")
         self.platform_file_button.configure(state=NORMAL)
 
     def log(self, *args):
@@ -248,19 +248,18 @@ class MainScreen(tk.Frame):
             self.macro_process = p
             p.start()
             self.macro_pid = p.pid
-            self.log("Process creation complete (pid: %d)"%(self.macro_pid))
-            self.macro_pid_infotext.set("Executed (%d)"%(self.macro_pid))
+            self.log("Process creation complete (pid: %d)" % self.macro_pid)
+            self.macro_pid_infotext.set("Executed (%d)" % self.macro_pid)
             self.macro_process_label.configure(fg="green")
             self.macro_process_toggle_button.configure(state=NORMAL)
             self.macro_process_toggle_button.configure(text="Stop")
-
         else:
             self.stop_macro()
             self.macro_process_toggle_button.configure(state=DISABLED)
             self.macro_pid_infotext.set("Stopping..")
             self.macro_process_label.configure(fg="orange")
 
-            self.log("SIGTERM %d"%(self.macro_pid))
+            self.log("SIGTERM %d" % self.macro_pid)
             os.kill(self.macro_pid, signal.SIGTERM)
             self.log("Process terminated")
             self.macro_process = None
@@ -271,7 +270,8 @@ class MainScreen(tk.Frame):
             self.macro_process_toggle_button.configure(text="Run")
 
     def on_platform_file_select(self):
-        platform_file_path = askopenfilename(initialdir=os.getcwd(), title="Terrain file selection", filetypes=(("terrain file (*.platform)", "*.platform"),))
+        platform_file_path = askopenfilename(initialdir=os.getcwd(), title="Terrain file selection",
+                                             filetypes=(("terrain file (*.platform)", "*.platform"),))
         if platform_file_path and os.path.exists(platform_file_path):
             self.set_platform_file(platform_file_path)
             get_config()['platform_file'] = platform_file_path
@@ -313,6 +313,7 @@ class MainScreen(tk.Frame):
     def _popup_about(self):
         tk.messagebox.showinfo('About', '''\
 Version: v%s
+Author: Dashadower, krrr
 Source code: https://github.com/krrr/MSV-Kanna-Ver
 
 Please be known that using this bot may get your account banned. By using this software,
