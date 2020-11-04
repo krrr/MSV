@@ -6,6 +6,7 @@ import logging
 import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
 
+from tkinter import ttk
 from tkinter.constants import *
 from tkinter.messagebox import showerror
 from tkinter.filedialog import askopenfilename
@@ -74,7 +75,7 @@ def macro_loop(input_queue, output_queue):
         output_queue.put(["exception", "exception"])
 
 
-class MainScreen(tk.Frame):
+class MainScreen(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
@@ -115,29 +116,32 @@ class MainScreen(tk.Frame):
         self.log_text_area = ScrolledText(self, height=10, width=20)
         self.log_text_area.pack(side=BOTTOM, expand=YES, fill=BOTH)
         self.log_text_area.bind("<Key>", lambda e: "break")
-        self.macro_info_frame = tk.Frame(self, borderwidth=1, relief=GROOVE)
-        self.macro_info_frame.pack(side=BOTTOM, anchor=S, expand=YES, fill=BOTH)
 
-        tk.Label(self.macro_info_frame, text="Bot process status:").grid(row=0, column=0)
+        self.action_btn_frame = ttk.Frame(self)
+        self.action_btn_frame.pack(side=BOTTOM, anchor=S, expand=NO, fill=BOTH, pady=5)
+        self.macro_toggle_button = ttk.Button(self.action_btn_frame, text="Start Macro", width=21,
+                                              command=lambda: self.stop_macro() if self.macro_running else self.start_macro())
+        self.macro_toggle_button.pack()
+
+        self.macro_info_frame = ttk.Frame(self, borderwidth=4, relief=GROOVE)
+        self.macro_info_frame.pack(side=BOTTOM, anchor=S, expand=NO, fill=BOTH)
+
+        ttk.Label(self.macro_info_frame, text="Bot process status:").grid(row=0, column=0)
 
         self.macro_process_label = tk.Label(self.macro_info_frame, textvariable=self.macro_pid_infotext, fg="red")
-        self.macro_process_label.grid(row=0, column=1, sticky=N+S+E+W)
-        self.macro_process_toggle_button = tk.Button(self.macro_info_frame, text="Run", command=self.toggle_macro_process)
+        self.macro_process_label.grid(row=0, column=1, sticky=W, padx=5)
+        self.macro_process_toggle_button = ttk.Button(self.macro_info_frame, text="Run", command=self.toggle_macro_process)
         self.macro_process_toggle_button.grid(row=0, column=2, sticky=N+S+E+W)
-
-        tk.Label(self.macro_info_frame, text="Terrain file:").grid(row=1, column=0, sticky=N+S+E+W)
-        tk.Label(self.macro_info_frame, textvariable=self.platform_file_name).grid(row=1, column=1, sticky=N+S+E+W)
-        self.platform_file_button = tk.Button(self.macro_info_frame, text="Open...", command=self.on_platform_file_select)
+        ttk.Label(self.macro_info_frame, text="Terrain file:").grid(row=1, column=0, sticky=N+S+E+W)
+        ttk.Label(self.macro_info_frame, textvariable=self.platform_file_name).grid(row=1, column=1, sticky=W, padx=5)
+        self.platform_file_button = ttk.Button(self.macro_info_frame, text="Open...", command=self.on_platform_file_select)
         self.platform_file_button.grid(row=1, column=2, sticky=N+S+E+W)
-        self.internal_platform_button = tk.Button(self.macro_info_frame, text="Presets", command=self.on_internal_platform_select)
+        self.internal_platform_button = ttk.Button(self.macro_info_frame, text="Presets", command=self.on_internal_platform_select)
         self.internal_platform_button.grid(row=1, column=3, sticky=N+S+E+W)
 
-        self.macro_toggle_button = tk.Button(self.macro_info_frame, text="Start macro",
-                                             command=lambda: self.stop_macro() if self.macro_running else self.start_macro())
-        self.macro_toggle_button.grid(row=2, column=0, sticky=N + S + E + W)
 
-        for x in range(5):
-            self.macro_info_frame.grid_columnconfigure(x, weight=1)
+        self.macro_info_frame.grid_columnconfigure(1, weight=1)
+
         self.log("MS-Visionify Kanna Ver v" + str(VERSION))
         self.log('\n')
 
@@ -171,7 +175,7 @@ class MainScreen(tk.Frame):
                 self.log("Bot process has ended.")
             elif output[0] == "exception":
                 self.macro_running = False
-                self.macro_toggle_button.configure(text="Start macro")
+                self.macro_toggle_button.configure(text="Start Macro")
                 self.platform_file_button.configure(state=NORMAL)
                 self.macro_process = None
                 self.macro_pid = 0
@@ -217,14 +221,14 @@ class MainScreen(tk.Frame):
         cap.capture()
         self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get()))
         self.macro_running = True
-        self.macro_toggle_button.configure(text="Stop macro")
+        self.macro_toggle_button.configure(text="Stop Macro")
         self.platform_file_button.configure(state=DISABLED)
 
     def stop_macro(self):
         self.macro_process_out_queue.put(("stop",))
         self.log("Bot stop request completed. Please wait for a while.")
         self.macro_running = False
-        self.macro_toggle_button.configure(text="Start macro")
+        self.macro_toggle_button.configure(text="Start Macro")
         self.platform_file_button.configure(state=NORMAL)
 
     def log(self, *args):

@@ -38,8 +38,8 @@ class KeyBindSetupWindow(tk.Toplevel):
 
             keycount += 1
 
-        ttk.Button(self, text="Restore default", command=self.set_default_keymap).grid(row=keycount, column=0)
-        ttk.Button(self, text="Save", command=self.onSave).grid(row=keycount, column=1)
+        ttk.Button(self, text="Restore default", command=self.set_default_keymap).grid(row=keycount, column=0, pady=8)
+        ttk.Button(self, text="Save", command=self.onSave).grid(row=keycount, column=1, pady=8)
         self.focus_set()
 
     def set_default_keymap(self):
