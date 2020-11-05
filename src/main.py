@@ -54,11 +54,9 @@ def macro_loop(input_queue, output_queue):
             logger.debug("received command {}".format(command))
             if command[0] == "start":
                 logger.debug("starting MacroController...")
-                keymap = command[1]
-                platform_file_dir = command[2]
-                if platform_file_dir.find('mapscripts/') != -1:
-                    name = os.path.splitext(os.path.basename(platform_file_dir))[0]
-                    macro = mapscripts.map_scripts[name](keymap, output_queue)
+                keymap, platform_file_dir, preset = command[1:]
+                if preset:
+                    macro = mapscripts.map_scripts[preset](keymap, output_queue)
                 else:
                     macro = MacroController(keymap, log_queue=output_queue)
                 macro.load_and_process_platform_map(platform_file_dir)
@@ -134,13 +132,17 @@ class MainScreen(ttk.Frame):
         self.macro_process_toggle_button.grid(row=0, column=2, sticky=N+S+E+W)
         ttk.Label(self.macro_info_frame, text="Terrain file:").grid(row=1, column=0, sticky=N+S+E+W)
         ttk.Label(self.macro_info_frame, textvariable=self.platform_file_name).grid(row=1, column=1, sticky=W, padx=5)
-        self.platform_file_button = ttk.Button(self.macro_info_frame, text="Open...", command=self.on_platform_file_select)
+        self.platform_file_button = ttk.Button(self.macro_info_frame, text="Open...", command=self._on_platform_file_select)
         self.platform_file_button.grid(row=1, column=2, sticky=N+S+E+W)
         self.platform_file_button.config(width=8)
-        self.internal_platform_button = ttk.Button(self.macro_info_frame, text="Presets", command=self.on_internal_platform_select)
-        self.internal_platform_button.grid(row=1, column=3, sticky=N+S+E+W)
-        for i in (self.macro_process_toggle_button, self.platform_file_button, self.internal_platform_button):
+        for i in (self.macro_process_toggle_button, self.platform_file_button):
             i.config(width=8)
+
+        ttk.Label(self.macro_info_frame, text="Preset:").grid(row=2, column=0, sticky=N+S+E+W)
+        self.preset_names = list(mapscripts.map_scripts.keys())
+        self.preset_combobox = ttk.Combobox(self.macro_info_frame, values=self.preset_names, state="readonly")
+        self.preset_combobox.grid(row=2, column=1, columnspan=2, sticky=W, padx=5)
+        self.preset_combobox.bind("<<ComboboxSelected>>", self._on_preset_platform_set)
 
         self.macro_info_frame.grid_columnconfigure(1, weight=1)
 
@@ -150,6 +152,13 @@ class MainScreen(ttk.Frame):
         last_opened_platform_file = get_config().get('platform_file')
         if last_opened_platform_file and os.path.isfile(last_opened_platform_file):
             self.set_platform_file(last_opened_platform_file)
+        selected_preset = get_config().get('preset')
+
+        if selected_preset is not None:
+            try:
+                self.preset_combobox.current(self.preset_names.index(selected_preset))
+            except tk.TclError:
+                pass
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(500, self.toggle_macro_process)
@@ -179,7 +188,7 @@ class MainScreen(ttk.Frame):
                 self.macro_running = False
                 self.macro_toggle_button.configure(text="Start Macro")
                 self.platform_file_button.configure(state=NORMAL)
-                self.internal_platform_button.configure(state=NORMAL)
+                self.preset_combobox.configure(state=NORMAL)
                 self.macro_process = None
                 self.macro_pid = 0
                 self.macro_process_toggle_button.configure(state=NORMAL)
@@ -222,11 +231,11 @@ class MainScreen(ttk.Frame):
             return
 
         cap.capture()
-        self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get()))
+        self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
         self.macro_running = True
         self.macro_toggle_button.configure(text="Stop Macro")
         self.platform_file_button.configure(state=DISABLED)
-        self.internal_platform_button.configure(state=DISABLED)
+        self.preset_combobox.configure(state=DISABLED)
 
     def stop_macro(self):
         self.macro_process_out_queue.put(("stop",))
@@ -234,7 +243,7 @@ class MainScreen(ttk.Frame):
         self.macro_running = False
         self.macro_toggle_button.configure(text="Start Macro")
         self.platform_file_button.configure(state=NORMAL)
-        self.internal_platform_button.configure(state=NORMAL)
+        self.preset_combobox.configure(state=NORMAL)
 
     def log(self, *args):
         res_txt = []
@@ -278,24 +287,26 @@ class MainScreen(ttk.Frame):
             self.macro_process_label.configure(fg="red")
             self.macro_process_toggle_button.configure(text="Run")
 
-    def on_platform_file_select(self):
+    def _on_platform_file_select(self):
         platform_file_path = askopenfilename(initialdir=os.getcwd(), title="Terrain file selection",
                                              filetypes=(("terrain file (*.platform)", "*.platform"),))
         if platform_file_path and os.path.exists(platform_file_path):
             self.set_platform_file(platform_file_path)
             get_config()['platform_file'] = platform_file_path
+            if self.preset_combobox.current() != -1:
+                self.preset_combobox.set('')
+                get_config()['preset'] = None
 
-    def on_internal_platform_select(self):
-        menu = tk.Menu(self.master, tearoff=0)
-        for i in mapscripts.map_scripts:
-            menu.add_command(label=i, command=lambda: self._on_preset_platform_set(i))
-
-        menu.post(self.internal_platform_button.winfo_rootx(), self.internal_platform_button.winfo_rooty() + self.internal_platform_button.winfo_height())
-
-    def _on_preset_platform_set(self, name):
-        path = 'mapscripts/' + name + '.platform'
+    def _on_preset_platform_set(self, __):
+        preset = self._get_preset()
+        get_config()['preset'] = preset
+        path = 'mapscripts/' + mapscripts.map2platform[preset] + '.platform'
         self.set_platform_file(path)
         get_config()['platform_file'] = path
+
+    def _get_preset(self):
+        idx = self.preset_combobox.current()
+        return self.preset_names[idx] if idx != -1 else None
 
     def set_platform_file(self, path):
         with open(path, "rb") as f:
