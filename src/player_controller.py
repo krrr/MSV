@@ -286,6 +286,12 @@ class PlayerController:
         if wait_delay:
             time.sleep(self.shikigami_haunting_delay)
 
+    def exorcist_charm(self, wait_delay=True):
+        self.key_mgr.single_press(self.keymap["exorcist_charm"])
+        self.skill_cast_counter += 1
+        if wait_delay:
+            time.sleep(1.1 + abs(self.random_duration(0.01)))
+
     def kishin_shoukan(self):
         self._use_set_skill('kishin_shoukan')
 

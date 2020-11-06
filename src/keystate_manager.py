@@ -165,6 +165,7 @@ DEFAULT_KEY_MAP = {
     "haku_reborn": [dic.DIK_END, "Haku Reborn"],
     "yuki_musume": [dic.DIK_1, "Yuki-musume Shoukan"],
     "interact": [dic.DIK_PERIOD, "Interact / Harvest"],
-    "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"]
+    "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"],
+    "exorcist_charm": [dic.DIK_Y, "Exorcist Charm"]
 }
 
