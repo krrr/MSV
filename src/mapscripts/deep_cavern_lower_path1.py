@@ -60,6 +60,10 @@ class Dclp1MacroController(MacroController):
         return 0
 
     def pickup_money(self):
+        if self.player_manager.keymap['mihaha_link'] is not None:
+            self.keyhandler.single_press(self.player_manager.keymap['mihaha_link'])
+            time.sleep(0.2)
+
         # at center top now
         # right platforms first
         self.logger.info('pick up money')

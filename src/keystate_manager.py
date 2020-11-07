@@ -166,6 +166,7 @@ DEFAULT_KEY_MAP = {
     "yuki_musume": [dic.DIK_1, "Yuki-musume Shoukan"],
     "interact": [dic.DIK_PERIOD, "Interact / Harvest"],
     "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"],
-    "exorcist_charm": [dic.DIK_Y, "Exorcist Charm"]
+    "exorcist_charm": [dic.DIK_Y, "Exorcist Charm"],
+    "mihaha_link": [None, "Mihaha Link"]
 }
 

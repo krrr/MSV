@@ -32,7 +32,7 @@ default_logger.addHandler(fh)
 
 
 APP_TITLE = "MSV Kanna Ver"
-VERSION = 0.2
+VERSION = 0.3
 
 
 def macro_loop(input_queue, output_queue):

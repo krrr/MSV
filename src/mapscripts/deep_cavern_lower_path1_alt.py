@@ -31,7 +31,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
             if not (72 <= self.player_manager.x <= 75):
                 self.player_manager.horizontal_move_goal(73)
 
-            self.keyhandler.single_press(dc.DIK_RIGHT)
+            self.keyhandler.single_press(dc.DIK_RIGHT if self.player_manager.x < 73.5 else dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
             self.player_manager.exorcist_charm()
         elif self.current_platform_hash == '600f8ed9':  # center bottom
