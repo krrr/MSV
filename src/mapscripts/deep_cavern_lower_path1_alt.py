@@ -33,13 +33,15 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
 
             self.keyhandler.single_press(dc.DIK_RIGHT if self.player_manager.x < 73.5 else dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
-            self.player_manager.exorcist_charm()
+            self.player_manager.exorcist_charm(False)
+            time.sleep(1.1 + abs(self.player_manager.random_duration(0.04)))
         elif self.current_platform_hash == '600f8ed9':  # center bottom
             self.player_manager.shikigami_haunting_sweep_move(70)
             self.player_manager.teleport_up()
         elif self.current_platform_hash == 'ab2972bd':  # center top
-            self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].start_x + 5)
-            self.player_manager.jumpl()
+            left_edge = self.terrain_analyzer.platforms['ab2972bd'].start_x
+            self.player_manager.shikigami_haunting_sweep_move(left_edge + 5)
+            self.player_manager.horizontal_move_goal(left_edge - 4)
         else:
             self.navigate_to_platform('b0d5f01d')  # left middle
 

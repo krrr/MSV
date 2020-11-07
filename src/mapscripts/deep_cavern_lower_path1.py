@@ -78,6 +78,11 @@ class Dclp1MacroController(MacroController):
 
         self.navigate_to_platform('600f8ed9')  # center bottom
 
+        # Quick other player sound notify
+        self.screen_processor.update_image(set_focus=False)
+        if self.screen_processor.find_other_player_marker():
+            self.alert_sound()
+
         # then left platforms
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].start_x + 6)
         self.navigate_to_platform('ab2972bd')  # center top
