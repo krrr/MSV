@@ -23,7 +23,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
         # pickup money
         if time.time() - self.last_pickup_money_time > self.pickup_money_interval:
             self.navigate_to_platform('ab2972bd')  # center top
-            self.pickup_money()
+            self.pickup_money(True)
             self.last_pickup_money_time = time.time()
             return
 

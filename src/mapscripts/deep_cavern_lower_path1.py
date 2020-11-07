@@ -59,8 +59,8 @@ class Dclp1MacroController(MacroController):
         self.loop_count += 1
         return 0
 
-    def pickup_money(self):
-        if self.player_manager.keymap['mihaha_link'] is not None:
+    def pickup_money(self, return1=False):
+        if self.player_manager.keymap.get('mihaha_link') is not None:
             self.keyhandler.single_press(self.player_manager.keymap['mihaha_link'])
             time.sleep(0.2)
 
@@ -92,6 +92,10 @@ class Dclp1MacroController(MacroController):
         time.sleep(0.15 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].end_x + 5)  # left top
         self.player_manager.shikigami_haunting()
+
+        if return1:  # alternative preset will stay at left middle platform
+            return
+
         time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['b0d5f01d'].start_x - 5)  # left middle
         time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
