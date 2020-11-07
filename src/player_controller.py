@@ -338,7 +338,8 @@ class PlayerController:
         return self._use_buff_skill('yuki_musume', 75, wait_before)
 
     def is_on_platform(self, platform, offset=0):
-        return self.y == platform.start_y and (platform.start_x - offset) <= self.x <= (platform.end_x + offset)
+        return (platform.start_y <= self.y <= platform.start_y + offset  # may being kicked by monster
+                and (platform.start_x - offset) <= self.x <= (platform.end_x + offset))
 
     def random_duration(self, gen_range=0.1, digits=2):
         """

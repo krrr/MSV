@@ -46,7 +46,7 @@ class MacroController:
         self.current_platform_hash = None
         self.goal_platform_hash = None
 
-        self.platform_error = 3  # If y value is same as a platform and within 3 pixels of platform border, consider to be on said platform
+        self.platform_error = 3  # if x within 3 pixels of platform border, consider to be on said platform
 
         self.rune_model_path = rune_model_dir
         # self.rune_solver = rs.RuneDetectorSimple(self.rune_model_path, screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
