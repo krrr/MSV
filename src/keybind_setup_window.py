@@ -20,20 +20,20 @@ class KeyBindSetupWindow(tk.Toplevel):
         self.keymap_data = self.read_keymap_file()
         self.labels = {}
         keycount = 0
-        _keyname = ""
 
         ttk.Style().configure("KEY.TLabel", borderwidth=1, relief=SOLID, padx=2)
         ttk.Style().configure("KEY.TButton", borderwidth=1, relief=SOLID)
 
         self.columnconfigure(1, weight=1, minsize=150)
         self.columnconfigure(0, weight=1)
-        for keyname, value in self.keymap_data.items():
-            dik_code, kor_name = value
-            ttk.Label(self, text=kor_name, style='KEY.TLabel').grid(row=keycount, column=0, sticky=N+S+E+W, pady=5, padx=(5,0))
+        for keyname, value in DEFAULT_KEY_MAP.items():
+            ttk.Label(self, text=value[1], style='KEY.TLabel').grid(row=keycount, column=0, sticky=N+S+E+W, pady=5, padx=(5,0))
+            self.labels[keyname] = tk.StringVar()
+            saved = self.keymap_data.get(keyname)
+            if saved and saved[0] is not None:
+                self.labels[keyname].set(self.dik2keysym(saved[0]))
             _keyname = keyname
-            self.labels[_keyname] = tk.StringVar()
-            self.labels[_keyname].set(self.dik2keysym(dik_code))
-            ttk.Button(self, textvariable=self.labels[_keyname], command=lambda _keyname=_keyname: self.set_key(_keyname)).grid(row=keycount, column=1, sticky=N+S+E+W, pady=5, padx=(0,5))
+            ttk.Button(self, textvariable=self.labels[keyname], command=lambda k=_keyname: self.set_key(k)).grid(row=keycount, column=1, sticky=N+S+E+W, pady=5, padx=(0,5))
             self.rowconfigure(keycount, weight=1)
 
             keycount += 1
@@ -51,7 +51,7 @@ class KeyBindSetupWindow(tk.Toplevel):
         try:
             dik = keysym_map[keysym]
             return dik
-        except:
+        except Exception:
             return 0
 
     def onSave(self):
@@ -59,22 +59,26 @@ class KeyBindSetupWindow(tk.Toplevel):
         self.destroy()
 
     def on_press(self, event,  key_name):
-        found = False
-        for key, value in keysym_map.items():
-            if event.keysym == key or str(event.keysym).lower() == key:
-                self.keymap_data[key_name] = [value, self.keymap_data[key_name][1]]
-                self.labels[key_name].set(key.upper())
-                found = True
-                break
-        if not found:
-            showwarning("key config", "unsupported key: " + str(event.keysym))
-            self.keymap_data[key_name] = DEFAULT_KEY_MAP[key_name]
-            self.labels[key_name].set(self.dik2keysym(DEFAULT_KEY_MAP[key_name][0]))
+        if event.keysym == 'Escape':
+            self.keymap_data[key_name] = [None, self.keymap_data[key_name][1]]
+            self.labels[key_name].set('')
+        else:
+            found = False
+            for key, value in keysym_map.items():
+                if event.keysym == key or str(event.keysym).lower() == key:
+                    self.keymap_data[key_name] = [value, DEFAULT_KEY_MAP[key_name][1]]
+                    self.labels[key_name].set(key.upper())
+                    found = True
+                    break
+            if not found:
+                showwarning("key config", "unsupported key: " + str(event.keysym))
+                self.keymap_data[key_name] = DEFAULT_KEY_MAP[key_name]
+                self.labels[key_name].set(self.dik2keysym(DEFAULT_KEY_MAP[key_name][0]))
 
         self.unbind("<Key>")
 
     def set_key(self, key_name):
-        self.labels[key_name].set("please input")
+        self.labels[key_name].set("please input...")
         self.unbind("<Key>")
         self.bind("<Key>", lambda event: self.on_press(event, key_name))
 
