@@ -423,52 +423,54 @@ class MacroController:
             self.player_manager.teleport_up()
             time.sleep(0.5)
 
-    def set_skills(self):
-        is_set = False
+    def set_skills(self, combine=False):
         self.player_manager.update()
         self.current_platform_hash = self.find_current_platform()
         if self.current_platform_hash is None:
-            return is_set
+            return False
 
-        if (self.terrain_analyzer.kishin_shoukan_coord and
-                time.time() - self.player_manager.last_skill_use_time['kishin_shoukan'] > self.player_manager.kishin_shoukan_cooldown):
-            platform = self.find_coord_platform(self.terrain_analyzer.kishin_shoukan_coord)
-            if platform:
-                self.logger.info('placing kishin shoukan')
-                self.screen_processor.update_image(set_focus=False)
-                if not self.navigate_to_platform(platform):
-                    return is_set
-                self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.kishin_shoukan_coord[0])
-                self.player_manager.horizontal_move_goal(self.terrain_analyzer.kishin_shoukan_coord[0])
-                time.sleep(0.1)
-                self.player_manager.kishin_shoukan()
-                self.player_manager.last_skill_use_time['kishin_shoukan'] = time.time()
+        if combine:
+            is_set = self._place_set_skill('yaksha_boss')
+            self.player_manager.update()
+            self.current_platform_hash = self.find_current_platform()
+            if self.current_platform_hash is None:
+                return is_set
+            if is_set:
+                self._place_set_skill('kishin_shoukan')
+                return True
+            else:
+                return False
+        else:
+            is_set = self._place_set_skill('kishin_shoukan')
+            self.player_manager.update()
+            self.current_platform_hash = self.find_current_platform()
+            if self.current_platform_hash is None:
+                return is_set
 
-                self.player_manager.update()
-                self.current_platform_hash = self.find_current_platform()
-                is_set = True
-                if self.current_platform_hash is None:
-                    return is_set
+            is_set1 = self._place_set_skill('yaksha_boss')
+            return is_set or is_set1
 
-        if (self.terrain_analyzer.yaksha_boss_coord and
-                time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] > self.player_manager.yaksha_boss_cooldown):
-            platform = self.find_coord_platform(self.terrain_analyzer.yaksha_boss_coord)
-            if platform:
-                self.logger.info('placing yaksha boss')
-                self.screen_processor.update_image(set_focus=False)
-                if not self.navigate_to_platform(platform):
-                    return is_set
+    def _place_set_skill(self, skill_name):
+        coord = getattr(self.terrain_analyzer, skill_name + '_coord')
+        if not coord or time.time() - self.player_manager.last_skill_use_time[skill_name] <= self.player_manager.skill_cooldown[skill_name]:
+            return False
 
-                self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.yaksha_boss_coord[0])
-                self.player_manager.horizontal_move_goal(self.terrain_analyzer.yaksha_boss_coord[0])
-                self.keyhandler.single_press(dc.DIK_RIGHT)
-                time.sleep(0.1)
-                self.player_manager.yaksha_boss()
-                self.player_manager.last_skill_use_time['yaksha_boss'] = time.time()
-                is_set = True
+        platform = self.find_coord_platform(coord)
+        if not platform:
+            return False
+        self.logger.info('placing ' + skill_name.replace('_', ' '))
+        self.screen_processor.update_image(set_focus=False)
+        if not self.navigate_to_platform(platform):
+            return False
+        self.player_manager.shikigami_haunting_sweep_move(coord[0])
+        self.player_manager.horizontal_move_goal(coord[0])
+        if skill_name == 'yaksha_boss':
+            self.keyhandler.single_press(dc.DIK_RIGHT)
+        time.sleep(0.1)
+        getattr(self.player_manager, skill_name)()
+        self.player_manager.last_skill_use_time[skill_name] = time.time()
 
-        self.loop_count += 1
-        return is_set
+        return True
 
     def unstick(self):
         """

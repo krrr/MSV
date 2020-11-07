@@ -17,7 +17,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
             return
 
-        if self.set_skills():
+        if self.set_skills(combine=True):
             return
 
         # pickup money

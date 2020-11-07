@@ -50,9 +50,9 @@ class PlayerController:
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
 
-        self.yaksha_boss_cooldown = 30
-
-        self.kishin_shoukan_cooldown = 60
+        self.skill_cooldown = {
+            'yaksha_boss': 30, 'kishin_shoukan': 60
+        }
         self.set_skill_common_delay = 1.4
 
         self.rune_fail_cooldown = 5
