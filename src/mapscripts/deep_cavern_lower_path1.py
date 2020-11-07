@@ -60,11 +60,7 @@ class Dclp1MacroController(MacroController):
         return 0
 
     def pickup_money(self, return1=False):
-        if self.player_manager.keymap.get('mihaha_link') is not None:
-            self.keyhandler.single_press(self.player_manager.keymap['mihaha_link'])
-            time.sleep(0.2)
-
-        # at center top now
+        # assume at center top now
         # right platforms first
         self.logger.info('pick up money')
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].end_x - 2)

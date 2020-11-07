@@ -363,6 +363,7 @@ class MacroController:
         used = any((used, self.player_manager.speed_infusion(wait_before=0 if used else delay)))
         used = any((used, self.player_manager.haku_reborn(wait_before=0 if used else delay)))
         used = any((used, self.player_manager.yuki_musume(wait_before=0 if used else delay)))
+        used = any((used, self.player_manager.mihaha_link(wait_before=0 if used else delay)))
         return used
 
     def _rune_detect_solve(self):
