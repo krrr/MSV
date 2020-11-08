@@ -6,6 +6,7 @@ import keystate_manager as km
 import player_controller as pc
 import screen_processor as sp
 import terrain_analyzer
+import threading
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 from rune_solver.rune_solver_simple import RuneSolverSimple
@@ -59,19 +60,14 @@ class MacroController:
 
         self.restrict_moonlight_slash_probability = 5
 
-        self.platform_fail_loops = 0
-        # How many loops passed and we are not on a platform?
-
-        self.platform_fail_loop_threshold = 10
-        # If self.platform_fail_loops is greater than threshold, run unstick()
-
-        self.unstick_attempts = 0
-        # If not on platform, how many times did we attempt unstick()?
-
-        self.unstick_attempts_threshold = 5
-        # If unstick after this amount fails to get us on a known platform, abort abort.
+        self.platform_fail_loops = 0  # How many loops passed and we are not on a platform?
+        self.platform_fail_loop_threshold = 10  # If self.platform_fail_loops is greater than threshold, run unstick()
+        self.unstick_attempts = 0  # If not on platform, how many times did we attempt unstick()?
+        self.unstick_attempts_threshold = 5  # abort if unstick after this amount fails to get us on a known platform
 
         self.pickup_money_interval = 90
+        self.last_alert_sound = 0
+        self.alert_sound_cd = 1
 
         self.logger.debug("%s init finished" % self.__class__.__name__)
 
@@ -496,9 +492,18 @@ class MacroController:
             self.log_queue.put(["stopped", None])
 
     def alert_sound(self, times=3):
-        for _ in range(times):
-            win32api.MessageBeep(win32con.MB_ICONWARNING)
-            time.sleep(0.5)
+        if 0 <= time.time() - self.last_alert_sound <= self.alert_sound_cd:
+            return
+
+        def func():
+            for _ in range(times):
+                win32api.MessageBeep(win32con.MB_ICONWARNING)
+                time.sleep(0.5)
+
+        thread = threading.Thread(target=func)
+        thread.setDaemon(True)
+        thread.start()
+        self.last_alert_sound = time.time() + 0.5 * times
 
     def save_current_screen(self, prefix):
         img = self.screen_capturer.capture()
