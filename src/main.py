@@ -329,6 +329,7 @@ class MainScreen(ttk.Frame):
 
     def _on_auto_solve_rune_check(self):
         get_config()['auto_solve_rune'] = self.auto_solve_rune.get()
+        save_config()  # let macro process read new value
 
     def _popup_about(self):
         tk.messagebox.showinfo('About', '''\
