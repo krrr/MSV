@@ -78,6 +78,8 @@ class Dclp1MacroController(MacroController):
 
         self.navigate_to_platform('600f8ed9')  # center bottom
 
+        self._place_set_skill('yaksha_boss')
+
         # Quick other player sound notify
         self.screen_processor.update_image(set_focus=False)
         if self.screen_processor.find_other_player_marker():
