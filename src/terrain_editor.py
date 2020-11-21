@@ -12,6 +12,9 @@ from tkinter.messagebox import askyesno
 
 
 class TerrainEditorWindow(tk.Toplevel):
+    set_skill_color = {'kishin_shoukan': (107, 50, 135), 'yaksha_boss': (196, 0, 0),
+                       'nightmare_invite': (226, 142, 185)}
+
     def __init__(self, master=None, open_file_path=None):
         tk.Toplevel.__init__(self, master)
         self.wm_minsize(100, 30)
@@ -56,17 +59,20 @@ class TerrainEditorWindow(tk.Toplevel):
 
         self.tool_frame_4 = tk.Frame(self.master_tool_frame)
         self.tool_frame_4.pack(fill=X)
-        self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Toggle yaksha boss coord",
+        self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Toggle yaksha boss pos",
                                                  command=lambda: self._set_place_skill_coord('yaksha_boss'))
         self.set_yaksha_coord_button.pack(side=LEFT, expand=YES, fill=X)
-        self.set_kishin_coord_button = tk.Button(self.tool_frame_4, text="Toggle kishin shoukan coord",
+        self.set_kishin_coord_button = tk.Button(self.tool_frame_4, text="Toggle kishin shoukan pos",
                                                  command=lambda: self._set_place_skill_coord('kishin_shoukan'))
         self.set_kishin_coord_button.pack(side=RIGHT, expand=YES, fill=X)
+        self.set_nightmare_invite_button = tk.Button(self.master_tool_frame, text="Toggle nightmare invite pos",
+                                                     command=lambda: self._set_place_skill_coord('nightmare_invite'))
+        self.set_nightmare_invite_button.pack(fill=X)
 
         self.tool_frame_5 = tk.Frame(self.master_tool_frame)
         self.tool_frame_5.pack(fill=X, side=BOTTOM)
-        tk.Button(self.tool_frame_5, text="reset", command=self.on_reset_platforms).pack(side=LEFT,expand=YES,fill=X)
-        tk.Button(self.tool_frame_5, text="save",command=self.on_save).pack(side=RIGHT, expand=YES, fill=X)
+        tk.Button(self.tool_frame_5, text="reset", command=self.on_reset_platforms).pack(side=LEFT, expand=YES, fill=X)
+        tk.Button(self.tool_frame_5, text="save", command=self.on_save).pack(side=RIGHT, expand=YES, fill=X)
 
         self.platform_listbox = tk.Listbox(self, selectmode=MULTIPLE)
         self.platform_listbox.pack(expand=YES, fill=BOTH)
@@ -103,8 +109,8 @@ class TerrainEditorWindow(tk.Toplevel):
 
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
-        self.other_attrs['kishin_shoukan_coord'] = self.terrain_analyzer.kishin_shoukan_coord
-        self.other_attrs['yaksha_boss_coord'] = self.terrain_analyzer.yaksha_boss_coord
+        for i in self.set_skill_color:
+            self.other_attrs[i + '_coord'] = self.terrain_analyzer.set_skill_coord[i]
         self.update_listbox()
 
     def on_close(self):
@@ -243,10 +249,10 @@ class TerrainEditorWindow(tk.Toplevel):
                 for key, platform in self.terrain_analyzer.platforms.items():
                     cv2.line(cropped_img, (platform.start_x, platform.start_y), (platform.end_x, platform.end_y), (0,255,0), 2)
 
-            for k in ['kishin_shoukan_coord', 'yaksha_boss_coord']:
-                coord = self.other_attrs.get(k)
+            for k in self.set_skill_color.keys():
+                coord = self.other_attrs.get(k + '_coord')
                 if coord:
-                    color = (107, 50, 135) if k == 'kishin_shoukan_coord' else (196, 0, 0)
+                    color = self.set_skill_color[k]
                     cv2.circle(cropped_img, (coord[0], coord[1]), 4, (255, 255, 255), -1)  # white border
                     cv2.circle(cropped_img, (coord[0], coord[1]), 3, color, -1)
 

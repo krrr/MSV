@@ -115,8 +115,7 @@ class PathAnalyzer:
         self.astar_open_val_grid = []  # 2d array to keep track of "open" values in a star search.
         self.astar_minimap_rect = []  # minimap rect (x,y,w,h) for use in generating astar data
 
-        self.yaksha_boss_coord = None
-        self.kishin_shoukan_coord = None
+        self.set_skill_coord = {}
 
     def save(self, filename="mapdata.platform", other_attrs = None):
         """Save platforms, minimap to a file
@@ -140,8 +139,9 @@ class PathAnalyzer:
             self.platforms = data["platforms"]
             minimap_coords = data["minimap"]
             self.astar_minimap_rect = minimap_coords
-            self.yaksha_boss_coord = data.get('yaksha_boss_coord')
-            self.kishin_shoukan_coord = data.get('kishin_shoukan_coord')
+            for i in data.keys():
+                if i.endswith('_coord'):
+                    self.set_skill_coord[i[:-6]] = data.get(i)
 
         self.generate_solution_dict()
         self.astar_map_grid = []

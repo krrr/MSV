@@ -51,7 +51,7 @@ class PlayerController:
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'yaksha_boss': 30, 'kishin_shoukan': 60
+            'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60
         }
         self.set_skill_common_delay = 1.4
 
@@ -62,7 +62,7 @@ class PlayerController:
         self.buff_common_delay = 2  # common delay for v buff
 
         self.last_skill_use_time = {
-            'yaksha_boss': 0, 'kishin_shoukan': 0,
+            'yaksha_boss': 0, 'kishin_shoukan': 0, 'nightmare_invite': 0,
             'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0, 'mihaha_link': 0
         }
 
@@ -297,6 +297,9 @@ class PlayerController:
 
     def yaksha_boss(self):
         self._use_set_skill('yaksha_boss')
+
+    def nightmare_invite(self):
+        self._use_set_skill('nightmare_invite')
 
     def _use_set_skill(self, skill_name):
         for _ in range(2):

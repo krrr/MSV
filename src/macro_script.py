@@ -433,22 +433,26 @@ class MacroController:
             if self.current_platform_hash is None:
                 return is_set
             if is_set:
+                self._place_set_skill('nightmare_invite')
                 self._place_set_skill('kishin_shoukan')
+                self.player_manager.update()
                 return True
             else:
                 return False
         else:
-            is_set = self._place_set_skill('kishin_shoukan')
-            self.player_manager.update()
-            self.current_platform_hash = self.find_current_platform()
-            if self.current_platform_hash is None:
-                return is_set
-
-            is_set1 = self._place_set_skill('yaksha_boss')
-            return is_set or is_set1
+            is_set = False
+            for i in ('kishin_shoukan', 'yaksha_boss', 'nightmare_invite'):
+                is_set = any((is_set, self._place_set_skill(i)))
+                self.player_manager.update()
+                self.current_platform_hash = self.find_current_platform()
+                if self.current_platform_hash is None:
+                    return is_set
 
     def _place_set_skill(self, skill_name):
-        coord = getattr(self.terrain_analyzer, skill_name + '_coord')
+        if self.player_manager.keymap.get(skill_name) is None:
+            return
+
+        coord = self.terrain_analyzer.set_skill_coord.get(skill_name)
         if not coord or time.time() - self.player_manager.last_skill_use_time[skill_name] <= self.player_manager.skill_cooldown[skill_name]:
             return False
 
