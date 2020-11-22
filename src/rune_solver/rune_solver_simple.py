@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 from .rune_solver_base import RuneSolverBase
 
 
@@ -13,13 +14,13 @@ class RuneSolverSimple(RuneSolverBase):
         super().__init__(screen_capturer, key_mgr)
 
         # load template
-        down_tpl = cv2.imread('rune_solver/down_arrow_template.png', cv2.IMREAD_COLOR)
+        down_tpl = cv2.imread(os.path.dirname(__file__) + '/down_arrow_template.png', cv2.IMREAD_COLOR)
         right_tpl = np.rot90(down_tpl)
         up_tpl = np.rot90(right_tpl)
         left_tpl = np.rot90(up_tpl)
         self.templates = {'left': left_tpl, 'up': up_tpl, 'right': right_tpl, 'down': down_tpl}
 
-        down_sm_tpl = cv2.imread('rune_solver/down_arrow_template_small.png', cv2.IMREAD_COLOR)
+        down_sm_tpl = cv2.imread(os.path.dirname(__file__) + '/down_arrow_template_small.png', cv2.IMREAD_COLOR)
         right_sm_tpl = np.rot90(down_sm_tpl)
         up_sm_tpl = np.rot90(right_sm_tpl)
         left_sm_tpl = np.rot90(up_sm_tpl)

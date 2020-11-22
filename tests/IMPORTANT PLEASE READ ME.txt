@@ -1,3 +1,6 @@
 problem with key input:
 sometimes the ALT key used for jumping/dropping gets stuck or not released and causes the macro to get stuck
 CHECK ALL PARTS WHICH USE ALT KEYS!!!
+
+nparray -> PIL.Image:
+Image.fromarray(cv2.cvtColor(np.array(cropped), cv2.COLOR_BGR2RGB)).show()
