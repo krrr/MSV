@@ -11,7 +11,9 @@ class CupMacroController(MacroController):
         self.money_picked = False
 
     def loop(self):
-        self._loop_common_job()
+        ret = self._loop_common_job()
+        if ret != 0:
+            return ret
 
         ### Rune Detector
         self._rune_detect_solve()

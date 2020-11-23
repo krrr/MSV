@@ -10,7 +10,9 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
-        self._loop_common_job()
+        ret = self._loop_common_job()
+        if ret != 0:
+            return ret
 
         ### Rune Detector
         self._rune_detect_solve()
