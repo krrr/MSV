@@ -35,7 +35,7 @@ class Dclp1MacroController(MacroController):
             self.player_manager.teleport_up()
         elif self.current_platform_hash == 'ab2972bd':  # center top
             # pickup money
-            if time.time() - self.last_pickup_money_time > self.pickup_money_interval:
+            if not self.elite_boss_detected and time.time() - self.last_pickup_money_time > self.pickup_money_interval:
                 self.pickup_money()
                 self.last_pickup_money_time = time.time()
                 return

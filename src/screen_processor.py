@@ -1,5 +1,5 @@
 import cv2, win32gui, time, math
-# import win32ui, win32con
+import os
 from PIL import ImageGrab
 import numpy as np, ctypes, ctypes.wintypes
 
@@ -94,11 +94,13 @@ class StaticImageProcessor:
 
         self.img_handle = img_handle
         self.bgr_img = None
-        self.bin_img = None
         self.gray_img = None
         self.processed_img = None
         self.minimap_area = 0
         self.minimap_rect = None
+
+        self.eboss_min_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/eboss_minute_tpl.png', cv2.IMREAD_GRAYSCALE)
+        self.eboss_sec_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/eboss_second_tpl.png', cv2.IMREAD_GRAYSCALE)
 
         self.maximum_minimap_area = 40000
 
@@ -203,7 +205,7 @@ class StaticImageProcessor:
                     if math.sqrt(abs(ref_coord[0]-coord[0])**2 + abs(ref_coord[1]-coord[1])**2) <= 3:
                         nearest_points += 1
 
-                if nearest_points >= 10 and nearest_points <= 13:
+                if 10 <= nearest_points <= 13:
                     avg_y += coord[0]
                     avg_x += coord[1]
                     totalpoints += 1
@@ -291,6 +293,29 @@ class StaticImageProcessor:
             return avg_x, avg_y
 
         return 0
+
+    def check_elite_boss(self):
+        h, w = self.gray_img.shape
+        # countdown area
+        area_w = 216
+        area_h = 56
+        x = (w // 2) - (area_w // 2)
+        y = 30
+        # search smaller area only
+        x += area_w // 2
+        area_w //= 2
+        y += area_h // 2
+        area_h //= 2
+
+        cropped = self.gray_img[y:y+area_h, x:x+area_w]
+        match_res = cv2.matchTemplate(cropped, self.eboss_min_tpl, cv2.TM_SQDIFF_NORMED)
+        loc = np.where(match_res < 0.03)
+        if len(loc[0]) != 1:
+            return False
+
+        match_res = cv2.matchTemplate(cropped, self.eboss_sec_tpl, cv2.TM_SQDIFF_NORMED)
+        loc = np.where(match_res < 0.03)
+        return len(loc[0]) == 1
 
 
 if __name__ == "__main__":

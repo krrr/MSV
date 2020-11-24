@@ -353,7 +353,7 @@ def main():
 
     root.title(args["title"] if args["title"] else APP_TITLE)
     try:
-        root.iconbitmap('appicon.ico')
+        root.iconbitmap('resources/appicon.ico')
     except tk.TclError:
         pass
     root.wm_minsize(400, 600)

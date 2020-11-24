@@ -24,6 +24,8 @@ class CustomLoggerHandler(logging.Handler):
 
 
 class MacroController:
+    ALERT_SOUND_CD = 1
+
     def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None):
         self.log_queue = log_queue
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -67,7 +69,8 @@ class MacroController:
 
         self.pickup_money_interval = 90
         self.last_alert_sound = 0
-        self.alert_sound_cd = 1
+        self.other_player_detected_start = None
+        self.elite_boss_detected = False
 
         self.logger.debug("%s init finished" % self.__class__.__name__)
 
@@ -177,11 +180,11 @@ class MacroController:
 
     def _loop_common_job(self):
         """Must be done job"""
-        # Check if MapleStory window is alive
-        random.seed((time.time() * 10**4) % 10 **3)
+        random.seed((time.time() * 10**4) % 10 ** 3)
 
         self.log_skill_usage_statistics()
 
+        # Check if MapleStory window is alive
         if not self.screen_capturer.ms_get_screen_hwnd():
             self.logger.error("Failed to get MS screen rect")
             self.abort()
@@ -196,14 +199,37 @@ class MacroController:
             return -1
         self.player_manager.update(player_pos[0], player_pos[1])
 
-        # Other player sound notify
-        if self.screen_processor.find_other_player_marker():
+        ### Other player check
+        other_pos = self.screen_processor.find_other_player_marker()
+        if other_pos:  # Other player present
+            if self.other_player_detected_start is None:
+                self.logger.info('other player detected')
+                self.other_player_detected_start = time.time()
             self.alert_sound()
+        else:
+            self.other_player_detected_start = None
+
+        ### Elite boss check
+        if self.screen_processor.check_elite_boss():
+            if not self.elite_boss_detected:
+                self.logger.info('elite boss detected')
+            self.elite_boss_detected = True
+            if other_pos:
+                if time.time() - self.other_player_detected_start >= 10:
+                    self.logger.info('eboss present and other player staying, escape')
+                    self.save_current_screen('eboss_people')
+                    self.abort()
+                    os.system("taskkill /f /im MapleStory.exe")  # temporary solution
+                    return
+            else:
+                self.alert_sound(1)
+        else:
+            self.elite_boss_detected = False
 
         ### Placeholder for Lie Detector Detector (sounds weird)
         ### End Placeholder
 
-        # Check if player is on platform
+        ### Check if player is on platform
         self.current_platform_hash = self.find_current_platform()
         if not self.current_platform_hash:
             # Move to nearest platform and redo loop
@@ -220,6 +246,8 @@ class MacroController:
         else:
             self.platform_fail_loops = 0
             self.unstick_attempts = 0
+
+        return 0
 
     def loop(self):
         """
@@ -421,6 +449,9 @@ class MacroController:
             time.sleep(0.5)
 
     def set_skills(self, combine=False):
+        if self.elite_boss_detected and self.other_player_detected_start is not None:
+            return False
+
         self.player_manager.update()
         self.current_platform_hash = self.find_current_platform()
         if self.current_platform_hash is None:
@@ -496,7 +527,7 @@ class MacroController:
             self.log_queue.put(["stopped", None])
 
     def alert_sound(self, times=3):
-        if 0 <= time.time() - self.last_alert_sound <= self.alert_sound_cd:
+        if 0 <= time.time() - self.last_alert_sound <= self.ALERT_SOUND_CD:
             return
 
         def func():

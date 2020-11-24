@@ -37,3 +37,11 @@ class TestScreenProcessor(TestCase):
 
         self.processor.update_image(Image.open('unittest_data/minimap_stranger.png'))
         self.assertIsNotNone(self.processor.find_other_player_marker(), 'stranger not found')
+
+    def test_check_elite_boss(self):
+        self.processor.update_image(Image.open('unittest_data/eboss_sample1.png'))
+        self.assertTrue(self.processor.check_elite_boss())
+        self.processor.update_image(Image.open('unittest_data/eboss_sample2.png'))
+        self.assertTrue(self.processor.check_elite_boss())
+        self.processor.update_image(Image.open('unittest_data/eboss_false_sample.png'))
+        self.assertFalse(self.processor.check_elite_boss())
