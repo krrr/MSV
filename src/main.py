@@ -266,7 +266,7 @@ class MainScreen(ttk.Frame):
             self.macro_process = p
             p.start()
             self.macro_pid = p.pid
-            self.log("Process creation complete (pid: %d)" % self.macro_pid)
+            self.log("Process started (pid: %d)" % self.macro_pid)
             self.macro_pid_infotext.set("Executed (%d)" % self.macro_pid)
             self.macro_process_label.configure(fg="green")
             self.macro_process_toggle_button.configure(state=NORMAL)

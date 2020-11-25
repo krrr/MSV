@@ -4,3 +4,4 @@ venv
 *.platform
 config.json
 /src/screenshots/
+/python/

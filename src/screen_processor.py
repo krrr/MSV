@@ -1,6 +1,6 @@
 import cv2, win32gui, time, math
 import os
-from PIL import ImageGrab
+import d3dshot
 import numpy as np, ctypes, ctypes.wintypes
 
 
@@ -14,6 +14,8 @@ class MapleScreenCapturer:
         self.hwnd = None
         if not ctypes.windll.user32.IsProcessDPIAware():
             ctypes.windll.user32.SetProcessDPIAware()
+
+        self.d3dshot = d3dshot.create()
 
     def ms_get_screen_hwnd(self):
         return win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
@@ -51,33 +53,8 @@ class MapleScreenCapturer:
             if win32gui.GetForegroundWindow() != self.hwnd:
                 return None
 
-        return ImageGrab.grab(rect)
-
-    # def screen_capture(self,w, h, x=0, y=0, save=True, save_name=''):
-    #     # hwnd = win32gui.FindWindow(None, None)
-    #     hwnd = win32gui.GetDesktopWindow()
-    #     wDC = win32gui.GetWindowDC(hwnd)
-    #     dcObj = win32ui.CreateDCFromHandle(wDC)
-    #     cDC = dcObj.CreateCompatibleDC()
-    #     dataBitMap = win32ui.CreateBitmap()
-    #     dataBitMap.CreateCompatibleBitmap(dcObj, w, h)
-    #     cDC.SelectObject(dataBitMap)
-    #     cDC.BitBlt((0, 0), (w, h), dcObj, (x, y), win32con.SRCCOPY)
-    #
-    #     if save:
-    #         dataBitMap.SaveBitmapFile(cDC, save_name)
-    #     else:
-    #         b = dataBitMap.GetBitmapBits(True)
-    #         img = np.fromstring(b, np.uint8).reshape(h, w, 4)
-    #         cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    #
-    #     dcObj.DeleteDC()
-    #     cDC.DeleteDC()
-    #     win32gui.ReleaseDC(hwnd, wDC)
-    #     win32gui.DeleteObject(dataBitMap.GetHandle())
-    #
-    #     if not save:
-    #         return img
+        # old method: ImageGrab.grab(rect)
+        return self.d3dshot.screenshot(rect)
 
     def pil_image_to_array(self, img):
         return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
@@ -324,7 +301,7 @@ if __name__ == "__main__":
     rect = dx.ms_get_screen_rect(hwnd)
     print('ms rect:', rect)
     image = dx.capture(rect=rect)
-    # image.show()
+    image.show()
     processor = StaticImageProcessor(dx)
     processor.update_image()
     print('minimap rect:', processor.get_minimap_rect())
