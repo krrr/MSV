@@ -121,12 +121,12 @@ class PlayerController:
                 self.horizontal_move_goal(goal_x)
             else:
                 last_teleport_x = self.x
-                time.sleep(0.02)
+                time.sleep(0.03)  # can teleport immediately after 3rd hit of shikigami haunting
                 if loc_delta > 0:
                     self.teleport_left()
                 else:
                     self.teleport_right()
-                time.sleep(0.32)
+                time.sleep(0.26)
 
             self.update()
             if time.time() - start_time > time_limit:

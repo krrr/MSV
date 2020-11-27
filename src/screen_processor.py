@@ -34,11 +34,11 @@ class MapleScreenCapturer:
         return pos[0], pos[1], pos[0]+rect[2], pos[1]+rect[3]  # returns x1, y1, x2, y2
 
     def capture(self, set_focus=True, hwnd=None, rect=None):
-        """Returns Maplestory window screenshot handle(not np.array!)
+        """Returns MapleStory window screenshot (not np.array!)
         :param set_focus : True if MapleStory window is to be focusesd before capture, False if not
         :param hwnd : Default: None Win32API screen handle to use. If None, sets and uses self.hwnd
-        :param rect : If defined, captures specificed ScreenRect area (x1, y1, x2, y2). Else, uses MS window ms_screen_rect.
-        :return : returns Imagegrab of screen (PIL Image)"""
+        :param rect : If defined, captures specified ScreenRect area (x1, y1, x2, y2). Else, uses MS window ms_screen_rect.
+        :return : returns PIL Image"""
         if hwnd:
             self.hwnd = hwnd
         if not hwnd:
@@ -55,9 +55,6 @@ class MapleScreenCapturer:
 
         # old method: ImageGrab.grab(rect)
         return self.d3dshot.screenshot(rect)
-
-    def pil_image_to_array(self, img):
-        return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
 
 class StaticImageProcessor:

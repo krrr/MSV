@@ -7,7 +7,6 @@ import directinput_constants as dc
 class Dclp1MacroControllerAlt(Dclp1MacroController):
     def __init__(self, keymap, logger_queue):
         super().__init__(keymap=keymap, logger_queue=logger_queue)
-        self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
         ret = self._loop_common_job()
@@ -50,6 +49,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
             left_edge = self.terrain_analyzer.platforms['ab2972bd'].start_x
             self.player_manager.shikigami_haunting_sweep_move(left_edge + 5)
             self.player_manager.horizontal_move_goal(left_edge - 4)
+            time.sleep(0.08)
         else:
             self.navigate_to_platform('b0d5f01d')  # left middle
 

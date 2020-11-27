@@ -25,11 +25,12 @@ class CustomLoggerHandler(logging.Handler):
 
 class MacroController:
     ALERT_SOUND_CD = 1
+    FIND_PLATFORM_OFFSET = 2
 
     def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None):
         self.log_queue = log_queue
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.DEBUG if get_config().get('debug') else logging.INFO)
         if not self.logger.hasHandlers():
             self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
             fh = logging.FileHandler("logging.log")
@@ -54,7 +55,6 @@ class MacroController:
         self.rune_model_path = rune_model_dir
         # self.rune_solver = rs.RuneDetectorSimple(self.rune_model_path, screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
         self.rune_solver = RuneSolverSimple(screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
-        self.find_platform_offset = 2
 
         self.loop_count = 0  # How many loops did we loop over?
         self.reset_navmap_loop_count = 10  # every x times reset navigation map, scrambling pathing
@@ -106,11 +106,10 @@ class MacroController:
         """
         Locate platform by coordinate
         """
-        self.player_manager.update()
         if not coord:
             return None
         for key, platform in self.terrain_analyzer.platforms.items():
-            if (platform.start_y - self.find_platform_offset <= coord[1] <= platform.start_y + self.find_platform_offset and
+            if (platform.start_y - self.FIND_PLATFORM_OFFSET <= coord[1] <= platform.start_y + self.FIND_PLATFORM_OFFSET and
                     platform.start_x <= coord[0] <= platform.end_x):
                 return key
 
@@ -152,9 +151,7 @@ class MacroController:
 
                 self._player_move(solution)
 
-                self.player_manager.update()
-                self.current_platform_hash = self.find_current_platform()
-
+                self.update()
                 if self.current_platform_hash != solution.to_hash:  # should retry
                     if self.current_platform_hash is None:  # in case stuck in ladder
                         self.logger.warning("stuck. attempting unstick()...")
@@ -225,12 +222,13 @@ class MacroController:
                 self.alert_sound(1)
         else:
             self.elite_boss_detected = False
+        ###
 
         ### Placeholder for Lie Detector Detector (sounds weird)
-        ### End Placeholder
+        ###
 
-        ### Check if player is on platform
         self.current_platform_hash = self.find_current_platform()
+        ### Check if player is on platform
         if not self.current_platform_hash:
             # Move to nearest platform and redo loop
             # Failed to find platform.
@@ -246,8 +244,13 @@ class MacroController:
         else:
             self.platform_fail_loops = 0
             self.unstick_attempts = 0
+        ###
 
         return 0
+
+    def update(self):
+        self.player_manager.update()  # will update image
+        self.current_platform_hash = self.find_current_platform()
 
     def loop(self):
         """
@@ -452,21 +455,19 @@ class MacroController:
         if self.elite_boss_detected and self.other_player_detected_start is not None:
             return False
 
-        self.player_manager.update()
-        self.current_platform_hash = self.find_current_platform()
+        self.update()
         if self.current_platform_hash is None:
             return False
 
         if combine:
             is_set = self._place_set_skill('yaksha_boss')
-            self.player_manager.update()
-            self.current_platform_hash = self.find_current_platform()
+            self.update()
             if self.current_platform_hash is None:
                 return is_set
             if is_set:
                 self._place_set_skill('nightmare_invite')
                 self._place_set_skill('kishin_shoukan')
-                self.player_manager.update()
+                self.update()
                 return True
             else:
                 return False
@@ -474,10 +475,10 @@ class MacroController:
             is_set = False
             for i in ('kishin_shoukan', 'yaksha_boss', 'nightmare_invite'):
                 is_set = any((is_set, self._place_set_skill(i)))
-                self.player_manager.update()
-                self.current_platform_hash = self.find_current_platform()
+                self.update()
                 if self.current_platform_hash is None:
                     return is_set
+            return is_set
 
     def _place_set_skill(self, skill_name):
         if self.player_manager.keymap.get(skill_name) is None:
@@ -491,7 +492,6 @@ class MacroController:
         if not platform:
             return False
         self.logger.info('placing ' + skill_name.replace('_', ' '))
-        self.screen_processor.update_image(set_focus=False)
         if not self.navigate_to_platform(platform):
             return False
         self.player_manager.shikigami_haunting_sweep_move(coord[0])
@@ -515,8 +515,8 @@ class MacroController:
         for i in ['jumpr', 'teleport_up', 'teleport_left', 'teleport_right']:
             getattr(self.player_manager, i)()
             time.sleep(0.8)
-            self.player_manager.update()
-            if self.find_current_platform():
+            self.update()
+            if self.current_platform_hash is not None:
                 return True
         return False
 

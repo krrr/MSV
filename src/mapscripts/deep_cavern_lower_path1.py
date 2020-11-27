@@ -79,17 +79,19 @@ class Dclp1MacroController(MacroController):
         time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.teleport_left()
 
-        self.navigate_to_platform('600f8ed9')  # center bottom
-
-        self._place_set_skill('yaksha_boss')
-
+        time.sleep(1)
+        self.update()
         # Quick other player sound notify
-        self.screen_processor.update_image(set_focus=False)
         if self.screen_processor.find_other_player_marker():
             self.alert_sound()
 
+        self.navigate_to_platform('600f8ed9')  # ensure at center bottom
+
+        self._place_set_skill('yaksha_boss')
+
         # then left platforms
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].start_x + 6)
+        self.update()
         self.navigate_to_platform('ab2972bd')  # center top
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].start_x + 2)
         self.player_manager.shikigami_haunting()
@@ -106,4 +108,5 @@ class Dclp1MacroController(MacroController):
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['b0d5f01d'].start_x - 5)  # left middle
         time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
 
+        self.update()
         self.navigate_to_platform('600f8ed9')  # center bottom
