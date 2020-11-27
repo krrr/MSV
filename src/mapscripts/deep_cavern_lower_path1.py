@@ -19,8 +19,9 @@ class Dclp1MacroController(MacroController):
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
             return
 
+        # set skills
         if self.current_platform_hash in ('ab2972bd', '600f8ed9'):  # at center top or bottom
-            if self.set_skills():
+            if not self.elite_boss_detected and self.set_skills():
                 return
 
         if self.current_platform_hash == '600f8ed9':  # center bottom
