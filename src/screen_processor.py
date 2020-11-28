@@ -8,6 +8,10 @@ class MapleWindowNotFoundError(Exception):
     pass
 
 
+class MapleWindowInvisibleError(Exception):
+    pass
+
+
 class MapleScreenCapturer:
     """Container for capturing MS screen"""
     def __init__(self):
@@ -26,7 +30,10 @@ class MapleScreenCapturer:
         :param hwnd: window handle from self.ms_get_screen_hwnd
         :return: window rect (x1, y1, x2, y2) of MS rect.
         """
-        rect = win32gui.GetClientRect(hwnd)
+        try:
+            rect = win32gui.GetClientRect(hwnd)
+        except Exception:
+            return None
         if rect[2] == 0:  # (0, 0, width, height)
             return None
         pos = win32gui.ClientToScreen(hwnd, (0, 0))
@@ -37,7 +44,7 @@ class MapleScreenCapturer:
         """Returns MapleStory window screenshot (not np.array!)
         :param set_focus : True if MapleStory window is to be focusesd before capture, False if not
         :param hwnd : Default: None Win32API screen handle to use. If None, sets and uses self.hwnd
-        :param rect : If defined, captures specified ScreenRect area (x1, y1, x2, y2). Else, uses MS window ms_screen_rect.
+        :param rect : If defined, captures specified ScreenRect area (x1, y1, x2, y2). Else, uses MS window rect.
         :return : returns PIL Image"""
         if hwnd:
             self.hwnd = hwnd
@@ -45,6 +52,8 @@ class MapleScreenCapturer:
             self.hwnd = self.ms_get_screen_hwnd()
         if not rect:
             rect = self.ms_get_screen_rect(self.hwnd)
+            if rect is None:
+                raise MapleWindowInvisibleError
         if set_focus and win32gui.GetForegroundWindow() != self.hwnd:
             win32gui.SetForegroundWindow(self.hwnd)
             time.sleep(0.1)
@@ -87,14 +96,11 @@ class StaticImageProcessor:
         self.upper_rune_marker = np.array([255, 103, 222])
 
         self.hwnd = self.img_handle.ms_get_screen_hwnd()
-        self.ms_screen_rect = None
 
-        if self.hwnd:
-            self.ms_screen_rect = self.img_handle.ms_get_screen_rect(self.hwnd)
-        else:
-            raise Exception("Could not find MapleStory window!!")
+        if not self.hwnd:
+            raise MapleWindowNotFoundError
 
-    def update_image(self, src=None, set_focus=True, update_rect=False):
+    def update_image(self, src=None, set_focus=True):
         """
         Calls ScreenCapturer's update function and updates images.
         :param src : rgb image data from PIL ImageGrab
@@ -102,14 +108,7 @@ class StaticImageProcessor:
         if src:
             rgb_img = src
         else:
-            if update_rect:
-                self.ms_screen_rect = self.img_handle.ms_get_screen_rect(self.hwnd)
-            if not self.ms_screen_rect:
-                self.ms_screen_rect = self.img_handle.ms_get_screen_rect(self.hwnd)
-
-            rgb_img = self.img_handle.capture(set_focus, self.hwnd, self.ms_screen_rect)
-            if not rgb_img:
-                assert self.bgr_img is not None, "self.img_handle did not return img"
+            rgb_img = self.img_handle.capture(set_focus, self.hwnd)
         self.bgr_img = cv2.cvtColor(np.array(rgb_img), cv2.COLOR_RGB2BGR)
         self.gray_img = cv2.cvtColor(self.bgr_img, cv2.COLOR_BGR2GRAY)
 
@@ -298,7 +297,7 @@ if __name__ == "__main__":
     rect = dx.ms_get_screen_rect(hwnd)
     print('ms rect:', rect)
     image = dx.capture(rect=rect)
-    image.show()
+    # image.show()
     processor = StaticImageProcessor(dx)
     processor.update_image()
     print('minimap rect:', processor.get_minimap_rect())

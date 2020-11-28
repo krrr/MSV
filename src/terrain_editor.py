@@ -110,7 +110,8 @@ class TerrainEditorWindow(tk.Toplevel):
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
         for i in self.set_skill_color:
-            self.other_attrs[i + '_coord'] = self.terrain_analyzer.set_skill_coord[i]
+            if i in self.terrain_analyzer.set_skill_coord:
+                self.other_attrs[i + '_coord'] = self.terrain_analyzer.set_skill_coord[i]
         self.update_listbox()
 
     def on_close(self):
@@ -200,7 +201,7 @@ class TerrainEditorWindow(tk.Toplevel):
             self.update_listbox()
 
     def find_minimap_coords(self):
-        self.image_processor.update_image(set_focus=False, update_rect=True)
+        self.image_processor.update_image(set_focus=False)
         self.minimap_rect = self.image_processor.get_minimap_rect()
 
     def update_image(self):
