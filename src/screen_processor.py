@@ -8,10 +8,6 @@ class MapleWindowNotFoundError(Exception):
     pass
 
 
-class MapleWindowInvisibleError(Exception):
-    pass
-
-
 class MapleScreenCapturer:
     """Container for capturing MS screen"""
     def __init__(self):
@@ -52,8 +48,8 @@ class MapleScreenCapturer:
             self.hwnd = self.ms_get_screen_hwnd()
         if not rect:
             rect = self.ms_get_screen_rect(self.hwnd)
-            if rect is None:
-                raise MapleWindowInvisibleError
+            if rect is None:  # window not visible etc.
+                return None
         if set_focus and win32gui.GetForegroundWindow() != self.hwnd:
             win32gui.SetForegroundWindow(self.hwnd)
             time.sleep(0.1)
@@ -289,6 +285,11 @@ class StaticImageProcessor:
         match_res = cv2.matchTemplate(cropped, self.eboss_sec_tpl, cv2.TM_SQDIFF_NORMED)
         loc = np.where(match_res < 0.03)
         return len(loc[0]) == 1
+
+    def check_white_room(self):
+        """Assume in white room if 70% or more pixels are pure white. Percentage of sample in unittest is 79%"""
+        area = self.bgr_img.shape[0] * self.bgr_img.shape[1]
+        return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.7
 
 
 if __name__ == "__main__":

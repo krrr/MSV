@@ -70,6 +70,7 @@ class MacroController:
         self.pickup_money_interval = 90
         self.last_alert_sound = 0
         self.other_player_detected_start = None
+        self.player_pos_not_found_start = None
         self.elite_boss_detected = False
 
         self.logger.debug("%s init finished" % self.__class__.__name__)
@@ -193,7 +194,22 @@ class MacroController:
         # Update Constants
         player_pos = self.screen_processor.find_player_minimap_marker()
         if not player_pos:
+            white_room = self.screen_processor.check_white_room()
+            if self.player_pos_not_found_start is None:
+                self.logger.info('white room detected' if white_room else 'player pos not found')
+                self.player_pos_not_found_start = time.time()
+
+            if white_room:
+                self.alert_sound(5)
+                if time.time() - self.other_player_detected_start >= 10:
+                    self.logger.info('white room detected and user AFK, exit')
+                    self.save_current_screen('white_room')
+                    self.abort()
+                    os.system("taskkill /f /im MapleStory.exe")  # temporary solution
+                    return
             return -1
+        else:
+            self.player_pos_not_found_start = None
         self.player_manager.update(player_pos[0], player_pos[1])
 
         ### Other player check
@@ -213,7 +229,7 @@ class MacroController:
             self.elite_boss_detected = True
             if other_pos:
                 if time.time() - self.other_player_detected_start >= 10:
-                    self.logger.info('eboss present and other player staying, escape')
+                    self.logger.info('eboss present and other player staying, exit')
                     self.save_current_screen('eboss_people')
                     self.abort()
                     os.system("taskkill /f /im MapleStory.exe")  # temporary solution

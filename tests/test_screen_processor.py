@@ -45,3 +45,7 @@ class TestScreenProcessor(TestCase):
         self.assertTrue(self.processor.check_elite_boss())
         self.processor.update_image(Image.open('unittest_data/eboss_false_sample.png'))
         self.assertFalse(self.processor.check_elite_boss())
+
+    def test_check_white_room(self):
+        self.processor.update_image(Image.open('unittest_data/white_room.png'))
+        self.assertTrue(self.processor.check_white_room())
