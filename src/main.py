@@ -90,6 +90,10 @@ class MainScreen(ttk.Frame):
         self.auto_solve_rune.set(get_config().get('auto_solve_rune', True))
         options_menu.add_checkbutton(label="Auto Solve Rune", onvalue=True, offvalue=False,
                                      variable=self.auto_solve_rune, command=self._on_auto_solve_rune_check)
+        self.debug_mode = tk.BooleanVar()
+        self.debug_mode.set(get_config().get('debug', False))
+        options_menu.add_checkbutton(label="Debug Mode", onvalue=True, offvalue=False,
+                                     variable=self.debug_mode, command=self._on_debug_mode_check)
         self._menubar.add_cascade(label="Options", menu=options_menu)
         help_menu = tk.Menu(tearoff=False)
         self._menubar.add_cascade(label="Help", menu=help_menu)
@@ -162,7 +166,7 @@ class MainScreen(ttk.Frame):
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(500, self.toggle_macro_process)
-        self.after(1000, self.check_input_queue)
+        self.after(500, self.check_input_queue)
 
     def on_close(self):
         if self.macro_process:
@@ -181,7 +185,7 @@ class MainScreen(ttk.Frame):
         while not self.macro_process_in_queue.empty():
             output = self.macro_process_in_queue.get()
             if output[0] == "log":
-                self.log("Process - "+str(output[1]))
+                self.log(time.strftime('%H:%M:%S') + ' - ' + str(output[1]))
             elif output[0] == "stopped":
                 self.log("Bot process has ended.")
             elif output[0] == "exception":
@@ -197,7 +201,7 @@ class MainScreen(ttk.Frame):
                 self.macro_process_toggle_button.configure(text="Running")
                 self.log("Bot process terminated due to an error. Please check the log file.")
 
-        self.after(1000, self.check_input_queue)
+        self.after(500, self.check_input_queue)
 
     def start_macro(self):
         if not ctypes.windll.shell32.IsUserAnAdmin():
@@ -222,9 +226,10 @@ class MainScreen(ttk.Frame):
             return
 
         rect = cap.ms_get_screen_rect(cap.hwnd)
-        self.log("MS hwnd", cap.hwnd)
-        self.log("MS rect", rect)
-        self.log("Out Queue put:", self.platform_file_path.get())
+        if get_config().get('debug'):
+            self.log("MS hwnd", cap.hwnd)
+            self.log("MS rect", rect)
+            self.log("Out Queue put:", self.platform_file_path.get())
         if rect[0] < 0 or rect[1] < 0:
             showerror(APP_TITLE, "Failed to get Maple Window location.\nMove MapleStory window so"
                                  "that the top left corner of the window is within the screen.")
@@ -329,6 +334,10 @@ class MainScreen(ttk.Frame):
 
     def _on_auto_solve_rune_check(self):
         get_config()['auto_solve_rune'] = self.auto_solve_rune.get()
+        save_config()  # let macro process read new value
+
+    def _on_debug_mode_check(self):
+        get_config()['debug'] = self.debug_mode.get()
         save_config()  # let macro process read new value
 
     def _popup_about(self):
