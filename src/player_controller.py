@@ -126,7 +126,7 @@ class PlayerController:
                     self.teleport_left()
                 else:
                     self.teleport_right()
-                time.sleep(0.26)
+                time.sleep(0.09)  # not affected by latency anymore, can be very tight
 
             self.update()
             if time.time() - start_time > time_limit:

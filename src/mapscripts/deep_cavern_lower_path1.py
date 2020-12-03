@@ -79,7 +79,7 @@ class Dclp1MacroController(MacroController):
         time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.teleport_left()
 
-        time.sleep(1)
+        time.sleep(1.1)
         self.update()
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():

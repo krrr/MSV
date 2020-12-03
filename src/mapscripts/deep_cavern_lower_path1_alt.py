@@ -49,7 +49,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
             left_edge = self.terrain_analyzer.platforms['ab2972bd'].start_x
             self.player_manager.shikigami_haunting_sweep_move(left_edge + 5)
             self.player_manager.horizontal_move_goal(left_edge - 4)
-            time.sleep(0.08)
+            time.sleep(0.095)
         else:
             self.navigate_to_platform('b0d5f01d')  # left middle
 
