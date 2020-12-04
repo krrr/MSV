@@ -1,10 +1,10 @@
-from src.screen_processor import MapleScreenCapturer
+from src.screen_processor import ScreenProcessor
 import cv2, imutils, os
 from src.monster_detector import MonsterTemplateDetector
 from src.player_medal_detector import PlayerMedalDetector
 import numpy as np
 os.chdir("../src")
-wincap = MapleScreenCapturer()
+wincap = ScreenProcessor()
 detector = MonsterTemplateDetector("img/ArcaneRiver/ChewChew/츄츄 아일랜드.json")
 playerdetector = PlayerMedalDetector()
 detector.create_template("mob1.png")

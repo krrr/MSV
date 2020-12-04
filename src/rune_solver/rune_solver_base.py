@@ -2,7 +2,7 @@
 """Classifier model verifier"""
 import logging
 import random
-from screen_processor import MapleScreenCapturer
+from screen_processor import ScreenProcessor
 import cv2, time
 import numpy as np
 from keystate_manager import KeyboardInputManager
@@ -30,7 +30,7 @@ class RuneSolverBase:
         self.rune_roi_1024 = [295, 180, 500, 133]
         self.rune_roi_800 = [170, 200, 440, 135]
         self.rune_roi = self.rune_roi_800  # set as default rune roi
-        self.screen_processor = MapleScreenCapturer() if not screen_capturer else screen_capturer
+        self.screen_processor = ScreenProcessor() if not screen_capturer else screen_capturer
         self.key_mgr = KeyboardInputManager() if not key_mgr else key_mgr
 
     def capture_roi(self):

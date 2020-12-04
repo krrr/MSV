@@ -40,7 +40,7 @@ class MacroController:
         self.logger.info("%s init" % self.__class__.__name__)
 
         self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
-        self.screen_capturer = sp.MapleScreenCapturer()
+        self.screen_capturer = sp.ScreenProcessor()
         self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = terrain_analyzer.PathAnalyzer()
         self.keyhandler = km.KeyboardInputManager()

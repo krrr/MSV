@@ -8,14 +8,17 @@ class MapleWindowNotFoundError(Exception):
     pass
 
 
-class MapleScreenCapturer:
+class ScreenProcessor:
+    d3dshot = None
+
     """Container for capturing MS screen"""
     def __init__(self):
         self.hwnd = None
         if not ctypes.windll.user32.IsProcessDPIAware():
             ctypes.windll.user32.SetProcessDPIAware()
 
-        self.d3dshot = d3dshot.create()
+        if ScreenProcessor.d3dshot is None:
+            ScreenProcessor.d3dshot = d3dshot.create()
 
     def ms_get_screen_hwnd(self):
         return win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
@@ -293,7 +296,7 @@ class StaticImageProcessor:
 
 
 if __name__ == "__main__":
-    dx = MapleScreenCapturer()
+    dx = ScreenProcessor()
     hwnd = dx.ms_get_screen_hwnd()
     rect = dx.ms_get_screen_rect(hwnd)
     print('ms rect:', rect)

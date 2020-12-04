@@ -1,6 +1,6 @@
-from src.screen_processor import MapleScreenCapturer, StaticImageProcessor
+from src.screen_processor import ScreenProcessor, StaticImageProcessor
 import cv2, numpy as np
-mcap = MapleScreenCapturer()
+mcap = ScreenProcessor()
 
 scrp = StaticImageProcessor(mcap)
 player_marker = np.array([68, 221, 255])

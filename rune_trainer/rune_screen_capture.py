@@ -1,10 +1,10 @@
 # -*- coding:utf-8 -*-
-from screen_processor import MapleScreenCapturer
+from screen_processor import ScreenProcessor
 from keystate_manager import KeyboardInputManager
 from directinput_constants import DIK_SPACE, DIK_UP
 import cv2, os, time, glob, imutils
 import numpy as np
-cap = MapleScreenCapturer()
+cap = ScreenProcessor()
 kbd = KeyboardInputManager()
 from win32gui import SetForegroundWindow
 os.chdir("images/screenshots")

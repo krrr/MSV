@@ -1,11 +1,11 @@
 from src.player_controller import PlayerController
 from src.keystate_manager import KeyboardInputManager
 import time
-from src.screen_processor import MapleScreenCapturer
+from src.screen_processor import ScreenProcessor
 from src.screen_processor import StaticImageProcessor
 from win32gui import SetForegroundWindow
 
-wcap = MapleScreenCapturer()
+wcap = ScreenProcessor()
 scrp = StaticImageProcessor(wcap)
 hwnd = wcap.ms_get_screen_hwnd()
 kbd_mgr = KeyboardInputManager()

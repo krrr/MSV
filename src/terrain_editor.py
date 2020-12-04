@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from screen_processor import StaticImageProcessor, MapleScreenCapturer
+from screen_processor import StaticImageProcessor, ScreenProcessor
 from terrain_analyzer import PathAnalyzer
 import cv2, threading, os
 import tkinter as tk
@@ -30,7 +30,7 @@ class TerrainEditorWindow(tk.Toplevel):
         self.current_coords = []
         self.other_attrs = {}
 
-        self.screen_capturer = MapleScreenCapturer()
+        self.screen_capturer = ScreenProcessor()
         if not self.screen_capturer.ms_get_screen_hwnd():
             showerror('Error', 'The MapleStory window was not found.')
             self.destroy()

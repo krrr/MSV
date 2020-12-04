@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
-from screen_processor import MapleScreenCapturer, StaticImageProcessor
+from screen_processor import ScreenProcessor, StaticImageProcessor
 import cv2, imutils, time
 import numpy as np
-cap = MapleScreenCapturer()
+cap = ScreenProcessor()
 ct = StaticImageProcessor(cap)
 from win32gui import SetForegroundWindow
 while True:

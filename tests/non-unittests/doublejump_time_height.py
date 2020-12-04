@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt, time
-from src.screen_processor import MapleScreenCapturer, StaticImageProcessor
+from src.screen_processor import ScreenProcessor, StaticImageProcessor
 from src.directinput_constants import DIK_ALT, DIK_UP
 from src.keystate_manager import KeyboardInputManager
 
-cap = MapleScreenCapturer()
+cap = ScreenProcessor()
 scrp = StaticImageProcessor(cap)
 scrp.update_image(set_focus=True)
 rect = scrp.get_minimap_rect()

@@ -1,9 +1,9 @@
 import imutils, cv2, numpy as np, time
-from src.screen_processor import MapleScreenCapturer
+from src.screen_processor import ScreenProcessor
 from src.screen_processor import StaticImageProcessor
 
 
-screencap = MapleScreenCapturer()
+screencap = ScreenProcessor()
 scrp = StaticImageProcessor(screencap)
 scrp.update_image()
 area = scrp.get_minimap_rect()

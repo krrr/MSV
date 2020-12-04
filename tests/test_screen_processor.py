@@ -1,9 +1,9 @@
 from unittest import TestCase
-from src.screen_processor import StaticImageProcessor, MapleScreenCapturer
+from src.screen_processor import StaticImageProcessor, ScreenProcessor
 from PIL import Image
 
 
-class MockMapleScreenCapturer(MapleScreenCapturer):
+class MockScreenProcessor(ScreenProcessor):
     def ms_get_screen_hwnd(self):
         return 1
 
@@ -15,7 +15,7 @@ class TestScreenProcessor(TestCase):
     processor = None
 
     def setUp(self):
-        self.processor = StaticImageProcessor(MockMapleScreenCapturer())
+        self.processor = StaticImageProcessor(MockScreenProcessor())
 
     def test_find_minimap_rect(self):
         self.processor.update_image(Image.open('unittest_data/minimap_guild.png'))

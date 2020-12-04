@@ -1,10 +1,10 @@
 # -*- coding:utf-8 -*-
 import sys
 sys.path.append("../src")
-from screen_processor import MapleScreenCapturer
+from screen_processor import ScreenProcessor
 import cv2, time, imutils, math, glob, random
 import numpy as np
-cap = MapleScreenCapturer()
+cap = ScreenProcessor()
 from win32gui import SetForegroundWindow
 
 

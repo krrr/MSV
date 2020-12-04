@@ -3,13 +3,13 @@
 import sys
 sys.path.append("../src")
 
-from screen_processor import MapleScreenCapturer
+from screen_processor import ScreenProcessor
 import cv2, time, imutils, os, glob, random
 import numpy as np
 from win32gui import SetForegroundWindow
 from keras.models import load_model
 from tensorflow import device
-cap = MapleScreenCapturer()
+cap = ScreenProcessor()
 
 from keras import backend as K
 from tensorflow import Session, ConfigProto, GPUOptions

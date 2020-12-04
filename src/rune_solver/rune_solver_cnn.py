@@ -10,7 +10,7 @@ logger.addHandler(fh)
 
 from .rune_solver_base import RuneSolverBase
 try:
-    from screen_processor import MapleScreenCapturer
+    from screen_processor import ScreenProcessor
     import cv2, time, os
     import numpy as np
     from keras.models import load_model

@@ -1,8 +1,8 @@
-from src.screen_processor import StaticImageProcessor, MapleScreenCapturer
+from src.screen_processor import StaticImageProcessor, ScreenProcessor
 from src.terrain_analyzer import PathAnalyzer
 import cv2, imutils
 
-wincap = MapleScreenCapturer()
+wincap = ScreenProcessor()
 scrp = StaticImageProcessor(wincap)
 scrp.update_image()
 area = scrp.get_minimap_rect()

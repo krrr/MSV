@@ -17,7 +17,7 @@ import mapscripts
 from util import get_config, save_config
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
-from screen_processor import MapleScreenCapturer
+from screen_processor import ScreenProcessor
 # from macro_script_astar import MacroControllerAStar as MacroController
 
 
@@ -219,7 +219,7 @@ class MainScreen(ttk.Frame):
             showerror(APP_TITLE, "Please select a terrain file.")
             return
 
-        cap = MapleScreenCapturer()
+        cap = ScreenProcessor()
         cap.hwnd = cap.ms_get_screen_hwnd()
         if not cap.hwnd:
             showerror(APP_TITLE, "MapleStory window not found")
