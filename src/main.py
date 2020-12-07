@@ -5,6 +5,7 @@ if sys.path[0].endswith('.zip'):  # python embeddable version
 import logging
 import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
+import win32con
 
 from tkinter import ttk
 from tkinter.constants import *
@@ -14,7 +15,7 @@ from tkinter.scrolledtext import ScrolledText
 
 from macro_script import MacroController
 import mapscripts
-from util import get_config, save_config
+from util import get_config, save_config, GlobalHotKeyListener
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
@@ -73,7 +74,7 @@ def macro_loop(input_queue, output_queue):
         output_queue.put(["exception", "exception"])
 
 
-class MainScreen(ttk.Frame):
+class MainWindow(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
@@ -168,6 +169,11 @@ class MainScreen(ttk.Frame):
         self.after(500, self.toggle_macro_process)
         self.after(500, self.check_input_queue)
 
+        self.hotkey_listener = GlobalHotKeyListener([
+            GlobalHotKeyListener.HotKey(1, 0, win32con.VK_F1, lambda: self.stop_macro() if self.macro_running else self.start_macro()),
+            GlobalHotKeyListener.HotKey(2, 0, win32con.VK_F2, lambda: self.toggle_macro_process())
+        ])
+
     def on_close(self):
         if self.macro_process:
             try:
@@ -179,6 +185,7 @@ class MainScreen(ttk.Frame):
         get_config()['geometry'] = self.master.geometry()
         save_config()
 
+        self.hotkey_listener.unregister()
         self.master.destroy()
 
     def check_input_queue(self):
@@ -367,7 +374,7 @@ def main():
         pass
     root.wm_minsize(400, 600)
 
-    MainScreen(root)
+    MainWindow(root)
 
     geo = get_config().get('geometry')
     if geo:
