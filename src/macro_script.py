@@ -7,10 +7,53 @@ import player_controller as pc
 import screen_processor as sp
 import terrain_analyzer
 import threading
+import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 from rune_solver.rune_solver_simple import RuneSolverSimple
 from util import get_config
+
+
+def macro_process_main(input_q, output_q):
+    logger = logging.getLogger("macro_loop")
+    logger.setLevel(logging.DEBUG)
+
+    fh = logging.FileHandler("logging.log", encoding='utf-8')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(fh)
+
+    macro = None
+
+    while True:
+        command = input_q.get()
+        logger.debug("received command {}".format(command))
+        try:
+            if command[0] == "start":
+                logger.debug("starting MacroController...")
+                keymap, platform_file_dir, preset = command[1:]
+                if preset:
+                    macro = mapscripts.map_scripts[preset](keymap, output_q, input_q)
+                else:
+                    macro = MacroController(keymap, output_q, input_q)
+                macro.load_and_process_platform_map(platform_file_dir)
+
+                while True:
+                    macro.loop()
+            elif command[0] == 'stop':
+                if macro:
+                    macro.abort()
+                    macro = None
+        except CommandReceived:  # break from inner loop
+            pass
+        except Exception:
+            logger.exception("Exception during loop execution:")
+            output_q.put(["exception", "exception"])
+            break
+
+
+class CommandReceived(Exception):
+    pass
 
 
 class CustomLoggerHandler(logging.Handler):
@@ -27,8 +70,9 @@ class MacroController:
     ALERT_SOUND_CD = 1
     FIND_PLATFORM_OFFSET = 2
 
-    def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None):
+    def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None, cmd_queue=None):
         self.log_queue = log_queue
+        self.cmd_queue = cmd_queue
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG if get_config().get('debug') else logging.INFO)
         if not self.logger.hasHandlers():
@@ -152,6 +196,7 @@ class MacroController:
 
                 self._player_move(solution)
 
+                self.check_cmd_queue()
                 self.update()
                 if self.current_platform_hash != solution.to_hash:  # should retry
                     if self.current_platform_hash is None:  # in case stuck in ladder
@@ -178,6 +223,8 @@ class MacroController:
 
     def _loop_common_job(self):
         """Must be done job"""
+        self.check_cmd_queue()
+
         random.seed((time.time() * 10**4) % 10 ** 3)
 
         self.log_skill_usage_statistics()
@@ -403,9 +450,13 @@ class MacroController:
         # first buff skill to use, add extra delay
         used = self.player_manager.holy_symbol(wait_before=delay)
         # following skill should not add delay if already used any skill (any() for avoiding short-circuit)
+        self.check_cmd_queue()
         used = any((used, self.player_manager.speed_infusion(wait_before=0 if used else delay)))
+        self.check_cmd_queue()
         used = any((used, self.player_manager.haku_reborn(wait_before=0 if used else delay)))
+        self.check_cmd_queue()
         used = any((used, self.player_manager.yuki_musume(wait_before=0 if used else delay)))
+        self.check_cmd_queue()
         used = any((used, self.player_manager.mihaha_link(wait_before=0 if used else delay)))
         return used
 
@@ -477,11 +528,13 @@ class MacroController:
 
         if combine:
             is_set = self._place_set_skill('yaksha_boss')
+            self.check_cmd_queue()
             self.update()
             if self.current_platform_hash is None:
                 return is_set
             if is_set:
                 self._place_set_skill('nightmare_invite')
+                self.check_cmd_queue()
                 self._place_set_skill('kishin_shoukan')
                 self.update()
                 return True
@@ -494,6 +547,7 @@ class MacroController:
                 self.update()
                 if self.current_platform_hash is None:
                     return is_set
+                self.check_cmd_queue()
             return is_set
 
     def _place_set_skill(self, skill_name):
@@ -536,9 +590,14 @@ class MacroController:
                 return True
         return False
 
+    def check_cmd_queue(self):
+        if self.cmd_queue and not self.cmd_queue.empty():
+            self.keyhandler.reset()
+            raise CommandReceived()
+
     def abort(self):
         self.keyhandler.reset()
-        self.logger.info("aborted")
+        self.logger.info("macro stopped")
         if self.log_queue:
             self.log_queue.put(["stopped", None])
 

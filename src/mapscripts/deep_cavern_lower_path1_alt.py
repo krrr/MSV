@@ -5,8 +5,8 @@ import directinput_constants as dc
 
 # deep cavern lower path 1 alternative script
 class Dclp1MacroControllerAlt(Dclp1MacroController):
-    def __init__(self, keymap, logger_queue):
-        super().__init__(keymap=keymap, logger_queue=logger_queue)
+    def __init__(self, keymap, logger_queue, cmd_queue):
+        super().__init__(keymap=keymap, logger_queue=logger_queue, cmd_queue=cmd_queue)
 
     def loop(self):
         ret = self._loop_common_job()

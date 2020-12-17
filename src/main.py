@@ -13,12 +13,12 @@ from tkinter.messagebox import showerror
 from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
-from macro_script import MacroController
 import mapscripts
 from util import get_config, save_config, GlobalHotKeyListener
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
+from macro_script import macro_process_main
 # from macro_script_astar import MacroControllerAStar as MacroController
 
 
@@ -34,44 +34,6 @@ default_logger.addHandler(fh)
 
 APP_TITLE = "MSV Kanna Ver"
 VERSION = 0.3
-
-
-def macro_loop(input_queue, output_queue):
-    logger = logging.getLogger("macro_loop")
-    logger.setLevel(logging.DEBUG)
-
-    fh = logging.FileHandler("logging.log", encoding='utf-8')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(fh)
-
-    try:
-        while True:
-            if input_queue.empty():
-                time.sleep(0.5)
-                continue
-
-            command = input_queue.get()
-            logger.debug("received command {}".format(command))
-            if command[0] == "start":
-                logger.debug("starting MacroController...")
-                keymap, platform_file_dir, preset = command[1:]
-                if preset:
-                    macro = mapscripts.map_scripts[preset](keymap, output_queue)
-                else:
-                    macro = MacroController(keymap, log_queue=output_queue)
-                macro.load_and_process_platform_map(platform_file_dir)
-
-                while True:
-                    macro.loop()
-                    if not input_queue.empty():
-                        command = input_queue.get()
-                        if command[0] == "stop":
-                            macro.abort()
-                            break
-    except Exception:
-        logger.exception("Exception during loop execution:")
-        output_queue.put(["exception", "exception"])
 
 
 class MainWindow(ttk.Frame):
@@ -108,10 +70,9 @@ class MainWindow(ttk.Frame):
         self.keymap = None
 
         self.macro_running = False
-        self.macro_pid = 0
         self.macro_process = None
-        self.macro_process_out_queue = multiprocessing.Queue()
-        self.macro_process_in_queue = multiprocessing.Queue()
+        self.macro_process_out_q = multiprocessing.Queue()
+        self.macro_process_in_q = multiprocessing.Queue()
 
         self.macro_pid_infotext = tk.StringVar()
         self.macro_pid_infotext.set("Not executed")
@@ -166,7 +127,7 @@ class MainWindow(ttk.Frame):
                 pass
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.after(500, self.toggle_macro_process)
+        self.after(100, self.toggle_macro_process)
         self.after(500, self.check_input_queue)
 
         self.hotkey_listener = GlobalHotKeyListener([
@@ -177,8 +138,8 @@ class MainWindow(ttk.Frame):
     def on_close(self):
         if self.macro_process:
             try:
-                self.macro_process_out_queue.put("stop")
-                os.kill(self.macro_pid, signal.SIGTERM)
+                self.macro_process_out_q.put("stop")
+                os.kill(self.macro_process.pid, signal.SIGTERM)
             except Exception:
                 pass
 
@@ -189,19 +150,18 @@ class MainWindow(ttk.Frame):
         self.master.destroy()
 
     def check_input_queue(self):
-        while not self.macro_process_in_queue.empty():
-            output = self.macro_process_in_queue.get()
+        while not self.macro_process_in_q.empty():
+            output = self.macro_process_in_q.get()
             if output[0] == "log":
                 self.log(time.strftime('%H:%M:%S') + ' - ' + str(output[1]))
             elif output[0] == "stopped":
-                self.log("Bot process has ended.")
+                pass
             elif output[0] == "exception":
                 self.macro_running = False
                 self.macro_toggle_button.configure(text="Start Macro")
                 self.platform_file_button.configure(state=NORMAL)
                 self.preset_combobox.configure(state=NORMAL)
                 self.macro_process = None
-                self.macro_pid = 0
                 self.macro_process_toggle_button.configure(state=NORMAL)
                 self.macro_pid_infotext.set("Not executed")
                 self.macro_process_label.configure(fg="red")
@@ -243,15 +203,15 @@ class MainWindow(ttk.Frame):
             return
 
         cap.capture()
-        self.macro_process_out_queue.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
+        self.macro_process_out_q.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
         self.macro_running = True
         self.macro_toggle_button.configure(text="Stop Macro")
         self.platform_file_button.configure(state=DISABLED)
         self.preset_combobox.configure(state=DISABLED)
 
     def stop_macro(self):
-        self.macro_process_out_queue.put(("stop",))
-        self.log("Bot stop request completed. Please wait for a while.")
+        self.macro_process_out_q.put(("stop",))
+        self.log("Stopping.")
         self.macro_running = False
         self.macro_toggle_button.configure(text="Start Macro")
         self.platform_file_button.configure(state=NORMAL)
@@ -270,16 +230,14 @@ class MainWindow(ttk.Frame):
             self.macro_pid_infotext.set("Running..")
             self.macro_process_label.configure(fg="orange")
             self.log("Bot process starting...")
-            self.macro_process_out_queue = multiprocessing.Queue()
-            self.macro_process_in_queue = multiprocessing.Queue()
-            p = multiprocessing.Process(target=macro_loop, args=(self.macro_process_out_queue, self.macro_process_in_queue))
-            p.daemon = True
+            self.macro_process_out_q = multiprocessing.Queue()
+            self.macro_process_in_q = multiprocessing.Queue()
+            self.macro_process = multiprocessing.Process(
+                target=macro_process_main, args=(self.macro_process_out_q, self.macro_process_in_q), daemon=True)
+            self.macro_process.start()
 
-            self.macro_process = p
-            p.start()
-            self.macro_pid = p.pid
-            self.log("Process started (pid: %d)" % self.macro_pid)
-            self.macro_pid_infotext.set("Executed (%d)" % self.macro_pid)
+            self.log("Process started (pid: %d)" % self.macro_process.pid)
+            self.macro_pid_infotext.set("Executed")
             self.macro_process_label.configure(fg="green")
             self.macro_process_toggle_button.configure(state=NORMAL)
             self.macro_process_toggle_button.configure(text="Stop")
@@ -289,11 +247,10 @@ class MainWindow(ttk.Frame):
             self.macro_pid_infotext.set("Stopping..")
             self.macro_process_label.configure(fg="orange")
 
-            self.log("SIGTERM %d" % self.macro_pid)
-            os.kill(self.macro_pid, signal.SIGTERM)
+            self.log("SIGTERM %d" % self.macro_process.pid)
+            os.kill(self.macro_process.pid, signal.SIGTERM)
             self.log("Process terminated")
             self.macro_process = None
-            self.macro_pid = 0
             self.macro_process_toggle_button.configure(state=NORMAL)
             self.macro_pid_infotext.set("Not executed")
             self.macro_process_label.configure(fg="red")

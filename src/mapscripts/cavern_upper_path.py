@@ -5,8 +5,8 @@ import directinput_constants as dc
 
 # cavern upper path script
 class CupMacroController(MacroController):
-    def __init__(self, keymap, logger_queue):
-        super().__init__(keymap=keymap, log_queue=logger_queue)
+    def __init__(self, keymap, logger_queue, cmd_queue):
+        super().__init__(keymap=keymap, log_queue=logger_queue, cmd_queue=cmd_queue)
         self.last_pickup_money_time = time.time() + 20
         self.money_picked = False
 

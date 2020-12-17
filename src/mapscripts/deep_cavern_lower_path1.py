@@ -5,8 +5,8 @@ import directinput_constants as dc
 
 # deep cavern lower path 1 script
 class Dclp1MacroController(MacroController):
-    def __init__(self, keymap, logger_queue):
-        super().__init__(keymap=keymap, log_queue=logger_queue)
+    def __init__(self, keymap, logger_queue, cmd_queue):
+        super().__init__(keymap=keymap, log_queue=logger_queue, cmd_queue=cmd_queue)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
@@ -68,18 +68,22 @@ class Dclp1MacroController(MacroController):
         self.logger.info('pick up money')
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].end_x - 2)
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].end_x + 4)
+        self.check_cmd_queue()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['85e71f57'].start_x + 2)  # right middle
         self.keyhandler.single_press(dc.DIK_RIGHT)
         self.player_manager.shikigami_haunting()
+        self.check_cmd_queue()
         time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 7)  # right right middle
         self.player_manager.shikigami_haunting()
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
+        self.check_cmd_queue()
         time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.teleport_left()
 
         time.sleep(1.1)
+        self.check_cmd_queue()
         self.update()
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
@@ -99,11 +103,12 @@ class Dclp1MacroController(MacroController):
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].start_x + 4)  # left top
         time.sleep(0.15 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].end_x + 5)  # left top
-        self.player_manager.shikigami_haunting()
 
         if return1:  # alternative preset will stay at left middle platform
+            time.sleep(0.15)
             return
 
+        self.player_manager.shikigami_haunting()
         time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['b0d5f01d'].start_x - 5)  # left middle
         time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
