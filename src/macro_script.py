@@ -67,7 +67,7 @@ class CustomLoggerHandler(logging.Handler):
 
 
 class MacroController:
-    ALERT_SOUND_CD = 1
+    ALERT_SOUND_CD = 2
     FIND_PLATFORM_OFFSET = 2
 
     def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None, cmd_queue=None):
@@ -133,16 +133,16 @@ class MacroController:
     def find_current_platform(self):
         current_platform_hash = None
 
-        for key, platform in self.terrain_analyzer.platforms.items():
-            if self.player_manager.is_on_platform(platform):
-                current_platform_hash = platform.hash
+        for p in self.terrain_analyzer.platforms.values():
+            if self.player_manager.is_on_platform(p):
+                current_platform_hash = p.hash
                 break
 
         if current_platform_hash is None:
             #  Add additional check to take into account imperfect platform coordinates
-            for key, platform in self.terrain_analyzer.platforms.items():
-                if self.player_manager.is_on_platform(platform, self.platform_error):
-                    current_platform_hash = platform.hash
+            for p in self.terrain_analyzer.platforms.values():
+                if self.player_manager.is_on_platform(p, self.platform_error):
+                    current_platform_hash = p.hash
                     break
 
         return current_platform_hash

@@ -357,7 +357,7 @@ class PathAnalyzer:
                     height_diff = abs(platform.start_y - other_platform.start_y)
                     # check lower bound in case there is another platform in the middle of current and destination
                     method = MoveMethod.DROP
-                    if 14 <= height_diff <= self.teleport_vertical_range:
+                    if 13 <= height_diff <= self.teleport_vertical_range:
                         method = MoveMethod.TELEPORTDOWN
                     solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method)
                     platform.solutions.append(solution)

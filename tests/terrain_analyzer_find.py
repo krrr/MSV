@@ -8,6 +8,9 @@ class TestScreenProcessor(TestCase):
     def setUp(self):
         self.pathextractor = PathAnalyzer()
 
+    def test_vc3(self):
+        self._load("../src/mapscripts/void_current3.platform")
+
     def test_dclp1(self):
         self._load("../src/mapscripts/deep_cavern_lower_path1.platform")
 
