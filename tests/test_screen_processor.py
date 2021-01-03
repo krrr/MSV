@@ -49,3 +49,7 @@ class TestScreenProcessor(TestCase):
     def test_check_white_room(self):
         self.processor.update_image(Image.open('unittest_data/white_room.png'))
         self.assertTrue(self.processor.check_white_room())
+
+    def test_check_dialog(self):
+        self.processor.update_image(Image.open('unittest_data/bounty_hunter_dialog.png'))
+        self.assertTrue(self.processor.check_dialog())

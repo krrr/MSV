@@ -66,6 +66,9 @@ class ScreenProcessor:
 
 
 class StaticImageProcessor:
+    DIALOG_W = 517
+    DIALOG_H = 188
+
     def __init__(self, img_handle=None):
         """
 
@@ -83,6 +86,7 @@ class StaticImageProcessor:
 
         self.eboss_min_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/eboss_minute_tpl.png', cv2.IMREAD_GRAYSCALE)
         self.eboss_sec_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/eboss_second_tpl.png', cv2.IMREAD_GRAYSCALE)
+        self.dialog_end_btn_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/dialog_end_chat_button.png', cv2.IMREAD_GRAYSCALE)
 
         self.maximum_minimap_area = 40000
 
@@ -293,6 +297,18 @@ class StaticImageProcessor:
         """Assume in white room if 70% or more pixels are pure white. Percentage of sample in unittest is 79%"""
         area = self.bgr_img.shape[0] * self.bgr_img.shape[1]
         return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.7
+
+    def check_dialog(self):
+        """Match 'End Chat' button of dialog (at left bottom)"""
+        h, w = self.gray_img.shape
+        x = (w // 2) - (self.DIALOG_W // 2)
+        y = (h // 2) - (self.DIALOG_H // 2)
+        cropped = self.gray_img[y+self.DIALOG_H-28:y+self.DIALOG_H, x:x+103]
+
+        match_res = cv2.matchTemplate(cropped, self.dialog_end_btn_tpl, cv2.TM_SQDIFF_NORMED)
+        loc = np.where(match_res < 0.015)
+
+        return len(loc[0] == 1)
 
 
 if __name__ == "__main__":

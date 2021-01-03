@@ -280,7 +280,10 @@ class MacroController:
             if self.elite_boss_detected:
                 self.logger.info('elite boss gone')
             self.elite_boss_detected = False
-        ###
+
+        ### Dialog box check
+        if self.screen_processor.check_dialog():
+            self.keyhandler.single_press(dc.DIK_ESCAPE)
 
         ### Placeholder for Lie Detector Detector (sounds weird)
         ###
