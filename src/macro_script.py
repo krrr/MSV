@@ -11,17 +11,13 @@ import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 from rune_solver.rune_solver_simple import RuneSolverSimple
-from util import get_config
+from util import get_config, get_file_log_handler
 
 
 def macro_process_main(input_q, output_q):
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
-
-    fh = logging.FileHandler("logging.log", encoding='utf-8')
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(fh)
+    logger.addHandler(get_file_log_handler())
 
     macro = None
 
@@ -77,10 +73,7 @@ class MacroController:
         self.logger.setLevel(logging.DEBUG if get_config().get('debug') else logging.INFO)
         if not self.logger.hasHandlers():
             self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
-            fh = logging.FileHandler("logging.log")
-            fh.setLevel(logging.DEBUG)
-            fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-            self.logger.addHandler(fh)
+            self.logger.addHandler(get_file_log_handler())
         self.logger.info("%s init" % self.__class__.__name__)
 
         self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
@@ -284,6 +277,8 @@ class MacroController:
             else:
                 self.alert_sound(1)
         else:
+            if self.elite_boss_detected:
+                self.logger.info('elite boss gone')
             self.elite_boss_detected = False
         ###
 

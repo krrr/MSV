@@ -14,7 +14,7 @@ from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
 import mapscripts
-from util import get_config, save_config, GlobalHotKeyListener
+from util import get_config, save_config, GlobalHotKeyListener, get_file_log_handler
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
@@ -22,14 +22,9 @@ from macro_script import macro_process_main
 # from macro_script_astar import MacroControllerAStar as MacroController
 
 
-default_logger = logging.getLogger("main")
-default_logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-fh = logging.FileHandler("logging.log")
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(formatter)
-default_logger.addHandler(fh)
+root_logger = logging.getLogger('main')
+root_logger.setLevel(logging.DEBUG)
+root_logger.addHandler(get_file_log_handler())
 
 
 APP_TITLE = "MSV Kanna Ver"
@@ -218,11 +213,10 @@ class MainWindow(ttk.Frame):
         self.preset_combobox.configure(state=NORMAL)
 
     def log(self, *args):
-        res_txt = []
-        for arg in args:
-            res_txt.append(str(arg))
-        self.log_text_area.insert(END, " ".join(res_txt)+"\n")
+        txt = ' '.join(str(i) for i in args)
+        self.log_text_area.insert(END, txt + "\n")
         self.log_text_area.see(END)
+        root_logger.info(txt)
 
     def toggle_macro_process(self):
         if not self.macro_process:

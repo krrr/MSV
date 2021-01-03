@@ -9,22 +9,18 @@ from keystate_manager import KeyboardInputManager
 from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK
 from win32con import VK_NUMLOCK
 from win32api import GetKeyState
+from util import get_file_log_handler
 
 
 class RuneSolverBase:
     def __init__(self, screen_capturer=None, key_mgr=None):
         """
         Run just Once to initialize
-        :param model_path: Path to trained keras model
-        :param labels: dictionary with class names as keys, integer as values
         example: {'down': 0, 'left': 1, 'right': 2, 'up': 3}
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler("../logging.log")
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-        self.logger.addHandler(fh)
+        self.logger.addHandler(get_file_log_handler())
 
         self.rune_roi_1366 = [450, 180, 500, 130]  # x, y, w, h
         self.rune_roi_1024 = [295, 180, 500, 133]

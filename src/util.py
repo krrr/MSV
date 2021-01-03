@@ -4,6 +4,8 @@ import sys
 import threading
 import win32con
 import collections
+import logging
+import logging.handlers
 import os
 
 _config = None
@@ -26,6 +28,13 @@ def get_config():
 def save_config():
     with open('config.json', 'w', encoding='utf-8') as f:
         json.dump(_config or {}, f, indent=True, sort_keys=True)
+
+
+def get_file_log_handler(level=logging.DEBUG):
+    fh = logging.handlers.RotatingFileHandler("logging.log", encoding='utf-8', maxBytes=1*1024*1024, backupCount=3)
+    fh.setLevel(level)
+    fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    return fh
 
 
 class GlobalHotKeyListener:

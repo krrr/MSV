@@ -1,26 +1,15 @@
 # -*- coding:utf-8 -*-
 """Classifier model verifier"""
-import logging
-
-logger = logging.getLogger("log")
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.StreamHandler())
-fh = logging.FileHandler("../logging.log", encoding="utf-8")
-logger.addHandler(fh)
-
 from .rune_solver_base import RuneSolverBase
-try:
-    from screen_processor import ScreenProcessor
-    import cv2, time, os
-    import numpy as np
-    from keras.models import load_model
-    from tensorflow import device
-    from keystate_manager import KeyboardInputManager
-    from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK, DIK_PERIOD
-    from win32con import VK_NUMLOCK
-    from win32api import GetKeyState
-except:
-    logger.exception("EXCEPTION FROM IMPORTS")
+from screen_processor import ScreenProcessor
+import cv2, time, os
+import numpy as np
+from keras.models import load_model
+from tensorflow import device
+from keystate_manager import KeyboardInputManager
+from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK, DIK_PERIOD
+from win32con import VK_NUMLOCK
+from win32api import GetKeyState
 
 
 class RuneSolverCnn(RuneSolverBase):
@@ -111,7 +100,6 @@ class RuneSolverCnn(RuneSolverBase):
         try:
             tensor = self.images2tensor(processed_imgs)
         except ValueError as e:
-            self.logger.error(e)
             return None
         result = self.classify(tensor)
 
@@ -123,11 +111,11 @@ if __name__ == "__main__":
         label = {'down': 0, 'left': 1, 'right': 2, 'up': 3}
 
         solver = RuneSolverCnn("../arrow_classifier_keras_gray.h5", label)
-        logger.debug("Log start")
-        logger.debug("screen handle: " + str(solver.screen_processor.ms_get_screen_hwnd()))
-        logger.debug("screen rect: " + str(solver.screen_processor.ms_get_screen_rect(solver.screen_processor.ms_get_screen_hwnd())))
+        print("Log start")
+        print("screen handle: " + str(solver.screen_processor.ms_get_screen_hwnd()))
+        print("screen rect: " + str(solver.screen_processor.ms_get_screen_rect(solver.screen_processor.ms_get_screen_hwnd())))
         # solver.scrp.screen_capture(800,600, save=True, save_name="dta.png")
-        logger.debug("Start processing input...")
+        print("Start processing input...")
         while True:
             img = solver.capture_roi()
             cv2.imshow("ExIt: Q", img)
@@ -136,10 +124,10 @@ if __name__ == "__main__":
             if return_val == -1:
                 print("no rune detected")
             else:
-                logger.debug("Finished solving runes.")
+                print("Finished solving runes.")
             k = cv2.waitKey(1)
             if k == ord("q"):
                 break
-        logger.debug("Application exit.")
-    except:
-        logger.exception("EXCEPTION")
+        print("Application exit.")
+    except Exception:
+        print("EXCEPTION")
