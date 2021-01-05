@@ -37,6 +37,9 @@ def get_file_log_handler(level=logging.DEBUG):
     return fh
 
 
+_user32 = ctypes.windll.user32
+
+
 class GlobalHotKeyListener:
     """bind windows global hotkey
     https://stackoverflow.com/questions/6023172/ending-a-program-mid-run/40177310#40177310
@@ -52,25 +55,36 @@ class GlobalHotKeyListener:
     def loop(hotkeys):
         # register hotkey with Win API
         for i in hotkeys:
-            if not ctypes.windll.user32.RegisterHotKey(None, i.id, i.modifier_key, i.virtual_key):
+            if not _user32.RegisterHotKey(None, i.id, i.modifier_key, i.virtual_key):
                 print("Unable to register hotkey with id " + str(i.id), file=sys.stderr)
 
         callback_map = {i.id: i.callback for i in hotkeys}
+        hotkey_down = {}  # virtual_key -> bool
 
         msg = ctypes.wintypes.MSG()
         try:
             # blocking call, will return 0 if received WM_QUIT
-            while ctypes.windll.user32.GetMessageA(ctypes.byref(msg), None, 0, 0) != 0:
+            while _user32.GetMessageA(ctypes.byref(msg), None, 0, 0) != 0:
                 if msg.message == win32con.WM_HOTKEY:
-                    callback = callback_map.get(msg.wParam)
-                    if callback:
-                        callback()
-                ctypes.windll.user32.TranslateMessage(ctypes.byref(msg))
-                ctypes.windll.user32.DispatchMessageA(ctypes.byref(msg))
+                    vk = msg.lParam >> 16
+                    if not hotkey_down.get(vk):
+                        hotkey_down[vk] = True
+                        _user32.SetTimer(None, 0, 200, None)
+                        callback = callback_map.get(msg.wParam)
+                        if callback:
+                            callback()
+                elif msg.message == win32con.WM_TIMER:
+                    for i in list(hotkey_down.keys()):
+                        if not _user32.GetKeyState(i) & 0x8000:  # key is not down
+                            del hotkey_down[i]
+                    if len(hotkey_down) == 0:
+                        _user32.KillTimer(None, msg.wParam)
+                _user32.TranslateMessage(ctypes.byref(msg))
+                _user32.DispatchMessageA(ctypes.byref(msg))
         finally:
             for i in hotkeys:
-                ctypes.windll.user32.UnregisterHotKey(None, i.id)
+                _user32.UnregisterHotKey(None, i.id)
 
     def unregister(self):
-        ctypes.windll.user32.PostThreadMessageA(self.thread.ident, win32con.WM_QUIT, 0, 0)
+        _user32.PostThreadMessageA(self.thread.ident, win32con.WM_QUIT, 0, 0)
         self.thread.join()
