@@ -443,7 +443,7 @@ class MacroController:
         self.loop_count += 1
         return 0
 
-    def buff_skills(self):
+    def buff_skills(self, yuki=True):
         delay = 0.35
         # first buff skill to use, add extra delay
         used = self.player_manager.holy_symbol(wait_before=delay)
@@ -453,8 +453,9 @@ class MacroController:
         self.check_cmd_queue()
         used = any((used, self.player_manager.haku_reborn(wait_before=0 if used else delay)))
         self.check_cmd_queue()
-        used = any((used, self.player_manager.yuki_musume(wait_before=0 if used else delay)))
-        self.check_cmd_queue()
+        if yuki:
+            used = any((used, self.player_manager.yuki_musume(wait_before=0 if used else delay)))
+            self.check_cmd_queue()
         used = any((used, self.player_manager.mihaha_link(wait_before=0 if used else delay)))
         return used
 

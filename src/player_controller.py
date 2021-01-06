@@ -302,8 +302,9 @@ class PlayerController:
         self._use_set_skill('nightmare_invite')
 
     def _use_set_skill(self, skill_name):
-        for _ in range(2):
-            self.key_mgr.single_press(self.keymap[skill_name], duration=0.25, additional_duration=abs(self.random_duration(0.2)))
+        for i in range(2):
+            self.key_mgr.single_press(self.keymap[skill_name], duration=0.25,
+                                      additional_duration=0 if i == 1 else 0.1)
         self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.set_skill_common_delay)
@@ -315,9 +316,9 @@ class PlayerController:
         if time.time() - self.last_skill_use_time[skill_name] > skill_cd + random.randint(0, 6):
             if wait_before:
                 time.sleep(wait_before)
-            for _ in range(2):
-                self.key_mgr.single_press(self.keymap[skill_name], duration=0.25)
-                time.sleep(0.1)
+            for i in range(2):
+                self.key_mgr.single_press(self.keymap[skill_name], duration=0.25,
+                                          additional_duration=0 if i == 1 else 0.1)
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.buff_common_delay)
