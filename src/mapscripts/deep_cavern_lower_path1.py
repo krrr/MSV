@@ -66,23 +66,41 @@ class Dclp1MacroController(MacroController):
         # assume at center top now
         # right platforms first
         self.logger.info('pick up money')
+
+        no_attack = self.other_player_detected_start and (self.player_manager.is_skill_key_set('yuki_musume')
+                                                          or self.player_manager.is_skill_key_set('mihaha_link'))
+        if no_attack and self.player_manager.is_skill_key_set('yuki_musume'):
+            self.player_manager.yuki_musume()
+
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].end_x - 2)
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].end_x + 4)
         self.check_cmd_queue()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['85e71f57'].start_x + 2)  # right middle
-        self.keyhandler.single_press(dc.DIK_RIGHT)
-        self.player_manager.shikigami_haunting()
-        self.check_cmd_queue()
-        time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
-        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 7)  # right right middle
-        self.player_manager.shikigami_haunting()
-        self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.shikigami_haunting()
-        self.check_cmd_queue()
-        time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
-        self.player_manager.teleport_left()
 
-        time.sleep(1.1)
+        if no_attack:
+            self.keyhandler.single_press(dc.DIK_RIGHT)
+            self.check_cmd_queue()
+            time.sleep(0.95 + abs(self.player_manager.random_duration(0.1)))
+            self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 3)  # right right middle
+            self.keyhandler.single_press(dc.DIK_LEFT)
+            time.sleep(0.6)
+            self.check_cmd_queue()
+            self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['600f8ed9'].end_x - 3)  # center bottom
+            time.sleep(0.55)
+        else:
+            self.keyhandler.single_press(dc.DIK_RIGHT)
+            self.player_manager.shikigami_haunting()
+            self.check_cmd_queue()
+            time.sleep(0.5 + abs(self.player_manager.random_duration(0.1)))
+            self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 6)  # right right middle
+            self.player_manager.shikigami_haunting()
+            self.keyhandler.single_press(dc.DIK_LEFT)
+            self.player_manager.shikigami_haunting()
+            self.check_cmd_queue()
+            time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
+            self.player_manager.teleport_left()
+            time.sleep(1.1)
+
         self.check_cmd_queue()
         self.update()
         # Quick other player sound notify

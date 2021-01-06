@@ -345,6 +345,9 @@ class PlayerController:
         return ((platform.start_y-offset) <= self.y <= platform.start_y  # may being kicked by monster
                 and (platform.start_x-offset) <= self.x <= (platform.end_x+offset))
 
+    def is_skill_key_set(self, skill_name):
+        return self.keymap.get(skill_name) is not None
+
     def random_duration(self, gen_range=0.1, digits=2):
         """
         returns a random number x where -gen_range<=x<=gen_range rounded to digits number of digits under floating points

@@ -54,7 +54,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
             self.navigate_to_platform('b0d5f01d')  # left middle
 
         ### Other buffs
-        self.buff_skills()
+        self.buff_skills(yuki=False)
         time.sleep(0.05)
 
         # Finished
