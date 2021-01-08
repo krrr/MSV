@@ -2,7 +2,6 @@ import sys
 if sys.path[0].endswith('.zip'):  # python embeddable version
     sys.path.insert(0, '')
 
-import logging
 import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
 import win32con
@@ -14,17 +13,12 @@ from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
 import mapscripts
-from util import get_config, save_config, GlobalHotKeyListener, get_file_log_handler
+from util import get_config, save_config, GlobalHotKeyListener
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
 from macro_script import macro_process_main
 # from macro_script_astar import MacroControllerAStar as MacroController
-
-
-root_logger = logging.getLogger('main')
-root_logger.setLevel(logging.DEBUG)
-root_logger.addHandler(get_file_log_handler())
 
 
 APP_TITLE = "MSV Kanna Ver"
@@ -85,7 +79,7 @@ class MainWindow(ttk.Frame):
         self.macro_info_frame = ttk.Frame(self, borderwidth=4, relief=GROOVE)
         self.macro_info_frame.pack(side=BOTTOM, anchor=S, expand=NO, fill=BOTH)
 
-        ttk.Label(self.macro_info_frame, text="Bot process status:").grid(row=0, column=0)
+        ttk.Label(self.macro_info_frame, text="Macro process status:").grid(row=0, column=0)
 
         self.macro_process_label = tk.Label(self.macro_info_frame, textvariable=self.macro_pid_infotext, fg="red")
         self.macro_process_label.grid(row=0, column=1, sticky=W, padx=5)
@@ -150,18 +144,15 @@ class MainWindow(ttk.Frame):
             if output[0] == "log":
                 self.log(time.strftime('%H:%M:%S') + ' - ' + str(output[1]))
             elif output[0] == "stopped":
-                pass
+                self._set_macro_status(False)
             elif output[0] == "exception":
-                self.macro_running = False
-                self.macro_toggle_button.configure(text="Start Macro")
-                self.platform_file_button.configure(state=NORMAL)
-                self.preset_combobox.configure(state=NORMAL)
+                self._set_macro_status(False)
                 self.macro_process = None
                 self.macro_process_toggle_button.configure(state=NORMAL)
                 self.macro_pid_infotext.set("Not executed")
                 self.macro_process_label.configure(fg="red")
                 self.macro_process_toggle_button.configure(text="Running")
-                self.log("Bot process terminated due to an error. Please check the log file.")
+                self.log("Macro process terminated due to an error. Please check the log file.")
 
         self.after(500, self.check_input_queue)
 
@@ -192,38 +183,37 @@ class MainWindow(ttk.Frame):
             self.log("MS hwnd", cap.hwnd)
             self.log("MS rect", rect)
             self.log("Out Queue put:", self.platform_file_path.get())
-        if rect[0] < 0 or rect[1] < 0:
-            showerror(APP_TITLE, "Failed to get Maple Window location.\nMove MapleStory window so"
+        if rect is None:
+            showerror(APP_TITLE, "Failed to get Maple Window location.\nMove MapleStory window so "
                                  "that the top left corner of the window is within the screen.")
             return
 
         cap.capture()
         self.macro_process_out_q.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
-        self.macro_running = True
-        self.macro_toggle_button.configure(text="Stop Macro")
-        self.platform_file_button.configure(state=DISABLED)
-        self.preset_combobox.configure(state=DISABLED)
+        self._set_macro_status(True)
 
     def stop_macro(self):
         self.macro_process_out_q.put(("stop",))
         self.log("Stopping.")
-        self.macro_running = False
-        self.macro_toggle_button.configure(text="Start Macro")
-        self.platform_file_button.configure(state=NORMAL)
-        self.preset_combobox.configure(state=NORMAL)
+        self._set_macro_status(False)
+
+    def _set_macro_status(self, running):
+        self.macro_running = running
+        self.macro_toggle_button.configure(text="Stop Macro" if running else "Start Macro")
+        self.platform_file_button.configure(state=DISABLED if running else NORMAL)
+        self.preset_combobox.configure(state=DISABLED if running else NORMAL)
 
     def log(self, *args):
         txt = ' '.join(str(i) for i in args)
         self.log_text_area.insert(END, txt + "\n")
         self.log_text_area.see(END)
-        root_logger.info(txt)
 
     def toggle_macro_process(self):
         if not self.macro_process:
             self.macro_process_toggle_button.configure(state=DISABLED)
             self.macro_pid_infotext.set("Running..")
             self.macro_process_label.configure(fg="orange")
-            self.log("Bot process starting...")
+            self.log("Macro process starting...")
             self.macro_process_out_q = multiprocessing.Queue()
             self.macro_process_in_q = multiprocessing.Queue()
             self.macro_process = multiprocessing.Process(
@@ -304,7 +294,7 @@ Version: v%s
 Author: Dashadower, krrr
 Source code: https://github.com/krrr/MSV-Kanna-Ver
 
-Please be known that using this bot may get your account banned. By using this software,
+Please be known that using this macro may get your account banned. By using this software,
 you acknowledge that the developers are not liable for any damages caused to you or your account.
 ''' % (VERSION,))
 
@@ -313,7 +303,7 @@ def main():
     ctypes.windll.user32.SetProcessDPIAware()
 
     multiprocessing.freeze_support()
-    parser = argparse.ArgumentParser(description="MS-Visionify, a bot to play MapleStory")
+    parser = argparse.ArgumentParser(description="MSV-Kanna-Ver, a macro to farm MapleStory")
     parser.add_argument("-title", dest="title", help="change main window title to designated value")
     args = vars(parser.parse_args())
     root = tk.Tk()

@@ -4,22 +4,6 @@ import macro_script
 import time, random
 
 
-class CustomLogger:
-    def __init__(self, logger_obj, logger_queue):
-        self.logger_obj = logger_obj
-        self.logger_queue = logger_queue
-
-    def debug(self, *args):
-        self.logger_obj.debug(" ".join([str(x) for x in args]))
-        if self.logger_queue:
-            self.logger_queue.put(("log", " ".join([str(x) for x in args])))
-
-    def exception(self, *args):
-        self.logger_obj.exception(" ".join([str(x) for x in args]))
-        if self.logger_queue:
-            self.logger_queue.put(("log", " ".join([str(x) for x in args])))
-
-
 class MacroControllerAStar(macro_script.MacroController):
     """
     This is a new port of MacroController from macro_script with improved pathing. MacroController Used PlatforScan,
@@ -42,9 +26,7 @@ class MacroControllerAStar(macro_script.MacroController):
             self.player_manager.skill_cast_counter = 0
             self.player_manager.skill_counter_time = time.time()
         if not self.screen_capturer.ms_get_screen_hwnd():
-            self.logger.debug("Failed to get MS screen rect")
-            self.abort()
-            return -1
+            self.abort("failed to get MS screen rect")
 
         # Update Screen
         self.screen_processor.update_image(set_focus=False)

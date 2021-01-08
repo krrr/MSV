@@ -4,7 +4,11 @@ import d3dshot
 import numpy as np, ctypes, ctypes.wintypes
 
 
-class MapleWindowNotFoundError(Exception):
+class GameCaptureError(Exception):
+    pass
+
+
+class MapleWindowNotFoundError(GameCaptureError):
     pass
 
 
@@ -112,6 +116,10 @@ class StaticImageProcessor:
             rgb_img = src
         else:
             rgb_img = self.img_handle.capture(set_focus, self.hwnd)
+
+        if rgb_img is None:
+            raise GameCaptureError
+
         self.bgr_img = cv2.cvtColor(np.array(rgb_img), cv2.COLOR_RGB2BGR)
         self.gray_img = cv2.cvtColor(self.bgr_img, cv2.COLOR_BGR2GRAY)
 

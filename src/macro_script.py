@@ -23,7 +23,6 @@ def macro_process_main(input_q, output_q):
 
     while True:
         command = input_q.get()
-        logger.debug("received command {}".format(command))
         try:
             if command[0] == "start":
                 logger.debug("starting MacroController...")
@@ -38,17 +37,27 @@ def macro_process_main(input_q, output_q):
                     macro.loop()
             elif command[0] == 'stop':
                 if macro:
-                    macro.abort()
+                    macro.abort(raise_=False)
                     macro = None
         except CommandReceived:  # break from inner loop
             pass
-        except Exception:
-            logger.exception("Exception during loop execution:")
-            output_q.put(["exception", "exception"])
-            break
+        except Aborted:
+            macro = None
+        except Exception as e:
+            if isinstance(e, sp.GameCaptureError):
+                macro.abort("failed to capture game window", raise_=False)
+                macro = None
+            else:  # unknown error
+                logger.exception("Exception during loop execution:")
+                output_q.put(("exception", None))
+                break
 
 
 class CommandReceived(Exception):
+    pass
+
+
+class Aborted(Exception):
     pass
 
 
@@ -224,9 +233,7 @@ class MacroController:
 
         # Check if MapleStory window is alive
         if not self.screen_capturer.ms_get_screen_hwnd():
-            self.logger.error("Failed to get MS screen rect")
-            self.abort()
-            return -1
+            self.abort('failed to get MS screen rect')
 
         # Update Screen
         self.screen_processor.update_image(set_focus=False)
@@ -242,11 +249,9 @@ class MacroController:
             if white_room:
                 self.alert_sound(5)
                 if time.time() - self.other_player_detected_start >= 10:
-                    self.logger.info('white room detected and user AFK, exit')
                     self.save_current_screen('white_room')
-                    self.abort()
                     os.system("taskkill /f /im MapleStory.exe")  # temporary solution
-                    return
+                    self.abort('white room detected and user AFK, exit')
             return -1
         else:
             self.player_pos_not_found_start = None
@@ -269,11 +274,9 @@ class MacroController:
             self.elite_boss_detected = True
             if other_pos:
                 if time.time() - self.other_player_detected_start >= 10:
-                    self.logger.info('eboss present and other player staying, exit')
                     self.save_current_screen('eboss_people')
-                    self.abort()
                     os.system("taskkill /f /im MapleStory.exe")  # temporary solution
-                    return
+                    self.abort('eboss present and other player staying')
             else:
                 self.alert_sound(1)
         else:
@@ -594,11 +597,13 @@ class MacroController:
             self.keyhandler.reset()
             raise CommandReceived()
 
-    def abort(self):
+    def abort(self, reason='', raise_=True):
         self.keyhandler.reset()
-        self.logger.info("macro stopped")
+        self.logger.info('macro stopped' + (': ' + reason if reason else ''))
         if self.log_queue:
-            self.log_queue.put(["stopped", None])
+            self.log_queue.put(('stopped', None))
+        if raise_:
+            raise Aborted
 
     def alert_sound(self, times=3):
         if 0 <= time.time() - self.last_alert_sound <= self.ALERT_SOUND_CD:
