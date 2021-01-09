@@ -84,22 +84,20 @@ class Dclp1MacroController(MacroController):
             self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 3)  # right right middle
             self.keyhandler.single_press(dc.DIK_LEFT)
             time.sleep(0.6)
-            self.check_cmd_queue()
-            self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['600f8ed9'].end_x - 3)  # center bottom
-            time.sleep(0.55)
         else:
             self.keyhandler.single_press(dc.DIK_RIGHT)
             self.player_manager.shikigami_haunting()
             self.check_cmd_queue()
-            time.sleep(0.5 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.6 + abs(self.player_manager.random_duration(0.1)))
             self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 6)  # right right middle
             self.player_manager.shikigami_haunting()
             self.keyhandler.single_press(dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
-            self.check_cmd_queue()
-            time.sleep(0.22 + abs(self.player_manager.random_duration(0.1)))
-            self.player_manager.teleport_left()
-            time.sleep(1.1)
+            time.sleep(0.25)
+
+        self.check_cmd_queue()
+        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['600f8ed9'].end_x - 3)  # center bottom
+        time.sleep(0.55)
 
         self.check_cmd_queue()
         self.update()
@@ -118,14 +116,16 @@ class Dclp1MacroController(MacroController):
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].start_x + 2)
         self.player_manager.shikigami_haunting()
         self.player_manager.teleport_left()
-        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].start_x + 4)  # left top
+        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].start_x + 3)  # left top
+        self.keyhandler.single_press(dc.DIK_RIGHT)
+        self.player_manager.shikigami_haunting()
         time.sleep(0.15 + abs(self.player_manager.random_duration(0.1)))
-        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].end_x + 5)  # left top
+        self.player_manager.teleport_right()
 
         if return1:  # alternative preset will stay at left middle platform
-            time.sleep(0.15)
             return
 
+        self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
         time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['b0d5f01d'].start_x - 5)  # left middle
