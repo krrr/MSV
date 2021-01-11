@@ -10,11 +10,11 @@ area = scrp.get_minimap_rect()
 
 
 while True:
+    t = time.perf_counter()
     scrp.update_image(set_focus=False)
-    st = time.time()
     playerpos = scrp.find_player_minimap_marker(area)
-    et = time.time()
-    #print("regular", et - st)
+    print("regular", time.perf_counter() - t)
+    time.sleep(0.02)
 
     regular_find = scrp.bgr_img[area[1]:area[1] + area[3], area[0]:area[0] + area[2]].copy()
     if playerpos:

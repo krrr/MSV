@@ -83,7 +83,7 @@ class MacroController:
         if not self.logger.hasHandlers():
             self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
             self.logger.addHandler(get_file_log_handler())
-        self.logger.info("%s init" % self.__class__.__name__)
+        self.logger.debug("%s init" % self.__class__.__name__)
 
         self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
         self.screen_capturer = sp.ScreenProcessor()

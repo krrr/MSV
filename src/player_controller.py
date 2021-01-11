@@ -79,9 +79,7 @@ class PlayerController:
             if scrp_ret_val:
                 player_coords_x, player_coords_y = scrp_ret_val
             else:
-                #raise Exception("screen_processor did not return coordinates!!")
-                player_coords_x = self.x
-                player_coords_y = self.y
+                raise Exception("screen_processor did not return coordinates!")
         self.x, self.y = player_coords_x, player_coords_y
 
     def distance(self, coord1, coord2):
@@ -101,7 +99,7 @@ class PlayerController:
             return True
 
         if not no_attack_distance:
-            self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT, 0.05)  # turn to correct direction
+            self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to correct direction
 
         start_time = time.time()
         time_limit = math.ceil(abs(loc_delta) / self.x_movement_enforce_rate) + 3
@@ -207,10 +205,7 @@ class PlayerController:
         self.key_mgr.direct_press(DIK_RIGHT if right else DIK_LEFT)
         while True:
             time.sleep(0.02)
-
             self.update()
-            if not self.x:
-                raise Exception("horizontal_move goal: failed to recognize coordinates")
 
             if abs(self.x - goal_x) <= self.horizontal_goal_offset:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
