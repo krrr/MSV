@@ -250,7 +250,7 @@ class MacroController:
                 self.alert_sound(5)
                 if time.time() - self.other_player_detected_start >= 10:
                     self.save_current_screen('white_room')
-                    os.system("taskkill /f /im MapleStory.exe")  # temporary solution
+                    self.exit_to_ch_select()
                     self.abort('white room detected and user AFK, exit')
             return -1
         else:
@@ -275,7 +275,7 @@ class MacroController:
             if other_pos:
                 if time.time() - self.other_player_detected_start >= 10:
                     self.save_current_screen('eboss_people')
-                    os.system("taskkill /f /im MapleStory.exe")  # temporary solution
+                    self.exit_to_ch_select()
                     self.abort('eboss present and other player staying')
             else:
                 self.alert_sound(1)
@@ -618,6 +618,11 @@ class MacroController:
         thread.setDaemon(True)
         thread.start()
         self.last_alert_sound = time.time() + 0.5 * times
+
+    def exit_to_ch_select(self):
+        for k in (dc.DIK_ESCAPE, dc.DIK_UP, dc.DIK_RETURN, dc.DIK_RETURN):
+            self.keyhandler.single_press(k)
+            time.sleep(0.2)
 
     def save_current_screen(self, prefix):
         img = self.screen_capturer.capture()
