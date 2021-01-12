@@ -75,6 +75,7 @@ class Dclp1MacroController(MacroController):
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].end_x - 2)
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].end_x + 4)
         self.check_cmd_queue()
+        time.sleep(0.1)
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['85e71f57'].start_x + 2)  # right middle
 
         if no_attack:
@@ -107,6 +108,8 @@ class Dclp1MacroController(MacroController):
 
         self.navigate_to_platform('600f8ed9')  # ensure at center bottom
 
+        if time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] <= 10:
+            self.player_manager.last_skill_use_time['yaksha_boss'] = 0  # force setting yaksha boss
         self._place_set_skill('yaksha_boss')
 
         # then left platforms
@@ -123,6 +126,7 @@ class Dclp1MacroController(MacroController):
         self.player_manager.teleport_right()
 
         if return1:  # alternative preset will stay at left middle platform
+            time.sleep(0.05)
             return
 
         self.keyhandler.single_press(dc.DIK_LEFT)
