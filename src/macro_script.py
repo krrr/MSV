@@ -244,14 +244,12 @@ class MacroController:
             white_room = self.screen_processor.check_white_room()
             if self.player_pos_not_found_start is None:
                 self.logger.info('white room detected' if white_room else 'player pos not found')
+                if white_room:
+                    self.save_current_screen('white_room')
                 self.player_pos_not_found_start = time.time()
 
             if white_room:
                 self.alert_sound(5)
-                if time.time() - self.other_player_detected_start >= 10:
-                    self.save_current_screen('white_room')
-                    self.exit_to_ch_select()
-                    self.abort('white room detected and user AFK, exit')
             return -1
         else:
             self.player_pos_not_found_start = None
