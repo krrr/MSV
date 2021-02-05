@@ -1,7 +1,7 @@
 import cv2, imutils, os
 from src.screen_processor import ScreenProcessor
 from src.screen_processor import StaticImageProcessor
-from src.keystate_manager import KeyboardInputManager
+from src.input_manager import InputManager
 import src.directinput_constants
 import numpy as np, time
 
@@ -9,7 +9,7 @@ screencap = ScreenProcessor()
 scrp = StaticImageProcessor(screencap)
 scrp.update_image()
 area = scrp.get_minimap_rect()
-key_mgr = KeyboardInputManager()
+key_mgr = InputManager()
 
 testkey = src.directinput_constants.DIK_A
 

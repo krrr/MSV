@@ -6,7 +6,7 @@ import cv2, time, os
 import numpy as np
 from keras.models import load_model
 from tensorflow import device
-from keystate_manager import KeyboardInputManager
+from input_manager import InputManager
 from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK, DIK_PERIOD
 from win32con import VK_NUMLOCK
 from win32api import GetKeyState

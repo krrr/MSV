@@ -18,6 +18,7 @@ from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
 from macro_script import macro_process_main
+from tools.auto_star_force import AutoStarForceWindow
 # from macro_script_astar import MacroControllerAStar as MacroController
 
 
@@ -47,6 +48,11 @@ class MainWindow(ttk.Frame):
         options_menu.add_checkbutton(label="Debug Mode", onvalue=True, offvalue=False,
                                      variable=self.debug_mode, command=self._on_debug_mode_check)
         self._menubar.add_cascade(label="Options", menu=options_menu)
+
+        tools_menu = tk.Menu(tearoff=False)
+        self._menubar.add_cascade(label="Tools", menu=tools_menu)
+        tools_menu.add_command(label='Auto Star Force', command=lambda: AutoStarForceWindow(self.master))
+
         help_menu = tk.Menu(tearoff=False)
         self._menubar.add_cascade(label="Help", menu=help_menu)
         help_menu.add_command(label='About', command=self._popup_about)
@@ -123,6 +129,8 @@ class MainWindow(ttk.Frame):
             GlobalHotKeyListener.HotKey(1, 0, win32con.VK_F1, lambda: self.stop_macro() if self.macro_running else self.start_macro()),
             GlobalHotKeyListener.HotKey(2, 0, win32con.VK_F2, lambda: self.toggle_macro_process())
         ])
+
+        self.after(300, lambda: AutoStarForceWindow(master))
 
     def on_close(self):
         if self.macro_process:

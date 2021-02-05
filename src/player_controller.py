@@ -1,5 +1,5 @@
 from directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
-from keystate_manager import DEFAULT_KEY_MAP
+from input_manager import DEFAULT_KEY_MAP
 import time, math, random
 
 
@@ -187,7 +187,7 @@ class PlayerController:
                 self.teleport_left()
                 self.horizontal_move_goal(goal_x)
 
-    def horizontal_move_goal(self, goal_x):
+    def horizontal_move_goal(self, goal_x, timeout=None):
         """
         Blocking call to move from current x position(self.x) to goal_x. Only counts x coordinates.
         Refactor notes: This function references self.screen_processor
@@ -198,9 +198,9 @@ class PlayerController:
         if dis <= self.horizontal_goal_offset:
             return True
 
-        start_time = time.time()
-        time_limit = math.ceil(dis / self.x_movement_enforce_rate) + 3
-        right = goal_x - self.x > 0  # need to go right:
+        start = time.time()
+        timeout = timeout or math.ceil(dis / self.x_movement_enforce_rate) + 3
+        right = goal_x - self.x > 0  # need to go right
 
         self.key_mgr.direct_press(DIK_RIGHT if right else DIK_LEFT)
         while True:
@@ -211,9 +211,21 @@ class PlayerController:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return True
 
-            if time.time() - start_time > time_limit:
+            if time.time() - start > timeout:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return False
+
+    def stay(self, timeout):
+        start = time.time()
+        while True:
+            t = time.time()
+            self.horizontal_move_goal(self.x, t + timeout - start)
+
+            if t - start > timeout:
+                break
+
+            time.sleep(0.04)
+            self.update()
 
     def teleport_up(self):
         self._do_teleport(DIK_UP)

@@ -1,6 +1,9 @@
-from src.keystate_manager import KeyboardInputManager
+import ctypes
+from src.input_manager import InputManager
+ctypes.windll.user32.SetProcessDPIAware()
+
 from src.directinput_constants import *
-import time
-time.sleep(2)
-mgr = KeyboardInputManager()
-mgr.single_press(DIK_INSERT)
+mgr = InputManager()
+# mgr.single_press(DIK_INSERT)
+mgr.mouse_move_absolute(1900, 1)
+# mgr.mouse_left_click()

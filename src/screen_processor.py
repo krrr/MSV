@@ -29,12 +29,14 @@ class ScreenProcessor:
     def ms_get_screen_hwnd(self):
         return win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
 
-    def ms_get_screen_rect(self, hwnd):
+    def ms_get_screen_rect(self, hwnd=None):
         """
         Get client rect of game window
         :param hwnd: window handle from self.ms_get_screen_hwnd
         :return: window rect (x1, y1, x2, y2) of MS rect.
         """
+        hwnd = self.hwnd if hwnd is None else hwnd
+
         try:
             rect = win32gui.GetClientRect(hwnd)
         except Exception:
@@ -53,7 +55,7 @@ class ScreenProcessor:
         :return : returns PIL Image"""
         if hwnd:
             self.hwnd = hwnd
-        if not hwnd:
+        if not self.hwnd:
             self.hwnd = self.ms_get_screen_hwnd()
         if not rect:
             rect = self.ms_get_screen_rect(self.hwnd)

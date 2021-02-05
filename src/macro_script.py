@@ -1,8 +1,8 @@
 import os
 import datetime
 import logging, math, time, random
-import keystate_manager as km
 import player_controller as pc
+import input_manager as km
 import screen_processor as sp
 import terrain_analyzer
 import threading
@@ -89,7 +89,7 @@ class MacroController:
         self.screen_capturer = sp.ScreenProcessor()
         self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = terrain_analyzer.PathAnalyzer()
-        self.keyhandler = km.KeyboardInputManager()
+        self.keyhandler = km.InputManager()
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
 
         self.last_platform_hash = None

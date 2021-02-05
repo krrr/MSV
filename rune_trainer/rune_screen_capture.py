@@ -1,11 +1,11 @@
 # -*- coding:utf-8 -*-
 from screen_processor import ScreenProcessor
-from keystate_manager import KeyboardInputManager
+from input_manager import InputManager
 from directinput_constants import DIK_SPACE, DIK_UP
 import cv2, os, time, glob, imutils
 import numpy as np
 cap = ScreenProcessor()
-kbd = KeyboardInputManager()
+kbd = InputManager()
 from win32gui import SetForegroundWindow
 os.chdir("images/screenshots")
 imgs = glob.glob("*.png")

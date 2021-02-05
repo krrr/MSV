@@ -1,9 +1,22 @@
 import directinput_constants as dic
 import time, ctypes
+import win32api
+import win32con
+import math
+import random
+
 
 SendInput = ctypes.windll.user32.SendInput
+GetCursorPos = ctypes.windll.user32.GetCursorPos
 # C struct redefinitions
 PUL = ctypes.POINTER(ctypes.c_ulong)
+KEYEVENTF_KEYUP = 0x0002
+KEYEVENTF_SCANCODE = 0x0008
+MOUSEEVENTF_MOVE = 0x0001
+MOUSEEVENTF_LEFTDOWN = 0x0002
+MOUSEEVENTF_LEFTUP = 0x0004
+MOUSEEVENTF_VIRTUALDESK = 0x4000
+MOUSEEVENTF_ABSOLUTE = 0x8000
 
 
 class KeyBdInput(ctypes.Structure):
@@ -25,14 +38,14 @@ class MouseInput(ctypes.Structure):
                 ("dy", ctypes.c_long),
                 ("mouseData", ctypes.c_ulong),
                 ("dwFlags", ctypes.c_ulong),
-                ("time",ctypes.c_ulong),
+                ("time", ctypes.c_ulong),
                 ("dwExtraInfo", PUL)]
 
 
 class Input_I(ctypes.Union):
     _fields_ = [("ki", KeyBdInput),
-                 ("mi", MouseInput),
-                 ("hi", HardwareInput)]
+                ("mi", MouseInput),
+                ("hi", HardwareInput)]
 
 
 class Input(ctypes.Structure):
@@ -51,12 +64,48 @@ def PressKey(hexKeyCode):
 def ReleaseKey(hexKeyCode):
     extra = ctypes.c_ulong(0)
     ii_ = Input_I()
-    ii_.ki = KeyBdInput(0, hexKeyCode, 0x0008 | 0x0002, 0, ctypes.pointer(extra))  # 0x0008: KEYEVENTF_SCANCODE
+    ii_.ki = KeyBdInput(0, hexKeyCode, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, ctypes.pointer(extra))
     x = Input(ctypes.c_ulong(1), ii_)
-    SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))  # 0x0002: KEYEVENTF_KEYUP
+    SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
 
-class KeyboardInputManager:
+def MouseMoveAbsolute(x, y):
+    x = int(x * 65536.0 / win32api.GetSystemMetrics(win32con.SM_CXSCREEN))
+    y = int(y * 65536.0 / win32api.GetSystemMetrics(win32con.SM_CYSCREEN))
+    extra = ctypes.c_ulong(0)
+    ii_ = Input_I()
+    ii_.mi = MouseInput(x, y, 0, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 0, ctypes.pointer(extra))
+    command = Input(ctypes.c_ulong(0), ii_)
+    SendInput(1, ctypes.pointer(command), ctypes.sizeof(command))
+
+
+def MouseLeftClick(down):
+    extra = ctypes.c_ulong(0)
+    ii_ = Input_I()
+    ii_.mi = MouseInput(0, 0, 0, MOUSEEVENTF_LEFTDOWN if down else MOUSEEVENTF_LEFTUP, 0, ctypes.pointer(extra))
+    x = Input(ctypes.c_ulong(0), ii_)
+    SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+
+def GetMouseCursorPos():
+    point = ctypes.wintypes.POINT()
+    if GetCursorPos(ctypes.pointer(point)) == 1:
+        return point.x, point.y
+    else:
+        return None
+
+
+# http://robertpenner.com/easing/
+# t: current_time
+def ease_in_out_quad(t, start, delta, duration):
+    t /= duration / 2
+    if t < 1:
+        return delta / 2 * t * t + start
+    t -= 1
+    return -delta / 2 * (t * (t - 2) - 1) + start
+
+
+class InputManager:
     """
     This is an attempt to manage input from a single source. It remembers key "states" , which consists of keypress
     modifications, and actuates them in a single batch.
@@ -141,6 +190,33 @@ class KeyboardInputManager:
     def direct_release(self, key_code):
         ReleaseKey(key_code)
         self.actual_key_state[key_code] = 0
+
+    def mouse_move_absolute(self, x, y):
+        MouseMoveAbsolute(x, y)
+
+    def mouse_move(self, x, y):
+        start_pos = GetMouseCursorPos()
+        deltas = x - start_pos[0], y - start_pos[1]
+        dis = int(math.sqrt(deltas[0]**2 + deltas[1]**2))
+        step = max((dis // 50, 5))
+        for i in range(1, step+1):
+            pos_x = ease_in_out_quad(i, start_pos[0], deltas[0], step)
+            pos_y = ease_in_out_quad(i, start_pos[1], deltas[1], step)
+            self.mouse_move_absolute(pos_x, pos_y)
+            time.sleep(0.02)
+        MouseMoveAbsolute(x, y)
+
+    def mouse_left_click(self):
+        MouseLeftClick(True)
+        time.sleep(0.02)
+        MouseLeftClick(False)
+
+    def mouse_left_click_at(self, x, y, rand=0):
+        if rand != 0:
+            x += random.randint(0, rand)
+            y += random.randint(0, rand)
+        self.mouse_move(x, y)
+        self.mouse_left_click()
 
     def reset(self):
         """

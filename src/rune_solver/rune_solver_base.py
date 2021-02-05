@@ -5,7 +5,7 @@ import random
 from screen_processor import ScreenProcessor
 import cv2, time
 import numpy as np
-from keystate_manager import KeyboardInputManager
+from input_manager import InputManager
 from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK
 from win32con import VK_NUMLOCK
 from win32api import GetKeyState
@@ -27,7 +27,7 @@ class RuneSolverBase:
         self.rune_roi_800 = [170, 200, 440, 135]
         self.rune_roi = self.rune_roi_800  # set as default rune roi
         self.screen_processor = ScreenProcessor() if not screen_capturer else screen_capturer
-        self.key_mgr = KeyboardInputManager() if not key_mgr else key_mgr
+        self.key_mgr = InputManager() if not key_mgr else key_mgr
 
     def capture_roi(self):
         screen_rect = self.screen_processor.ms_get_screen_rect(self.screen_processor.ms_get_screen_hwnd())

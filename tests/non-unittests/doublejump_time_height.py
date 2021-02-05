@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt, time
 from src.screen_processor import ScreenProcessor, StaticImageProcessor
 from src.directinput_constants import DIK_ALT, DIK_UP
-from src.keystate_manager import KeyboardInputManager
+from src.input_manager import InputManager
 
 cap = ScreenProcessor()
 scrp = StaticImageProcessor(cap)
 scrp.update_image(set_focus=True)
 rect = scrp.get_minimap_rect()
 
-inp = KeyboardInputManager()
+inp = InputManager()
 
 start_delay = 0.5
 increment = -0.05

@@ -1,5 +1,5 @@
 from src.player_controller import PlayerController
-from src.keystate_manager import KeyboardInputManager
+from src.input_manager import InputManager
 import time
 from src.screen_processor import ScreenProcessor
 from src.screen_processor import StaticImageProcessor
@@ -8,7 +8,7 @@ from win32gui import SetForegroundWindow
 wcap = ScreenProcessor()
 scrp = StaticImageProcessor(wcap)
 hwnd = wcap.ms_get_screen_hwnd()
-kbd_mgr = KeyboardInputManager()
+kbd_mgr = InputManager()
 player_cntrlr = PlayerController(kbd_mgr, scrp)
 
 SetForegroundWindow(hwnd)

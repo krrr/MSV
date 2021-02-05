@@ -4,7 +4,7 @@ from tkinter.constants import *
 from util import get_config
 from tkinter.messagebox import showinfo, showwarning
 from directinput_constants import keysym_map
-from keystate_manager import DEFAULT_KEY_MAP
+from input_manager import DEFAULT_KEY_MAP
 
 
 class KeyBindSetupWindow(tk.Toplevel):
