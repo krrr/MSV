@@ -2,6 +2,8 @@ import cv2, win32gui, time, math
 import os
 import d3dshot
 import numpy as np, ctypes, ctypes.wintypes
+import sys
+from PIL import ImageGrab
 
 
 class GameCaptureError(Exception):
@@ -21,7 +23,7 @@ class ScreenProcessor:
         if not ctypes.windll.user32.IsProcessDPIAware():
             ctypes.windll.user32.SetProcessDPIAware()
 
-        if ScreenProcessor.d3dshot is None:
+        if sys.getwindowsversion().major == 10 and ScreenProcessor.d3dshot is None:
             ScreenProcessor.d3dshot = d3dshot.create()
 
     def ms_get_screen_hwnd(self):
@@ -65,8 +67,10 @@ class ScreenProcessor:
             if win32gui.GetForegroundWindow() != self.hwnd:
                 return None
 
-        # old method: ImageGrab.grab(rect)
-        return self.d3dshot.screenshot(rect)
+        if self.d3dshot is None:
+            return ImageGrab.grab(rect)
+        else:
+            return self.d3dshot.screenshot(rect)
 
 
 class StaticImageProcessor:
