@@ -6,9 +6,14 @@ import win32con
 import collections
 import logging
 import logging.handlers
+import winsound
 import os
 
 _config = None
+
+
+def play_sound(name):
+    winsound.PlaySound('resources\\sound\\' + name + '.wav', winsound.SND_FILENAME | winsound.SND_ASYNC)
 
 
 def get_config():

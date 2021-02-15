@@ -1,7 +1,6 @@
 import os
 import datetime
 import logging, math, time, random
-import win32api, win32con
 import keystate_manager as km
 import player_controller as pc
 import screen_processor as sp
@@ -10,6 +9,7 @@ import threading
 import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
+import winsound
 from rune_solver.rune_solver_simple import RuneSolverSimple
 from util import get_config, get_file_log_handler
 
@@ -611,7 +611,7 @@ class MacroController:
 
         def func():
             for _ in range(times):
-                win32api.MessageBeep(win32con.MB_ICONWARNING)
+                winsound.MessageBeep(winsound.MB_ICONASTERISK)
                 time.sleep(0.5)
 
         thread = threading.Thread(target=func)

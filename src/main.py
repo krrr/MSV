@@ -13,7 +13,7 @@ from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
 import mapscripts
-from util import get_config, save_config, GlobalHotKeyListener
+from util import get_config, save_config, GlobalHotKeyListener, play_sound
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
@@ -188,11 +188,13 @@ class MainWindow(ttk.Frame):
                                  "that the top left corner of the window is within the screen.")
             return
 
+        play_sound('beep_up')
         cap.capture()
         self.macro_process_out_q.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
         self._set_macro_status(True)
 
     def stop_macro(self):
+        play_sound('beep_down')
         self.macro_process_out_q.put(("stop",))
         self.log("Stopping.")
         self._set_macro_status(False)
