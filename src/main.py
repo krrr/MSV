@@ -13,6 +13,7 @@ from tkinter.filedialog import askopenfilename
 from tkinter.scrolledtext import ScrolledText
 
 import mapscripts
+import util
 from util import get_config, save_config, GlobalHotKeyListener, play_sound
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
@@ -314,8 +315,13 @@ def main():
 
     multiprocessing.freeze_support()
     parser = argparse.ArgumentParser(description="MSV-Kanna-Ver, a macro to farm MapleStory")
-    parser.add_argument("-title", dest="title", help="change main window title to designated value")
+    parser.add_argument("-t", dest="title", help="change main window title to designated value")
+    parser.add_argument("-c", dest="config", help="specify config file path")
     args = vars(parser.parse_args())
+
+    if args['config']:
+        util.config_file = args['config']
+
     root = tk.Tk()
 
     root.title(args["title"] if args["title"] else APP_TITLE)
