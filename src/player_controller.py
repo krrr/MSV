@@ -198,9 +198,9 @@ class PlayerController:
         if dis <= self.horizontal_goal_offset:
             return True
 
-        start = time.time()
-        timeout = timeout or math.ceil(dis / self.x_movement_enforce_rate) + 3
-        right = goal_x - self.x > 0  # need to go right
+        start_time = time.time()
+        time_limit = timeout or math.ceil(dis / self.x_movement_enforce_rate) + 3
+        right = goal_x - self.x > 0  # need to go right:
 
         self.key_mgr.direct_press(DIK_RIGHT if right else DIK_LEFT)
         while True:
@@ -211,21 +211,21 @@ class PlayerController:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return True
 
-            if time.time() - start > timeout:
+            if time.time() - start_time > time_limit:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return False
 
-    def stay(self, timeout):
-        start = time.time()
-        while True:
-            t = time.time()
-            self.horizontal_move_goal(self.x, t + timeout - start)
+    def stay(self, goal_x, timeout):
+        start_time = time.time()
 
-            if t - start > timeout:
+        while True:
+            self.update()
+            self.horizontal_move_goal(goal_x, time.time()-timeout)
+
+            if time.time()-timeout > start_time:
                 break
 
-            time.sleep(0.04)
-            self.update()
+            time.sleep(0.02)
 
     def teleport_up(self):
         self._do_teleport(DIK_UP)

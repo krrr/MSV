@@ -38,10 +38,10 @@ class TBoyResearchTrain1(MacroController):
             self.player_manager.shikigami_haunting()
             time.sleep(0.05)
             self.player_manager.exorcist_charm(False)
-            time.sleep(1.23 + abs(self.player_manager.random_duration(0.04)))
+            self.player_manager.stay(128, 1.23 + abs(self.player_manager.random_duration(0.04)))
             self.keyhandler.single_press(dc.DIK_LEFT if dir == dc.DIK_RIGHT else dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
-            time.sleep(1.23 + abs(self.player_manager.random_duration(0.04)))
+            self.player_manager.stay(128, 1.23 + abs(self.player_manager.random_duration(0.04)))
         elif self.current_platform_hash == '1b6295e0':  # bottom
             self.player_manager.shikigami_haunting_sweep_move(127)
             self.player_manager.teleport_up()
@@ -61,6 +61,8 @@ class TBoyResearchTrain1(MacroController):
         self.logger.info('pick up money')
 
         self.navigate_to_platform('48acf160')  # top right
+        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['48acf160'].start_x + 3)
+        self.update()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['48acf160'].end_x + 3)
         self.check_cmd_queue()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['374d7c30'].start_x + 3)

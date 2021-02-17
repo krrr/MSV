@@ -38,10 +38,10 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
             self.player_manager.shikigami_haunting()
             time.sleep(0.05)
             self.player_manager.exorcist_charm(False)
-            time.sleep(1.23 + abs(self.player_manager.random_duration(0.04)))
+            self.player_manager.stay(73, 1.23 + abs(self.player_manager.random_duration(0.04)))
             self.keyhandler.single_press(dc.DIK_LEFT if dir == dc.DIK_RIGHT else dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
-            time.sleep(1.23 + abs(self.player_manager.random_duration(0.04)))
+            self.player_manager.stay(73, 1.23 + abs(self.player_manager.random_duration(0.04)))
         elif self.current_platform_hash == '600f8ed9':  # center bottom
             self.player_manager.shikigami_haunting_sweep_move(70)
             self.player_manager.teleport_up()
