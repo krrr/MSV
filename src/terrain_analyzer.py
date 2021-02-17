@@ -116,11 +116,10 @@ class PathAnalyzer:
         self.astar_minimap_rect = []  # minimap rect (x,y,w,h) for use in generating astar data
 
         self.set_skill_coord = {}
+        self.other_attrs = {}
 
-    def save(self, filename="mapdata.platform", other_attrs = None):
-        """Save platforms, minimap to a file
-        :param filename: path to save file
-        """
+    def save(self, filename="mapdata.platform", other_attrs=None):
+        """Save platforms, minimap to a file"""
         data = {"platforms": self.platforms}
         if other_attrs:
             data.update(other_attrs)
@@ -136,12 +135,14 @@ class PathAnalyzer:
 
         with open(filename, "rb") as f:
             data = pickle.load(f)
-            self.platforms = data["platforms"]
-            minimap_coords = data["minimap"]
+            self.platforms = data['platforms']
+            minimap_coords = data['minimap']
             self.astar_minimap_rect = minimap_coords
             for i in data.keys():
                 if i.endswith('_coord'):
                     self.set_skill_coord[i[:-6]] = data.get(i)
+            self.other_attrs = {k: v for (k, v) in data.items() if k != 'platforms' and not k.endswith('_coord')}
+            print(self.other_attrs)
 
         self.generate_solution_dict()
         self.astar_map_grid = []
@@ -222,9 +223,12 @@ class PathAnalyzer:
     def generate_solution_dict(self):
         """Generates a solution dictionary, which is a dictionary with platform as keys and a dictionary of a list[strategy, 0]
         This function is now called automatically within load()"""
+        min_y = min(i.end_y for i in self.platforms.values())
+        max_y = max(i.end_y for i in self.platforms.values())
+
         for key, platform in self.platforms.items():
             platform.last_visit = 0
-            self.calculate_interplatform_solutions(key)
+            self.calculate_interplatform_solutions(key, min_y, max_y)
 
     def move_platform(self, from_platform, to_platform):
         """Update navigation map visit counter to keep track of visited platforms when moded
@@ -330,7 +334,7 @@ class PathAnalyzer:
         self.last_x = inp_x
         self.last_y = inp_y
 
-    def calculate_interplatform_solutions(self, hash):
+    def calculate_interplatform_solutions(self, hash, min_y, max_y):
         """Find relationships between platform, like how one platform links to another using movement.
         :param hash: platform hash in self.platforms Platform
         :return None
@@ -356,9 +360,10 @@ class PathAnalyzer:
                 if platform.start_y < other_platform.end_y:  # Platform is higher than current_platform. Thus we can just drop
                     height_diff = abs(platform.start_y - other_platform.start_y)
                     # check lower bound in case there is another platform in the middle of current and destination
-                    method = MoveMethod.DROP
-                    if 13 <= height_diff <= self.teleport_vertical_range:
+                    if (other_platform.end_y == max_y or 13 <= height_diff) and self.teleport_vertical_range:
                         method = MoveMethod.TELEPORTDOWN
+                    else:
+                        method = MoveMethod.DROP
                     solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method)
                     platform.solutions.append(solution)
                 else:  # We need to use teleport to get there, but first check if within teleport range

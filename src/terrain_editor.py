@@ -57,14 +57,15 @@ class TerrainEditorWindow(tk.Toplevel):
         self.stop_platform_record_button = tk.Button(self.tool_frame_2, text="Stop record platform", command=self.stop_record_platform, state=DISABLED)
         self.stop_platform_record_button.pack(side=RIGHT, expand=YES, fill=X)
 
-        self.tool_frame_4 = tk.Frame(self.master_tool_frame)
-        self.tool_frame_4.pack(fill=X)
-        self.set_yaksha_coord_button = tk.Button(self.tool_frame_4, text="Toggle yaksha boss pos",
-                                                 command=lambda: self._set_place_skill_coord('yaksha_boss'))
-        self.set_yaksha_coord_button.pack(side=LEFT, expand=YES, fill=X)
-        self.set_kishin_coord_button = tk.Button(self.tool_frame_4, text="Toggle kishin shoukan pos",
+        self.set_yaksha_coord_button0 = tk.Button(self.master_tool_frame, text="Toggle yaksha boss pos (face left)",
+                                                 command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'left'))
+        self.set_yaksha_coord_button0.pack(fill=X)
+        self.set_yaksha_coord_button1 = tk.Button(self.master_tool_frame, text="Toggle yaksha boss pos (face right)",
+                                                 command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'right'))
+        self.set_yaksha_coord_button1.pack(fill=X)
+        self.set_kishin_coord_button = tk.Button(self.master_tool_frame, text="Toggle kishin shoukan pos",
                                                  command=lambda: self._set_place_skill_coord('kishin_shoukan'))
-        self.set_kishin_coord_button.pack(side=RIGHT, expand=YES, fill=X)
+        self.set_kishin_coord_button.pack(fill=X)
         self.set_nightmare_invite_button = tk.Button(self.master_tool_frame, text="Toggle nightmare invite pos",
                                                      command=lambda: self._set_place_skill_coord('nightmare_invite'))
         self.set_nightmare_invite_button.pack(fill=X)
@@ -100,18 +101,23 @@ class TerrainEditorWindow(tk.Toplevel):
         if open_file_path:
             self.load_platform_file(open_file_path)
 
-    def _set_place_skill_coord(self, skill_name):
+    def _set_place_skill_coord(self, skill_name, extra_attr=None, extra_attr_value=None):
         old = self.other_attrs.get(skill_name + '_coord')
         if old == (self.last_coord_x, self.last_coord_y):
             del self.other_attrs[skill_name + '_coord']
+            if extra_attr:
+                del self.other_attrs[extra_attr]
         else:
             self.other_attrs[skill_name + '_coord'] = (self.last_coord_x, self.last_coord_y)
+            if extra_attr:
+                self.other_attrs[extra_attr] = extra_attr_value
 
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
         for i in self.set_skill_color:
             if i in self.terrain_analyzer.set_skill_coord:
                 self.other_attrs[i + '_coord'] = self.terrain_analyzer.set_skill_coord[i]
+        self.other_attrs = self.terrain_analyzer.other_attrs.copy()
         self.update_listbox()
 
     def on_close(self):

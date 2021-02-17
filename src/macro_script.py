@@ -567,7 +567,8 @@ class MacroController:
         self.player_manager.shikigami_haunting_sweep_move(coord[0])
         self.player_manager.horizontal_move_goal(coord[0])
         if skill_name == 'yaksha_boss':
-            self.keyhandler.single_press(dc.DIK_RIGHT)
+            dir_ = dc.DIK_LEFT if self.terrain_analyzer.other_attrs.get('yaksha_boss_dir') == 'left' else dc.DIK_RIGHT
+            self.keyhandler.single_press(dir_)
         time.sleep(0.1)
         getattr(self.player_manager, skill_name)()
         self.player_manager.last_skill_use_time[skill_name] = time.time()
