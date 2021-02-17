@@ -8,6 +8,9 @@ class TestScreenProcessor(TestCase):
     def setUp(self):
         self.pathextractor = PathAnalyzer()
 
+    def test_tboy_train1(self):
+        self._load("../src/mapscripts/t_boys_research_train1.platform")
+
     def test_vc3(self):
         self._load("../src/mapscripts/void_current3.platform")
 
