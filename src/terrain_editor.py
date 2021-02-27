@@ -114,10 +114,10 @@ class TerrainEditorWindow(tk.Toplevel):
 
     def load_platform_file(self, path):
         self.terrain_analyzer.load(path)
+        self.other_attrs = self.terrain_analyzer.other_attrs.copy()
         for i in self.set_skill_color:
             if i in self.terrain_analyzer.set_skill_coord:
                 self.other_attrs[i + '_coord'] = self.terrain_analyzer.set_skill_coord[i]
-        self.other_attrs = self.terrain_analyzer.other_attrs.copy()
         self.update_listbox()
 
     def on_close(self):

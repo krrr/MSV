@@ -131,8 +131,6 @@ class MainWindow(ttk.Frame):
             GlobalHotKeyListener.HotKey(2, 0, win32con.VK_F2, lambda: self.toggle_macro_process())
         ])
 
-        self.after(300, lambda: AutoStarForceWindow(master))
-
     def on_close(self):
         if self.macro_process:
             try:
