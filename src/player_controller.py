@@ -293,6 +293,28 @@ class PlayerController:
         if wait_delay:
             time.sleep(self.shikigami_haunting_delay)
 
+    def shiki_exo_shiki(self, x, wait=True):
+        if not (x-2 <= self.x <= x+2):
+            self.horizontal_move_goal(x)
+
+        dir_ = DIK_RIGHT if self.x < x else DIK_LEFT
+        self.key_mgr.single_press(dir_)
+        self.shikigami_haunting()
+        time.sleep(0.05)
+        self.exorcist_charm(False)
+        self.stay(x, 1.22 + abs(self.random_duration(0.05)))
+        self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
+        self.shikigami_haunting()
+
+        if wait:
+            self.stay(x, 1.22 + abs(self.random_duration(0.05)))
+        else:
+            self.key_mgr.single_press(dir_)
+            self.shikigami_haunting()
+            self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
+            self.shikigami_haunting()
+            self.stay(x, 0.2 + abs(self.random_duration(0.05)))
+
     def exorcist_charm(self, wait_delay=True):
         self.key_mgr.single_press(self.keymap["exorcist_charm"])
         self.skill_cast_counter += 1

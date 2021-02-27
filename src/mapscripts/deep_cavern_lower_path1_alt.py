@@ -1,6 +1,5 @@
 import time
 from .deep_cavern_lower_path1 import Dclp1MacroController
-import directinput_constants as dc
 
 
 # deep cavern lower path 1 alternative script
@@ -30,18 +29,7 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
             return
 
         if self.current_platform_hash == 'b0d5f01d':  # left middle
-            if not (72 <= self.player_manager.x <= 75):
-                self.player_manager.horizontal_move_goal(73)
-
-            dir = dc.DIK_RIGHT if self.player_manager.x < 73.5 else dc.DIK_LEFT
-            self.keyhandler.single_press(dir)
-            self.player_manager.shikigami_haunting()
-            time.sleep(0.05)
-            self.player_manager.exorcist_charm(False)
-            self.player_manager.stay(73, 1.23 + abs(self.player_manager.random_duration(0.04)))
-            self.keyhandler.single_press(dc.DIK_LEFT if dir == dc.DIK_RIGHT else dc.DIK_LEFT)
-            self.player_manager.shikigami_haunting()
-            self.player_manager.stay(73, 1.23 + abs(self.player_manager.random_duration(0.04)))
+            self.player_manager.shiki_exo_shiki(73)
         elif self.current_platform_hash == '600f8ed9':  # center bottom
             self.player_manager.shikigami_haunting_sweep_move(70)
             self.player_manager.teleport_up()

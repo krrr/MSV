@@ -1,6 +1,5 @@
 import time
 from macro_script import MacroController
-import directinput_constants as dc
 
 
 class TBoyResearchTrain1(MacroController):
@@ -30,20 +29,9 @@ class TBoyResearchTrain1(MacroController):
             return
 
         if self.current_platform_hash == '257d1219':  # center right
-            if not (126 <= self.player_manager.x <= 130):
-                self.player_manager.horizontal_move_goal(128)
-
-            dir_ = dc.DIK_RIGHT if self.player_manager.x < 128 else dc.DIK_LEFT
-            self.keyhandler.single_press(dir_)
-            self.player_manager.shikigami_haunting()
-            time.sleep(0.05)
-            self.player_manager.exorcist_charm(False)
-            self.player_manager.stay(128, 1.23 + abs(self.player_manager.random_duration(0.04)))
-            self.keyhandler.single_press(dc.DIK_LEFT if dir == dc.DIK_RIGHT else dc.DIK_LEFT)
-            self.player_manager.shikigami_haunting()
-            self.player_manager.stay(128, 1.23 + abs(self.player_manager.random_duration(0.04)))
+            self.player_manager.shiki_exo_shiki(128)
         elif self.current_platform_hash == '1b6295e0':  # bottom
-            self.player_manager.shikigami_haunting_sweep_move(127)
+            self.player_manager.shikigami_haunting_sweep_move(128)
             self.player_manager.teleport_up()
         else:
             self.navigate_to_platform('257d1219')  # center right
