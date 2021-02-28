@@ -4,6 +4,8 @@ from .deep_cavern_lower_path1_alt import Dclp1MacroControllerAlt
 from .void_current3 import Vc3MacroController
 from .t_boys_research_train1 import TBoyResearchTrain1
 from .bash_club3 import BashClub3
+from .fox_tree_top_path import FoxTreeTopPath
+from .fox_tree_lower_path3 import FoxTreeLowerPath3
 
 
 map_scripts = {
@@ -12,7 +14,9 @@ map_scripts = {
     'dclp1_exorcist': Dclp1MacroControllerAlt,
     'vc3': Vc3MacroController,
     'tboy_train1': TBoyResearchTrain1,
-    'bash_club3': BashClub3
+    'bash_club3': BashClub3,
+    'fox_tree_top_path': FoxTreeTopPath,
+    'fox_tree_lower_path3': FoxTreeLowerPath3,
 }
 
 map2platform = {
@@ -21,5 +25,7 @@ map2platform = {
     'dclp1_exorcist': 'deep_cavern_lower_path1',
     'vc3': 'void_current3',
     'tboy_train1': 't_boys_research_train1',
-    'bash_club3': 'bash_club3'
+    'bash_club3': 'bash_club3',
+    'fox_tree_top_path': 'fox_tree_top_path',
+    'fox_tree_lower_path3': 'fox_tree_lower_path3',
 }
