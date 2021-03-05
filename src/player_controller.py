@@ -5,6 +5,9 @@ import time, math, random
 
 # simple jump vertical distance: about 6 pixels
 class PlayerController:
+    TELEPORT_CD = 0.65
+    SHIKIGAMI_HAUNTING_RANGE = 18
+
     """
     This class keeps track of character location and manages advanced movement and attacks.
     """
@@ -28,6 +31,7 @@ class PlayerController:
         AttackinPlatform
         """
         self.x = self.y = None
+        self.last_teleport_time = 0
 
         self.keymap = {}
         for key, value in keymap.items():
@@ -42,7 +46,6 @@ class PlayerController:
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
-        self.shikigami_haunting_range = 18
         self.shikigami_haunting_delay = 0.37  # delay after using shikigami haunting where character is not movable
 
         self.horizontal_movement_threshold = 18  # teleport instead of walk if distance greater than threshold
@@ -228,26 +231,28 @@ class PlayerController:
             time.sleep(0.02)
 
     def teleport_up(self):
-        self._do_teleport(DIK_UP)
+        return self._do_teleport(DIK_UP)
 
     def teleport_down(self):
-        self._do_teleport(DIK_DOWN)
+        return self._do_teleport(DIK_DOWN)
 
     def teleport_left(self):
-        self._do_teleport(DIK_LEFT)
+        return self._do_teleport(DIK_LEFT)
 
     def teleport_right(self):
-        self._do_teleport(DIK_RIGHT)
+        return self._do_teleport(DIK_RIGHT)
 
     def _do_teleport(self, dir_key):
         """Warining: is a blocking call"""
         self.key_mgr.direct_press(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_press(self.keymap["teleport"])
+        self.last_teleport_time = time.time()
         time.sleep(0.03 + abs(self.random_duration(0.05)))
         self.key_mgr.direct_release(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_release(self.keymap["teleport"])
+        return True
 
     def shikigami_charm(self):
         self.key_mgr.single_press(self.keymap["shikigami_charm"])

@@ -10,6 +10,7 @@ import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import winsound
+from player_controller import PlayerController
 from rune_solver.rune_solver_simple import RuneSolverSimple
 from util import get_config, get_file_log_handler
 
@@ -174,7 +175,7 @@ class MacroController:
 
             solutions = self.terrain_analyzer.pathfind(self.current_platform_hash, platform_hash)
             if not solutions:
-                self.logger.error("could not generate path to platform %s from platform %s" % (platform_hash, self.current_platform_hash))
+                self.logger.error("generate path failed: platform %s -> %s" % (self.current_platform_hash, platform_hash))
                 return False
 
             self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(str(x.method) for x in solutions)))
@@ -415,15 +416,15 @@ class MacroController:
             else:
                 in_solution_movement_goal = lookahead_lb
 
-            self.player_manager.shikigami_haunting_sweep_move(in_solution_movement_goal, no_attack_distance=self.player_manager.shikigami_haunting_range)
+            self.player_manager.shikigami_haunting_sweep_move(in_solution_movement_goal, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
         elif sweep:
             # We need to move within the solution bounds. First, find closest solution bound which can cover majority of current platform.
             if self.player_manager.x < next_platform_solution.lower_bound[0]:
                 # We are left of solution bounds.
-                self.player_manager.shikigami_haunting_sweep_move(lookahead_ub, no_attack_distance=self.player_manager.shikigami_haunting_range)
+                self.player_manager.shikigami_haunting_sweep_move(lookahead_ub, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
             else:
                 # We are right of solution bounds
-                self.player_manager.shikigami_haunting_sweep_move(lookahead_lb, no_attack_distance=self.player_manager.shikigami_haunting_range)
+                self.player_manager.shikigami_haunting_sweep_move(lookahead_lb, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
 
         # time.sleep(0.1)
 
@@ -499,24 +500,27 @@ class MacroController:
         if move_method == MoveMethod.DROP:
             self.player_manager.drop()
             time.sleep(1)
-        elif move_method == MoveMethod.TELEPORTDOWN:
-            self.player_manager.teleport_down()
-            time.sleep(0.5)
         elif move_method == MoveMethod.JUMPL:
             self.player_manager.jumpl()
             time.sleep(0.7)
         elif move_method == MoveMethod.JUMPR:
             self.player_manager.jumpr()
             time.sleep(0.7)
-        elif move_method == MoveMethod.TELEPORTL:
-            self.player_manager.teleport_left()
-            time.sleep(0.5)
-        elif move_method == MoveMethod.TELEPORTR:
-            self.player_manager.teleport_right()
-            time.sleep(0.5)
-        elif move_method == MoveMethod.TELEPORTUP:
-            self.player_manager.teleport_up()
-            time.sleep(0.5)
+        elif move_method in (MoveMethod.TELEPORTL, MoveMethod.TELEPORTR, MoveMethod.TELEPORTUP, MoveMethod.TELEPORTDOWN):
+            elapsed = time.time() - self.player_manager.last_teleport_time
+            if elapsed < self.player_manager.TELEPORT_CD:
+                self.player_manager.stay(self.player_manager.x, self.player_manager.TELEPORT_CD - elapsed)
+
+            if move_method == MoveMethod.TELEPORTL:
+                self.player_manager.teleport_left()
+            elif move_method == MoveMethod.TELEPORTR:
+                self.player_manager.teleport_right()
+            elif move_method == MoveMethod.TELEPORTUP:
+                self.player_manager.teleport_up()
+            elif move_method == MoveMethod.TELEPORTDOWN:
+                self.player_manager.teleport_down()
+
+            time.sleep(0.1)
 
     def set_skills(self, combine=False):
         if self.elite_boss_detected and self.other_player_detected_start is not None:
@@ -560,6 +564,7 @@ class MacroController:
 
         platform = self.find_coord_platform(coord)
         if not platform:
+            self.logger.warning('placing skill ' + skill_name + 'coord not found: ' + str(coord))
             return False
         self.logger.info('placing ' + skill_name.replace('_', ' '))
         if not self.navigate_to_platform(platform):

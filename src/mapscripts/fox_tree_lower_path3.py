@@ -22,7 +22,7 @@ class FoxTreeLowerPath3(MacroController):
         elif self.current_platform_hash == 'b5822ca6':  # bottom
             self.player_manager.shikigami_haunting_sweep_move(37)
             self.player_manager.teleport_up()
-        elif self.current_platform_hash == 'b5822ca6':  # yaksha platform
+        elif self.current_platform_hash == '8f1abfca':  # yaksha platform
             self.player_manager.teleport_down()
         else:
             self.navigate_to_platform('773b4dee')  # center
