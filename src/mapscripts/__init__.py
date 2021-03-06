@@ -6,6 +6,7 @@ from .t_boys_research_train1 import TBoyResearchTrain1
 from .bash_club3 import BashClub3
 from .fox_tree_top_path import FoxTreeTopPath
 from .fox_tree_lower_path3 import FoxTreeLowerPath3
+from .corridor_h01 import CorridorH01
 
 
 map_scripts = {
@@ -17,6 +18,7 @@ map_scripts = {
     'bash_club3': BashClub3,
     'fox_tree_top_path': FoxTreeTopPath,
     'fox_tree_lower_path3': FoxTreeLowerPath3,
+    'corridor_h01': CorridorH01,
 }
 
 map2platform = {
@@ -28,4 +30,5 @@ map2platform = {
     'bash_club3': 'bash_club3',
     'fox_tree_top_path': 'fox_tree_top_path',
     'fox_tree_lower_path3': 'fox_tree_lower_path3',
+    'corridor_h01': 'corridor_h01',
 }
