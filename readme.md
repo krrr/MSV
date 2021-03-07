@@ -11,3 +11,15 @@ Kanna class version of original MS-Visionify (https://github.com/Dashadower/MS-V
 ### Note of regard to code users
 * GPLv3 Licence (same as original project)
 * Commercial uses are prohibited
+
+
+
+### Supported maps
+#### Meso farm maps
+* dclp1: 
+#### Leech maps
+* first_drill_hall: First Drill Hall  (165-172)
+* corridor_h01: Corridor H01  (173-176)
+* bash_club3: Dingy Brawl 'n' Bash Club 3  (177-185)
+* fox_tree_top_path: Fox Tree Top Path  (186-189)
+* fox_tree_lower_path3: Fox Tree Lower Path 3 (190-200)
