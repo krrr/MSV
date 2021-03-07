@@ -254,6 +254,11 @@ class PlayerController:
         self.key_mgr.direct_release(self.keymap["teleport"])
         return True
 
+    def wait_teleport_cd(self):
+        elapsed = time.time() - self.last_teleport_time
+        if elapsed < self.TELEPORT_CD:
+            self.stay(self.x, self.TELEPORT_CD - elapsed)
+
     def shikigami_charm(self):
         self.key_mgr.single_press(self.keymap["shikigami_charm"])
 

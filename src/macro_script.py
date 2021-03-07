@@ -478,6 +478,7 @@ class MacroController:
             if self.navigate_to_platform(rune_platform_hash):
                 self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
                 self.player_manager.horizontal_move_goal(rune_coords[0])
+                self.player_manager.wait_teleport_cd()
                 time.sleep(0.1)
                 self.keyhandler.single_press(self.player_manager.keymap["interact"])
                 time.sleep(1.5)
@@ -507,9 +508,7 @@ class MacroController:
             self.player_manager.jumpr()
             time.sleep(0.7)
         elif move_method in (MoveMethod.TELEPORTL, MoveMethod.TELEPORTR, MoveMethod.TELEPORTUP, MoveMethod.TELEPORTDOWN):
-            elapsed = time.time() - self.player_manager.last_teleport_time
-            if elapsed < self.player_manager.TELEPORT_CD:
-                self.player_manager.stay(self.player_manager.x, self.player_manager.TELEPORT_CD - elapsed)
+            self.player_manager.wait_teleport_cd()
 
             if move_method == MoveMethod.TELEPORTL:
                 self.player_manager.teleport_left()
