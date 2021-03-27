@@ -479,7 +479,7 @@ class MacroController:
                 self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
                 self.player_manager.horizontal_move_goal(rune_coords[0])
                 self.player_manager.wait_teleport_cd()
-                time.sleep(0.1)
+                time.sleep(0.2)
                 self.keyhandler.single_press(self.player_manager.keymap["interact"])
                 time.sleep(1.5)
                 self.save_current_screen('rune')  # save image to disk for future use

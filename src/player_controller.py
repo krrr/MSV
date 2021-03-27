@@ -218,8 +218,12 @@ class PlayerController:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return False
 
-    def stay(self, goal_x, timeout):
+    def stay(self, timeout, goal_x=None):
         start_time = time.time()
+
+        if goal_x is None:
+            self.update()
+            goal_x = self.x
 
         while True:
             self.update()
@@ -257,7 +261,7 @@ class PlayerController:
     def wait_teleport_cd(self):
         elapsed = time.time() - self.last_teleport_time
         if elapsed < self.TELEPORT_CD:
-            self.stay(self.x, self.TELEPORT_CD - elapsed)
+            self.stay(self.TELEPORT_CD - elapsed, self.x)
 
     def shikigami_charm(self):
         self.key_mgr.single_press(self.keymap["shikigami_charm"])
@@ -304,7 +308,10 @@ class PlayerController:
             time.sleep(self.shikigami_haunting_delay)
 
     def shiki_exo_shiki(self, x, wait=True):
-        if not (x-2 <= self.x <= x+2):
+        dis = abs(self.x - x)
+        if dis > self.SHIKIGAMI_HAUNTING_RANGE:
+            self.shikigami_haunting_sweep_move(x)
+        elif dis > 2:
             self.horizontal_move_goal(x)
 
         dir_ = DIK_RIGHT if self.x < x else DIK_LEFT
@@ -312,18 +319,18 @@ class PlayerController:
         self.shikigami_haunting()
         time.sleep(0.05)
         self.exorcist_charm(False)
-        self.stay(x, 1.22 + abs(self.random_duration(0.05)))
+        self.stay(1.22 + abs(self.random_duration(0.05)), x)
         self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
         self.shikigami_haunting()
 
         if wait:
-            self.stay(x, 1.22 + abs(self.random_duration(0.05)))
+            self.stay(1.22 + abs(self.random_duration(0.05)), x)
         else:
             self.key_mgr.single_press(dir_)
             self.shikigami_haunting()
             self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
             self.shikigami_haunting()
-            self.stay(x, 0.2 + abs(self.random_duration(0.05)))
+            self.stay(0.2 + abs(self.random_duration(0.05)), x)
 
     def exorcist_charm(self, wait_delay=True):
         self.key_mgr.single_press(self.keymap["exorcist_charm"])
