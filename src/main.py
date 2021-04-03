@@ -31,6 +31,7 @@ class MainWindow(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
+        master.bind("<<log>>", lambda e: print(dir(e)))
         self.pack(expand=YES, fill=BOTH)
 
         self._menubar = tk.Menu()
@@ -134,7 +135,7 @@ class MainWindow(ttk.Frame):
     def on_close(self):
         if self.macro_process:
             try:
-                self.macro_process_out_q.put("stop")
+                self.macro_process_in_q.put("stop")
                 os.kill(self.macro_process.pid, signal.SIGTERM)
             except Exception:
                 pass
@@ -146,8 +147,8 @@ class MainWindow(ttk.Frame):
         self.master.destroy()
 
     def check_input_queue(self):
-        while not self.macro_process_in_q.empty():
-            output = self.macro_process_in_q.get()
+        while not self.macro_process_out_q.empty():
+            output = self.macro_process_out_q.get()
             if output[0] == "log":
                 self.log(time.strftime('%H:%M:%S') + ' - ' + str(output[1]))
             elif output[0] == "stopped":
@@ -197,12 +198,12 @@ class MainWindow(ttk.Frame):
 
         play_sound('beep_up')
         cap.capture()
-        self.macro_process_out_q.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
+        self.macro_process_in_q.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
         self._set_macro_status(True)
 
     def stop_macro(self):
         play_sound('beep_down')
-        self.macro_process_out_q.put(("stop",))
+        self.macro_process_in_q.put(("stop",))
         self.log("Stopping.")
         self._set_macro_status(False)
 
@@ -223,10 +224,10 @@ class MainWindow(ttk.Frame):
             self.macro_pid_infotext.set("Running..")
             self.macro_process_label.configure(fg="orange")
             self.log("Macro process starting...")
-            self.macro_process_out_q = multiprocessing.Queue()
             self.macro_process_in_q = multiprocessing.Queue()
+            self.macro_process_out_q = multiprocessing.Queue()
             self.macro_process = multiprocessing.Process(
-                target=macro_process_main, args=(self.macro_process_out_q, self.macro_process_in_q), daemon=True)
+                target=macro_process_main, args=(self.macro_process_in_q, self.macro_process_out_q), daemon=True)
             self.macro_process.start()
 
             self.log("Process started (pid: %d)" % self.macro_process.pid)
