@@ -8,6 +8,7 @@ import logging
 import logging.handlers
 import winsound
 import os
+import multiprocessing as mp
 
 _config = None
 config_file = 'config.json'
@@ -41,6 +42,25 @@ def get_file_log_handler(level=logging.DEBUG):
     fh.setLevel(level)
     fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', "%m-%d %H:%M:%S"))
     return fh
+
+
+class QueueLoggerHandler(logging.Handler):
+    def __init__(self, level, logger_queue):
+        super().__init__(level)
+        self.logger_queue = logger_queue
+
+    def emit(self, record):
+        if self.logger_queue:
+            self.logger_queue.put(("log", self.format(record)))
+
+
+def copy_ev_queue(src: mp.Queue, dst, root):
+    while True:
+        try:
+            dst.append(src.get())  # get() is blocking
+            root.event_generate("<<ev>>", when="tail")
+        except (ValueError, AssertionError):  # queue closed
+            return
 
 
 _user32 = ctypes.windll.user32

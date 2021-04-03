@@ -5,7 +5,8 @@ if sys.path[0].endswith('.zip'):  # python embeddable version
 import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
 import win32con
-
+import threading
+from collections import deque
 from tkinter import ttk
 from tkinter.constants import *
 from tkinter.messagebox import showerror
@@ -14,7 +15,7 @@ from tkinter.scrolledtext import ScrolledText
 
 import mapscripts
 import util
-from util import get_config, save_config, GlobalHotKeyListener, play_sound
+from util import get_config, save_config, GlobalHotKeyListener, play_sound, copy_ev_queue
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
 from screen_processor import ScreenProcessor
@@ -31,7 +32,8 @@ class MainWindow(ttk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
-        master.bind("<<log>>", lambda e: print(dir(e)))
+        self.event_queue = deque()  # tkinter custom event can't pass data, it sucks
+        master.bind("<<ev>>", lambda _: self.check_input_queue())
         self.pack(expand=YES, fill=BOTH)
 
         self._menubar = tk.Menu()
@@ -68,7 +70,6 @@ class MainWindow(ttk.Frame):
 
         self.macro_running = False
         self.macro_process = None
-        self.macro_process_out_q = multiprocessing.Queue()
         self.macro_process_in_q = multiprocessing.Queue()
 
         self.macro_pid_infotext = tk.StringVar()
@@ -125,7 +126,6 @@ class MainWindow(ttk.Frame):
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(100, self.toggle_macro_process)
-        self.after(500, self.check_input_queue)
 
         self.hotkey_listener = GlobalHotKeyListener([
             GlobalHotKeyListener.HotKey(1, 0, win32con.VK_F1, lambda: self.stop_macro() if self.macro_running else self.start_macro()),
@@ -147,13 +147,13 @@ class MainWindow(ttk.Frame):
         self.master.destroy()
 
     def check_input_queue(self):
-        while not self.macro_process_out_q.empty():
-            output = self.macro_process_out_q.get()
-            if output[0] == "log":
-                self.log(time.strftime('%H:%M:%S') + ' - ' + str(output[1]))
-            elif output[0] == "stopped":
+        while len(self.event_queue) > 0:
+            ev = self.event_queue.popleft()
+            if ev[0] == "log":
+                self.log(time.strftime('%H:%M:%S') + ' - ' + str(ev[1]))
+            elif ev[0] == "stopped":
                 self._set_macro_status(False)
-            elif output[0] == "exception":
+            elif ev[0] == "exception":
                 self._set_macro_status(False)
                 self.macro_process = None
                 self.macro_process_toggle_button.configure(state=NORMAL)
@@ -161,8 +161,6 @@ class MainWindow(ttk.Frame):
                 self.macro_process_label.configure(fg="red")
                 self.macro_process_toggle_button.configure(text="Running")
                 self.log("Macro process terminated due to an error. Please check the log file.")
-
-        self.after(500, self.check_input_queue)
 
     def start_macro(self):
         if not ctypes.windll.shell32.IsUserAnAdmin():
@@ -225,10 +223,11 @@ class MainWindow(ttk.Frame):
             self.macro_process_label.configure(fg="orange")
             self.log("Macro process starting...")
             self.macro_process_in_q = multiprocessing.Queue()
-            self.macro_process_out_q = multiprocessing.Queue()
+            macro_process_out_q = multiprocessing.Queue()
             self.macro_process = multiprocessing.Process(
-                target=macro_process_main, args=(self.macro_process_in_q, self.macro_process_out_q), daemon=True)
+                target=macro_process_main, args=(self.macro_process_in_q, macro_process_out_q), daemon=True)
             self.macro_process.start()
+            threading.Thread(target=copy_ev_queue, args=(macro_process_out_q, self.event_queue, self.master), daemon=True).start()
 
             self.log("Process started (pid: %d)" % self.macro_process.pid)
             self.macro_pid_infotext.set("Executed")

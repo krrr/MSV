@@ -10,12 +10,13 @@ import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import winsound
+import multiprocessing as mp
 from player_controller import PlayerController
 from rune_solver.rune_solver_simple import RuneSolverSimple
-from util import get_config, get_file_log_handler
+from util import get_config, get_file_log_handler, QueueLoggerHandler
 
 
-def macro_process_main(input_q, output_q):
+def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(get_file_log_handler())
@@ -46,12 +47,15 @@ def macro_process_main(input_q, output_q):
             macro = None
         except Exception as e:
             if isinstance(e, sp.GameCaptureError):
-                macro.abort("failed to capture game window", raise_=False)
-                macro = None
+                if macro:
+                    macro.abort("failed to capture game window", raise_=False)
+                    macro = None
             else:  # unknown error
                 logger.exception("Exception during loop execution:")
                 output_q.put(("exception", None))
                 break
+
+    output_q.close()
 
 
 class CommandReceived(Exception):
@@ -62,27 +66,18 @@ class Aborted(Exception):
     pass
 
 
-class CustomLoggerHandler(logging.Handler):
-    def __init__(self, level, logger_queue):
-        super().__init__(level)
-        self.logger_queue = logger_queue
-
-    def emit(self, record):
-        if self.logger_queue:
-            self.logger_queue.put(("log", self.format(record)))
-
-
 class MacroController:
     ALERT_SOUND_CD = 2
     FIND_PLATFORM_OFFSET = 2
 
-    def __init__(self, keymap=km.DEFAULT_KEY_MAP, rune_model_dir=r"arrow_classifier_keras_gray.h5", log_queue=None, cmd_queue=None):
+    def __init__(self, keymap=km.DEFAULT_KEY_MAP, log_queue=None, cmd_queue=None,
+                 rune_model_dir='arrow_classifier_keras_gray.h5'):
         self.log_queue = log_queue
         self.cmd_queue = cmd_queue
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG if get_config().get('debug') else logging.INFO)
         if not self.logger.hasHandlers():
-            self.logger.addHandler(CustomLoggerHandler(logging.DEBUG, log_queue))
+            self.logger.addHandler(QueueLoggerHandler(logging.DEBUG, log_queue))
             self.logger.addHandler(get_file_log_handler())
         self.logger.debug("%s init" % self.__class__.__name__)
 
