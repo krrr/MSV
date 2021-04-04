@@ -5,23 +5,34 @@ from tkinter.messagebox import showerror
 from screen_processor import ScreenProcessor, GameCaptureError
 from input_manager import InputManager
 import directinput_constants as dc
-import pyocr
-import pyocr.builders
-import pyocr.libtesseract
 import re
 import time
 import math
 import logging
-import multiprocessing
 import random
+import multiprocessing as mp
+import threading
 from PIL import ImageOps
-from util import get_file_log_handler
+from util import get_config, copy_ev_queue, setup_tesseract_ocr, QueueLoggerHandler
+from collections import deque
+from macro_script import Aborted
 
 
-def macro_process_main(input_q, output_q):
-    logger = logging.getLogger("macro_loop")
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(get_file_log_handler())
+def macro_process_main(input_q: mp.Queue, output_q: mp.Queue, target_star, star_catch, safe_guard):
+    try:
+        auto_star_force = AutoStarForce(ScreenProcessor(), logging.DEBUG if get_config().get('debug') else logging.INFO,
+                                        cmd_queue=input_q, log_queue=output_q)
+        auto_star_force.run(target_star, star_catch, safe_guard)
+        output_q.put(('stopped', None))
+    except GameCaptureError:
+        output_q.put(('log', 'failed to capture game window'))
+        output_q.put(('stopped', None))
+    except Aborted:
+        output_q.put(('stopped', None))
+    except Exception as e:
+        output_q.put(('exception', e))
+
+    output_q.close()
 
 
 def color_distance(c1, c2):
@@ -46,14 +57,22 @@ class AutoStarForce:
     SUCCESS_FONT_COLOR = (255, 255, 34)
     RESULT_TEXT_RECT = (55, 171, 293, 200)
 
-    def __init__(self, screen_processor):
+    def __init__(self, screen_processor, log_level=logging.DEBUG, cmd_queue=None, log_queue=None):
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.setLevel(log_level)
+        if log_queue and not self.logger.hasHandlers():
+            self.logger.addHandler(QueueLoggerHandler(logging.DEBUG, log_queue))
+
+        setup_tesseract_ocr()
+        import pyocr.libtesseract
         if not pyocr.libtesseract.is_available():
             raise Exception('no OCR tool available')
         self.tool = pyocr.libtesseract
         if 'eng' not in self.tool.get_available_languages():
             raise Exception('tesseract english data not available')
-        self.current_star_regexp = re.compile('(\\d+)\\s?Star\\s?>\\s?\\d+\\s?Star')
 
+        self.current_star_regexp = re.compile('(\\d+)\\s?Star\\s?>\\s?\\d+\\s?Star')
+        self.cmd_queue = cmd_queue
         self.screen_processor = screen_processor
         self.screen_processor.hwnd = self.screen_processor.ms_get_screen_hwnd()
         self.input_mgr = InputManager()
@@ -62,24 +81,23 @@ class AutoStarForce:
         self.rect = None
 
     def run(self, target_star, star_catch, safe_guard):
+        self.logger.info('start enhancing to %s', target_star)
         count = 0
         next_star = None
         while True:
             self.update_image()
 
-            curr = None
             if next_star is None:
                 curr = self.get_current_star()
                 if curr is None:
                     raise Exception('failed to determine current star')
-                next_star = None
             else:
                 curr = next_star
 
             if curr >= target_star:
                 break
 
-            print('current star:', curr)
+            self.logger.info('current star: %s', curr)
 
             options = self.get_enhance_options()
             if (star_catch and options[0] == self.OPTION_CHECKED) or (not star_catch and options[0] == self.OPTION_UNCHECKED):
@@ -89,28 +107,35 @@ class AutoStarForce:
                 self.input_mgr.mouse_left_click_at(*self._map_pos(self.SAFE_GUARD_OPTION_POINT), 4)
                 time.sleep(0.1)
 
+            if self.cmd_queue and not self.cmd_queue.empty():
+                return
+
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.ENHANCE_BTN_POS), 4)
             time.sleep(0.08)
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.CONFIRM_OK_BTN_POS), 4)
 
+            time.sleep(random.uniform(0.1, 0.3))
+            self.input_mgr.mouse_move(self.rect[0] + random.randint(-20, 20), self.rect[3] + random.randint(-20, 20))
+
             if star_catch:
                 time.sleep(0.1)
                 if self.wait(catcher=True) == 0:
-                    time.sleep(0.2)
+                    time.sleep(0.1)
                     self.wait_star_center()
                     self.input_mgr.single_press(dc.DIK_RETURN)
 
             # game showing slow shining animation
             self.wait(result=True)
             result = self.get_result()
+
+            if self.cmd_queue and not self.cmd_queue.empty():
+                return
+
+            time.sleep(random.uniform(0.1, 0.25))
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.RESULT_OK_BTN_POS), 4)
-            if random.random() > 0.5:
-                time.sleep(0.1)
-                self.input_mgr.mouse_left_click_at(self.rect[0] + random.randint(0, 8), self.rect[3] - random.randint(0, 5), 4)
-            else:
-                time.sleep(0.3)
+            time.sleep(random.uniform(0.25, 0.35))
             if result == self.RESULT_SUCCESS:
-                print('success')
+                self.logger.debug('success')
                 time.sleep(0.1)
                 for _ in range(20):
                     time.sleep(0.1)
@@ -121,18 +146,19 @@ class AutoStarForce:
                 next_star = None
                 time.sleep(0.4)
             elif result == self.RESULT_FAILED:
-                print('fail')
-                next_star = curr - 1 if curr > 10 else curr
+                self.logger.debug('fail')
+                next_star = curr - 1 if (curr > 10 and curr != 15 and curr != 20) else curr
                 time.sleep(0.8)
             elif result == self.RESULT_DESTROYED:
                 return
             else:
                 raise Exception('unknown result')
 
-            print('-------------------------------')
+            if self.cmd_queue and not self.cmd_queue.empty():
+                return
+
+            self.logger.debug('-------------------------------')
             count += 1
-            if count != 0 and count % 7 == 0:
-                time.sleep(1.5)
 
     def _map_pos(self, pos):
         return self.ms_rect[0] + self.AREA_POS[0] + pos[0], self.ms_rect[1] + self.AREA_POS[1] + pos[1]
@@ -152,7 +178,9 @@ class AutoStarForce:
             x, y = self.ms_rect[0] + self.AREA_POS[0], self.ms_rect[1] + self.AREA_POS[1]
             self.rect = (x, y, x+self.AREA_SIZE[0], y+self.AREA_SIZE[1])
 
-        self.img = self.screen_processor.capture(set_focus=True, rect=self.rect)
+            self.screen_processor.set_foreground()
+
+        self.img = self.screen_processor.capture(set_focus=False, rect=self.rect)
 
     def get_enhance_options(self):
         star_catch_pixel = self.img.getpixel(self.STAR_CATCH_OPTION_POINT)[:3]
@@ -176,7 +204,6 @@ class AutoStarForce:
                     return self.RESULT_FAILED
                 elif px == (0, 0, 0):  # black
                     return self.RESULT_DESTROYED
-        area.show()
         return None
 
     # this method should be fast
@@ -191,7 +218,7 @@ class AutoStarForce:
         # print('target_zone_width:', target_zone_width)
         x, y, w, h = 156, 215, 8, 1  # check this area on star track border
         if target_zone_width <= 45:
-            x = 151
+            x = 155
 
         rect = (self.rect[0]+x, self.rect[1]+y, self.rect[0]+x+w, self.rect[1]+y+h)
         start = time.time()
@@ -200,8 +227,9 @@ class AutoStarForce:
             if any(color_distance(img.getpixel((x, 0)), self.STAR_TRACK_COLOR) > 50 for x in range(w)):
                 break
 
-            if time.time() - start > 5:
-                raise Exception('timeout')
+            if time.time() - start > 2:
+                self.logger.warning('wait_star_center timeout')
+                break
 
     def wait(self, catcher=False, result=False):
         start = time.time()
@@ -224,13 +252,17 @@ class AutoStarForce:
 
 
 class AutoStarForceWindow(tk.Toplevel):
-    def __init__(self, master):
+    def __init__(self, main_win, master):
         tk.Toplevel.__init__(self, master)
+        self.main_win = main_win
+        self.event_queue = deque()  # tkinter custom event can't pass data, it sucks
+        self.bind("<<ev>>", lambda _: self._check_event_queue())
         self.wm_minsize(400, 80)
         self.geometry('+%d+%d' % (master.winfo_x(), master.winfo_y()))
         self.title("Auto Star Force")
         self.running = False
         self.macro_process = None
+        self.macro_process_in_q = None
 
         self.frame = ttk.Frame(self)
         self.frame.pack(expand=NO, fill=BOTH)
@@ -259,27 +291,58 @@ class AutoStarForceWindow(tk.Toplevel):
 
         self.action_btn_frame = ttk.Frame(self)
         self.action_btn_frame.pack(side=BOTTOM, anchor=S, expand=NO, fill=BOTH, pady=5)
-        self.toggle_button = ttk.Button(self.action_btn_frame, text="Enhance", width=18,
-                                        command=lambda: self.toggle())
-        self.toggle_button.pack()
+        self.toggle_btn = ttk.Button(self.action_btn_frame, text="Enhance", width=18,
+                                     command=lambda: self.toggle_macro())
+        self.toggle_btn.pack()
 
         self.focus_set()
 
-    def toggle(self):
+        self.master.event_generate("<<log>>", when="tail", data='ss')
+        self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    def toggle_macro(self):
         if self.running:
-            pass
+            self.macro_process_in_q.put(('stop',))
+            self._set_macro_status(False)
         else:
             target_star = self.target_star_input.get()
             if not target_star:
                 showerror('Error', 'target star not set')
                 return
             target_star = int(target_star)
-            print(self.safe_guard_opt.get())
-            # auto_star_force = AutoStarForce(ScreenProcessor())
-            # auto_star_force.run(17, True, True)
-            self.macro_process = multiprocessing.Process(
-                target=macro_process_main, args=(self.macro_process_out_q, self.macro_process_in_q), daemon=True)
+            if not 1 <= target_star <= 22:
+                showerror('Error', 'target star not valid')
+                return
+
+            out_q = mp.Queue()
+            self.macro_process_in_q = mp.Queue()
+            args = (self.macro_process_in_q, out_q, target_star,
+                    self.star_catch_opt.get(), self.safe_guard_opt.get())
+            self.macro_process = mp.Process(target=macro_process_main, args=args, daemon=True)
             self.macro_process.start()
+            threading.Thread(target=copy_ev_queue, args=(out_q, self.event_queue, self), daemon=True).start()
+            self._set_macro_status(True)
+
+    def _check_event_queue(self):
+        while len(self.event_queue) > 0:
+            ev = self.event_queue.popleft()
+            if ev[0] == "log":
+                self.main_win.log(ev[1])
+            elif ev[0] == "stopped":
+                self._set_macro_status(False)
+                self.main_win.log('enhancing stopped')
+            elif ev[0] == "exception":
+                self._set_macro_status(False)
+                self.macro_process = None
+                self.main_win.log(str(ev[1]))
+
+    def _set_macro_status(self, running):
+        self.running = running
+        self.toggle_btn.configure(text="Stop" if running else "Enhance")
+
+    def on_close(self):
+        self.unbind('<<ev>>')
+        self.destroy()
 
 
 if __name__ == "__main__":

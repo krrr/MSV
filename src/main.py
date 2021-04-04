@@ -33,7 +33,7 @@ class MainWindow(ttk.Frame):
         super().__init__(master)
         self.master = master
         self.event_queue = deque()  # tkinter custom event can't pass data, it sucks
-        master.bind("<<ev>>", lambda _: self.check_input_queue())
+        master.bind("<<ev>>", lambda _: self._check_event_queue())
         self.pack(expand=YES, fill=BOTH)
 
         self._menubar = tk.Menu()
@@ -55,7 +55,7 @@ class MainWindow(ttk.Frame):
 
         tools_menu = tk.Menu(tearoff=False)
         self._menubar.add_cascade(label="Tools", menu=tools_menu)
-        tools_menu.add_command(label='Auto Star Force', command=lambda: AutoStarForceWindow(self.master))
+        tools_menu.add_command(label='Auto Star Force', command=lambda: AutoStarForceWindow(self, self.master))
 
         help_menu = tk.Menu(tearoff=False)
         self._menubar.add_cascade(label="Help", menu=help_menu)
@@ -133,9 +133,10 @@ class MainWindow(ttk.Frame):
         ])
 
     def on_close(self):
+        self.master.unbind('<<ev>>')
         if self.macro_process:
             try:
-                self.macro_process_in_q.put("stop")
+                self.macro_process_in_q.put(("stop",))
                 os.kill(self.macro_process.pid, signal.SIGTERM)
             except Exception:
                 pass
@@ -146,7 +147,7 @@ class MainWindow(ttk.Frame):
         self.hotkey_listener.unregister()
         self.master.destroy()
 
-    def check_input_queue(self):
+    def _check_event_queue(self):
         while len(self.event_queue) > 0:
             ev = self.event_queue.popleft()
             if ev[0] == "log":

@@ -63,6 +63,15 @@ def copy_ev_queue(src: mp.Queue, dst, root):
             return
 
 
+def setup_tesseract_ocr():
+    if os.path.exists('../Tesseract-OCR'):
+        p = os.path.realpath('../Tesseract-OCR')
+        os.environ['PATH'] += ';' + p
+        os.environ['TESSDATA_PREFIX'] = os.path.join(p, 'tessdata')
+        if hasattr(os, 'add_dll_directory'):  # py 3.8+
+            os.add_dll_directory(p)
+
+
 _user32 = ctypes.windll.user32
 
 

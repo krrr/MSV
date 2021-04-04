@@ -346,21 +346,21 @@ class PathAnalyzer:
             jmpl : left jump
         """
 
-        return_map_dict = []
         platform = self.platforms[hash]
         platform.solutions = []
         for key, other_platform in self.platforms.items():
             if platform.hash == key:
                 continue
+
             # Has vertical overlaps
             if platform.start_x < other_platform.end_x and platform.end_x > other_platform.start_x or \
                     other_platform.start_x < platform.start_x < other_platform.end_x:
                 lower_bound_x = max(platform.start_x, other_platform.start_x)
                 upper_bound_x = min(platform.end_x, other_platform.end_x)
-                if platform.start_y < other_platform.end_y:  # Platform is higher than current_platform. Thus we can just drop
-                    height_diff = abs(platform.start_y - other_platform.start_y)
+                height_diff = abs(platform.start_y - other_platform.start_y)
+                if platform.start_y < other_platform.end_y:  # current is higher, just drop
                     # check lower bound in case there is another platform in the middle of current and destination
-                    if (other_platform.end_y == max_y or 13 <= height_diff) and self.teleport_vertical_range:
+                    if (other_platform.end_y == max_y or 13 <= height_diff) and height_diff <= self.teleport_vertical_range:
                         method = MoveMethod.TELEPORTDOWN
                     else:
                         method = MoveMethod.DROP

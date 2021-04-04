@@ -9,3 +9,4 @@ pywin32==228
 tensorboard==1.13.1
 tensorflow==1.13.2
 d3dshot==0.1.5
+pyocr

@@ -213,8 +213,8 @@ class InputManager:
 
     def mouse_left_click_at(self, x, y, rand=0):
         if rand != 0:
-            x += random.randint(0, rand)
-            y += random.randint(0, rand)
+            x += random.randint(-rand, rand)
+            y += random.randint(-rand, rand)
         self.mouse_move(x, y)
         self.mouse_left_click()
 

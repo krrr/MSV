@@ -47,6 +47,18 @@ class ScreenProcessor:
 
         return pos[0], pos[1], pos[0]+rect[2], pos[1]+rect[3]  # returns x1, y1, x2, y2
 
+    def is_foreground(self):
+        return win32gui.GetForegroundWindow() == self.hwnd
+
+    def set_foreground(self):
+        win32gui.SetForegroundWindow(self.hwnd)
+        time.sleep(0.1)
+        if win32gui.GetForegroundWindow() != self.hwnd:
+            time.sleep(0.1)
+        if win32gui.GetForegroundWindow() != self.hwnd:
+            return False
+        return True
+
     def capture(self, set_focus=True, hwnd=None, rect=None):
         """Returns MapleStory window screenshot (not np.array!)
         :param set_focus : True if MapleStory window is to be focusesd before capture, False if not
@@ -62,12 +74,7 @@ class ScreenProcessor:
             if rect is None:  # window not visible etc.
                 return None
         if set_focus and win32gui.GetForegroundWindow() != self.hwnd:
-            win32gui.SetForegroundWindow(self.hwnd)
-            time.sleep(0.1)
-            if win32gui.GetForegroundWindow() != self.hwnd:
-                time.sleep(0.1)
-            if win32gui.GetForegroundWindow() != self.hwnd:
-                return None
+            self.set_foreground()
 
         if self.d3dshot is None:
             return ImageGrab.grab(rect)
