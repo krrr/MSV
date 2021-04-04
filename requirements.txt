@@ -7,6 +7,6 @@ opencv-python==4.4.0.42
 Pillow==7.1.2
 pywin32==228
 tensorboard==1.13.1
-tensorflow==1.13.2
+tensorflow==2.4.0
 d3dshot==0.1.5
 pyocr
