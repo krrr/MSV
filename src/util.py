@@ -9,6 +9,7 @@ import logging.handlers
 import winsound
 import os
 import multiprocessing as mp
+import math
 
 _config = None
 config_file = 'config.json'
@@ -123,3 +124,8 @@ class GlobalHotKeyListener:
     def unregister(self):
         _user32.PostThreadMessageA(self.thread.ident, win32con.WM_QUIT, 0, 0)
         self.thread.join()
+
+
+def color_distance(c1, c2):
+    return math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2)
+

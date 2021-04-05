@@ -7,13 +7,12 @@ from input_manager import InputManager
 import directinput_constants as dc
 import re
 import time
-import math
 import logging
 import random
 import multiprocessing as mp
 import threading
 from PIL import ImageOps
-from util import get_config, copy_ev_queue, setup_tesseract_ocr, QueueLoggerHandler
+from util import get_config, copy_ev_queue, setup_tesseract_ocr, color_distance, QueueLoggerHandler
 from collections import deque
 from macro_script import Aborted
 
@@ -33,10 +32,6 @@ def macro_process_main(input_q: mp.Queue, output_q: mp.Queue, target_star, star_
         output_q.put(('exception', e))
 
     output_q.close()
-
-
-def color_distance(c1, c2):
-    return math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2)
 
 
 class AutoStarForce:

@@ -282,6 +282,11 @@ class MacroController:
         if self.screen_processor.check_dialog():
             self.keyhandler.single_press(dc.DIK_ESCAPE)
 
+        ### Experience full check
+        if self.screen_processor.check_exp_full():
+            self.logger.info('exp nearly full')
+            return -3
+
         ### Placeholder for Lie Detector Detector (sounds weird)
         ###
 

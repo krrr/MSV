@@ -4,6 +4,7 @@ import d3dshot
 import numpy as np, ctypes, ctypes.wintypes
 import sys
 from PIL import ImageGrab
+import util
 
 
 class GameCaptureError(Exception):
@@ -85,6 +86,7 @@ class ScreenProcessor:
 class StaticImageProcessor:
     DIALOG_W = 517
     DIALOG_H = 188
+    EXP_COLOR_BGR = (99, 237, 229)  # bgr
 
     def __init__(self, img_handle=None):
         """
@@ -330,6 +332,13 @@ class StaticImageProcessor:
         loc = np.where(match_res < 0.015)
 
         return len(loc[0] == 1)
+
+    def check_exp_full(self):
+        """exp >= 90%"""
+        h, w = self.gray_img.shape
+        x, y = int(w*0.9), h-2
+
+        return any(util.color_distance(self.bgr_img[y][i], self.EXP_COLOR_BGR) < 10 for i in range(x, x + 9, 3))
 
 
 if __name__ == "__main__":
