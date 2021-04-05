@@ -210,7 +210,8 @@ class PlayerController:
             time.sleep(0.02)
             self.update()
 
-            if abs(self.x - goal_x) <= self.horizontal_goal_offset:
+            if ((right and self.x >= goal_x - self.horizontal_goal_offset) or
+                    (not right and self.x <= goal_x + self.horizontal_goal_offset)):
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return True
 
