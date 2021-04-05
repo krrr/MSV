@@ -9,6 +9,8 @@ from .fox_tree_lower_path3 import FoxTreeLowerPath3
 from .corridor_h01 import CorridorH01
 from .first_drill_hall import FirstDrillHall
 from .final_edge_of_light4 import Fel4MacroController
+from .kerning_tower_2f_cafe4 import KerningTower2FCafe4
+from .kerning_tower_5f_shops4 import KerningTower5FShops4
 
 
 map_scripts = {
@@ -18,6 +20,8 @@ map_scripts = {
     'fel4': Fel4MacroController,
     'vc3': Vc3MacroController,
     'tboy_train1': TBoyResearchTrain1,
+    '2f_cafe4': KerningTower2FCafe4,
+    '5f_shops4': KerningTower5FShops4,
     'first_drill_hall': FirstDrillHall,
     'corridor_h01': CorridorH01,
     'bash_club3': BashClub3,
@@ -32,6 +36,8 @@ map2platform = {
     'fel4': 'final_edge_of_light4',
     'vc3': 'void_current3',
     'tboy_train1': 't_boys_research_train1',
+    '2f_cafe4': 'kerning_tower_2f_cafe4',
+    '5f_shops4': 'kerning_tower_5f_shops4',
     'first_drill_hall': 'first_drill_hall',
     'corridor_h01': 'corridor_h01',
     'bash_club3': 'bash_club3',

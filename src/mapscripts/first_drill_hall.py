@@ -35,6 +35,7 @@ class FirstDrillHall(MacroController):
             self.player_manager.shikigami_haunting(wait_delay=False)
             time.sleep(0.1)
             self.player_manager.teleport_left() if to_left else self.player_manager.teleport_right()
+            self.update()
             self.player_manager.horizontal_move_goal(self.LEFT_X if to_left else self.RIGHT_X)
         else:
             self.navigate_to_platform('09e13898')  # the platform
