@@ -55,7 +55,7 @@ class TestScreenProcessor(TestCase):
         self.assertTrue(self.processor.check_dialog())
 
     def test_exp_full(self):
-        self.processor.update_image(Image.open('unittest_data/exp_full.jpg'))
+        self.processor.update_image(Image.open('unittest_data/exp_full.png'))
         self.assertTrue(self.processor.check_exp_full())
         self.processor.update_image(Image.open('unittest_data/bounty_hunter_dialog.png'))
         self.assertFalse(self.processor.check_exp_full())

@@ -86,7 +86,7 @@ class ScreenProcessor:
 class StaticImageProcessor:
     DIALOG_W = 517
     DIALOG_H = 188
-    EXP_COLOR_BGR = (99, 237, 229)  # bgr
+    EXP_COLOR_BGR = (0, 250, 243)  # bottom of exp bar
 
     def __init__(self, img_handle=None):
         """
