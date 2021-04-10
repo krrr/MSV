@@ -15,6 +15,10 @@ class MapleWindowNotFoundError(GameCaptureError):
     pass
 
 
+class MiniMapError(Exception):
+    pass
+
+
 class ScreenProcessor:
     d3dshot = None
 
@@ -133,7 +137,7 @@ class StaticImageProcessor:
             rgb_img = self.img_handle.capture(set_focus, self.hwnd)
 
         if rgb_img is None:
-            raise GameCaptureError
+            raise GameCaptureError('failed to capture game window')
 
         self.bgr_img = cv2.cvtColor(np.array(rgb_img), cv2.COLOR_RGB2BGR)
         self.gray_img = cv2.cvtColor(self.bgr_img, cv2.COLOR_BGR2GRAY)
@@ -317,9 +321,9 @@ class StaticImageProcessor:
         return len(loc[0]) == 1
 
     def check_white_room(self):
-        """Assume in white room if 70% or more pixels are pure white. Percentage of sample in unittest is 79%"""
+        """Assume in white room if 50% or more pixels are pure white. Percentage of sample in unittest is 79%"""
         area = self.bgr_img.shape[0] * self.bgr_img.shape[1]
-        return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.7
+        return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.5
 
     def check_dialog(self):
         """Match 'End Chat' button of dialog (at left bottom)"""
