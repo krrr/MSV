@@ -1,5 +1,6 @@
 from directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
 from input_manager import DEFAULT_KEY_MAP
+from screen_processor import MiniMapError
 import time, math, random
 
 
@@ -11,7 +12,7 @@ class PlayerController:
     """
     This class keeps track of character location and manages advanced movement and attacks.
     """
-    def __init__(self, key_mgr, screen_handler, keymap=DEFAULT_KEY_MAP):
+    def __init__(self, key_mgr, screen_processor, keymap=DEFAULT_KEY_MAP):
         """
         Class Variables:
 
@@ -23,7 +24,7 @@ class PlayerController:
         self.goal_y: If moving, destination y coord
         self.busy: True if current class is calling blocking calls or in a loop
         :param key_mgr: Handle to KeyboardInputManager
-        :param screen_handler: Handle to StaticImageProcessor. Only used to call find_player_minimap_marker
+        :param screen_processor: Handle to StaticImageProcessor. Only used to call find_player_minimap_marker
 
         Bot States:
         Idle
@@ -37,7 +38,7 @@ class PlayerController:
         for key, value in keymap.items():
             self.keymap[key] = value[0]
         self.key_mgr = key_mgr
-        self.screen_processor = screen_handler
+        self.screen_processor = screen_processor
         self.goal_x = self.goal_y = None
 
         self.busy = False
@@ -76,14 +77,14 @@ class PlayerController:
         :param player_coords_y: Coordinates to update self.y
         :return: None
         """
-        if not player_coords_x:
+        if player_coords_x:
+            self.x, self.y = player_coords_x, player_coords_y
+        else:
             self.screen_processor.update_image()
-            scrp_ret_val = self.screen_processor.find_player_minimap_marker()
-            if scrp_ret_val:
-                player_coords_x, player_coords_y = scrp_ret_val
-            else:
-                raise Exception("screen_processor did not return coordinates!")
-        self.x, self.y = player_coords_x, player_coords_y
+            pos = self.screen_processor.find_player_minimap_marker()
+            if not pos:
+                raise MiniMapError("failed to find player pos in minimap")
+            self.x, self.y = pos
 
     def distance(self, coord1, coord2):
         return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)

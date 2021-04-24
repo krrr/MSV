@@ -11,10 +11,6 @@ class CupMacroController(MacroController):
         self.money_picked = False
 
     def loop(self):
-        ret = self._loop_common_job()
-        if ret != 0:
-            return ret
-
         ### Rune Detector
         self._rune_detect_solve()
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast

@@ -3,7 +3,6 @@ import datetime
 import logging, math, time, random
 import player_controller as pc
 import input_manager as km
-import screen_processor as sp
 import terrain_analyzer
 import threading
 import mapscripts
@@ -11,6 +10,7 @@ from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import winsound
 import multiprocessing as mp
+from screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from player_controller import PlayerController
 from rune_solver.rune_solver_simple import RuneSolverSimple
 from util import get_config, get_file_log_handler, QueueLoggerHandler
@@ -35,8 +35,7 @@ def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
                     macro = MacroController(keymap, output_q, input_q)
                 macro.load_and_process_platform_map(platform_file_dir)
 
-                while True:
-                    macro.loop()
+                macro.loop_entry()
             elif command[0] == 'stop':
                 if macro:
                     macro.abort(raise_=False)
@@ -45,15 +44,10 @@ def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
             pass
         except Aborted:
             macro = None
-        except Exception as e:
-            if isinstance(e, sp.GameCaptureError):
-                if macro:
-                    macro.abort("failed to capture game window", raise_=False)
-                    macro = None
-            else:  # unknown error
-                logger.exception("Exception during loop execution:")
-                output_q.put(("exception", None))
-                break
+        except Exception:  # unknown error
+            logger.exception("Exception during loop execution:")
+            output_q.put(("exception", None))
+            break
 
     output_q.close()
 
@@ -69,6 +63,7 @@ class Aborted(Exception):
 class MacroController:
     ALERT_SOUND_CD = 2
     FIND_PLATFORM_OFFSET = 2
+    ERROR_RETRY_LIMIT = 5
 
     def __init__(self, keymap=km.DEFAULT_KEY_MAP, log_queue=None, cmd_queue=None,
                  rune_model_dir='arrow_classifier_keras_gray.h5'):
@@ -82,8 +77,8 @@ class MacroController:
         self.logger.debug("%s init" % self.__class__.__name__)
 
         self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
-        self.screen_capturer = sp.ScreenProcessor()
-        self.screen_processor = sp.StaticImageProcessor(self.screen_capturer)
+        self.screen_capturer = ScreenProcessor()
+        self.screen_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = terrain_analyzer.PathAnalyzer()
         self.keyhandler = km.InputManager()
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
@@ -220,7 +215,14 @@ class MacroController:
             self.player_manager.skill_counter_time = time.time()
 
     def _loop_common_job(self):
-        """Must be done job"""
+        """Must be done job.
+        :return: loop exit code
+        exit code information:
+            0: all good
+            -1: problem in image processing
+            -2: problem in navigation/pathing
+            -3: white room detected
+        """
         self.check_cmd_queue()
 
         random.seed((time.time() * 10**4) % 10 ** 3)
@@ -239,14 +241,16 @@ class MacroController:
         if not player_pos:
             white_room = self.screen_processor.check_white_room()
             if self.player_pos_not_found_start is None:
-                self.logger.info('white room detected' if white_room else 'player pos not found')
-                if white_room:
-                    self.save_current_screen('white_room')
                 self.player_pos_not_found_start = time.time()
+                if white_room:
+                    self.logger.info('white room detected')
+                    self.save_current_screen('white_room')
 
             if white_room:
                 self.alert_sound(5)
-            return -1
+                return -3
+            else:
+                raise MiniMapError('player pos not found')
         else:
             self.player_pos_not_found_start = None
         self.player_manager.update(player_pos[0], player_pos[1])
@@ -284,11 +288,8 @@ class MacroController:
 
         ### Experience full check
         if self.screen_processor.check_exp_full():
-            self.logger.info('exp nearly full')
-            return -3
-
-        ### Placeholder for Lie Detector Detector (sounds weird)
-        ###
+            self.alert_sound(2)
+            self.abort('exp nearly full')
 
         self.current_platform_hash = self.find_current_platform()
         ### Check if player is on platform
@@ -300,20 +301,36 @@ class MacroController:
                 self.logger.warning("stuck. attempting unstick()...")
                 self.unstick()
             if self.unstick_attempts >= self.unstick_attempts_threshold:
-                self.logger.warning("unstick() threshold reached. sending error code..")
-                return -2
-            else:
-                return 0
+                self.abort('unstick threshold reached')
+            return -2
         else:
             self.platform_fail_loops = 0
             self.unstick_attempts = 0
-        ###
 
         return 0
 
     def update(self):
         self.player_manager.update()  # will update image
         self.current_platform_hash = self.find_current_platform()
+
+    def loop_entry(self):
+        retry_err_count = 0
+        while True:
+            try:
+                ret = self._loop_common_job()
+                if ret != 0:
+                    continue
+
+                retry_err_count = 0
+                self.loop()
+            except (GameCaptureError, MiniMapError) as e:
+                if retry_err_count > self.ERROR_RETRY_LIMIT:
+                    self.abort(str(e))
+                else:
+                    if retry_err_count == 0:
+                        self.logger.warning(str(e) + ', retry...')
+                    time.sleep(1 if retry_err_count < 2 else 2)
+                    retry_err_count += 1
 
     def loop(self):
         """
@@ -322,16 +339,7 @@ class MacroController:
         platform, it will invoke PathAnalyzer.move_platform. HOWEVER, in an attempt to make the system error-proof,
         platform movement and solution flagging is done on the loop call succeeding the loop call where the actual
         movement is made. self.goal_platform is used for such purpose.
-        :return: loop exit code
-        exit code information:
-            0: all good
-            -1: problem in image processing
-            -2: problem in navigation/pathing
         """
-        ret = self._loop_common_job()
-        if ret != 0:
-            return ret
-
         # Update navigation dictionary with last_platform and current_platform
         if self.goal_platform_hash and self.current_platform_hash == self.goal_platform_hash:
             self.terrain_analyzer.move_platform(self.last_platform_hash, self.current_platform_hash)

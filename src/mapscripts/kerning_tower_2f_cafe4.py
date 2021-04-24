@@ -7,10 +7,6 @@ class KerningTower2FCafe4(MacroController):
         super().__init__(keymap=keymap, log_queue=logger_queue, cmd_queue=cmd_queue)
 
     def loop(self):
-        ret = self._loop_common_job()
-        if ret != 0:
-            return ret
-
         # ignore rune
 
         # set skills

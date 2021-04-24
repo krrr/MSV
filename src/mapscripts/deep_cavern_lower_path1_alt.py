@@ -8,10 +8,6 @@ class Dclp1MacroControllerAlt(Dclp1MacroController):
         super().__init__(keymap=keymap, logger_queue=logger_queue, cmd_queue=cmd_queue)
 
     def loop(self):
-        ret = self._loop_common_job()
-        if ret != 0:
-            return ret
-
         ### Rune Detector
         self._rune_detect_solve()
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
