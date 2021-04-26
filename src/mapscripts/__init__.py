@@ -11,6 +11,7 @@ from .final_edge_of_light4 import Fel4MacroController
 from .kerning_tower_2f_cafe4 import KerningTower2FCafe4
 from .kerning_tower_5f_shops4 import KerningTower5FShops4
 from .kerning_tower_b1_store2 import KerningTowerB1Store2
+from .labyrinth_interior1 import LabyrinthInterior1
 
 
 map_scripts = {
@@ -18,6 +19,7 @@ map_scripts = {
     'dclp1_shiki': Dclp1MacroController,
     'dclp1_exorcist': Dclp1MacroControllerAlt,
     'fel4': Fel4MacroController,
+    'interior1': LabyrinthInterior1,
     'tboy_train1': TBoyResearchTrain1,
     'b1_store2': KerningTowerB1Store2,
     '2f_cafe4': KerningTower2FCafe4,
@@ -34,7 +36,7 @@ map2platform = {
     'dclp1_shiki': 'deep_cavern_lower_path1',
     'dclp1_exorcist': 'deep_cavern_lower_path1',
     'fel4': 'final_edge_of_light4',
-    'vc3': 'void_current3',
+    'interior1': 'labyrinth_interior1',
     'tboy_train1': 't_boys_research_train1',
     'b1_store2': 'kerning_tower_b1_store2',
     '2f_cafe4': 'kerning_tower_2f_cafe4',
