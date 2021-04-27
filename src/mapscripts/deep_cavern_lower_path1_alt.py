@@ -4,9 +4,6 @@ from .deep_cavern_lower_path1 import Dclp1MacroController
 
 # deep cavern lower path 1 alternative script
 class Dclp1MacroControllerAlt(Dclp1MacroController):
-    def __init__(self, keymap, logger_queue, cmd_queue):
-        super().__init__(keymap=keymap, logger_queue=logger_queue, cmd_queue=cmd_queue)
-
     def loop(self):
         ### Rune Detector
         self._rune_detect_solve()

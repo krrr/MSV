@@ -8,9 +8,6 @@ class FirstDrillHall(MacroController):
     LEFT_X = 67
     RIGHT_X = 87
 
-    def __init__(self, keymap, logger_queue, cmd_queue):
-        super().__init__(keymap=keymap, log_queue=logger_queue, cmd_queue=cmd_queue)
-
     def loop(self):
         # ignore rune
 

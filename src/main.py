@@ -26,7 +26,7 @@ from tools.auto_star_force import AutoStarForceWindow
 
 
 APP_TITLE = "MSV Kanna Ver"
-VERSION = 0.3
+VERSION = 0.4
 
 
 class MainWindow(ttk.Frame):

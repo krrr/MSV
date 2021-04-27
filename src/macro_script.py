@@ -29,10 +29,11 @@ def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
             if command[0] == "start":
                 logger.debug("starting MacroController...")
                 keymap, platform_file_dir, preset = command[1:]
+                config = get_config()
                 if preset:
-                    macro = mapscripts.map_scripts[preset](keymap, output_q, input_q)
+                    macro = mapscripts.map_scripts[preset](keymap, output_q, input_q, config)
                 else:
-                    macro = MacroController(keymap, output_q, input_q)
+                    macro = MacroController(keymap, output_q, input_q, config)
                 macro.load_and_process_platform_map(platform_file_dir)
 
                 macro.loop_entry()
@@ -65,18 +66,20 @@ class MacroController:
     FIND_PLATFORM_OFFSET = 2
     ERROR_RETRY_LIMIT = 5
 
-    def __init__(self, keymap=km.DEFAULT_KEY_MAP, log_queue=None, cmd_queue=None,
-                 rune_model_dir='arrow_classifier_keras_gray.h5'):
+    def __init__(self, keymap=km.DEFAULT_KEY_MAP, log_queue=None, cmd_queue=None, config=None):
+        if config is None:
+            config = {}
         self.log_queue = log_queue
         self.cmd_queue = cmd_queue
+        self.debug = config.get('debug', True)
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(logging.DEBUG if get_config().get('debug') else logging.INFO)
+        self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
         if not self.logger.hasHandlers():
             self.logger.addHandler(QueueLoggerHandler(logging.DEBUG, log_queue))
             self.logger.addHandler(get_file_log_handler())
         self.logger.debug("%s init" % self.__class__.__name__)
 
-        self.auto_resolve_rune = get_config().get('auto_solve_rune', True)
+        self.auto_resolve_rune = config.get('auto_solve_rune', True)
         self.screen_capturer = ScreenProcessor()
         self.screen_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = terrain_analyzer.PathAnalyzer()
@@ -89,7 +92,7 @@ class MacroController:
 
         self.platform_error = 3  # if x within 3 pixels of platform border, consider to be on said platform
 
-        self.rune_model_path = rune_model_dir
+        self.rune_model_path = config.get('rune_model_dir', 'arrow_classifier_keras_gray.h5')
         # self.rune_solver = rs.RuneDetectorSimple(self.rune_model_path, screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
         self.rune_solver = RuneSolverSimple(screen_capturer=self.screen_capturer, key_mgr=self.keyhandler)
 
@@ -109,8 +112,6 @@ class MacroController:
         self.other_player_detected_start = None
         self.player_pos_not_found_start = None
         self.elite_boss_detected = False
-
-        self.logger.debug("%s init finished" % self.__class__.__name__)
 
     def load_and_process_platform_map(self, path):
         ret = self.terrain_analyzer.load(path)
@@ -490,7 +491,8 @@ class MacroController:
                 time.sleep(0.2)
                 self.keyhandler.single_press(self.player_manager.keymap["interact"])
                 time.sleep(1.5)
-                self.save_current_screen('rune')  # save image to disk for future use
+                if self.debug:  # save image to disk for future use
+                    self.save_current_screen('rune')
                 solve_result = self.rune_solver.solve_auto()
                 if solve_result is None:
                     self.logger.error("rune_solver.solve_auto failed to solve")

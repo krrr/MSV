@@ -3,8 +3,8 @@ from macro_script import MacroController
 
 
 class TBoyResearchTrain1(MacroController):
-    def __init__(self, keymap, logger_queue, cmd_queue):
-        super().__init__(keymap=keymap, log_queue=logger_queue, cmd_queue=cmd_queue)
+    def __init__(self, keymap, log_queue, cmd_queue, config):
+        super().__init__(keymap, log_queue, cmd_queue, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):

@@ -3,9 +3,6 @@ from macro_script import MacroController
 
 
 class FoxTreeLowerPath3(MacroController):
-    def __init__(self, keymap, logger_queue, cmd_queue):
-        super().__init__(keymap=keymap, log_queue=logger_queue, cmd_queue=cmd_queue)
-
     def loop(self):
         # ignore rune
 
