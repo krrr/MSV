@@ -17,7 +17,9 @@ Kanna class version of original MS-Visionify (https://github.com/Dashadower/MS-V
 ### Supported maps
 #### Meso farm maps
 * dclp1: Deep in the Cavern - Lower Path 1
+* interior1: Labyrinth of Suffering Interior 1
 #### Leech maps
+* b1_store2: B1 Store 2 (141-149)
 * 2f_cafe4: 2F Cafe 4 (150-160)
 * 5f_shops4: 5F Cosmetics Shops 4 (161-164)
 * first_drill_hall: First Drill Hall  (165-173)
