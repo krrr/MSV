@@ -13,7 +13,7 @@ import multiprocessing as mp
 from screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from player_controller import PlayerController
 from rune_solver.rune_solver_simple import RuneSolverSimple
-from util import get_config, get_file_log_handler, QueueLoggerHandler
+from util import get_config, get_file_log_handler, play_sound, QueueLoggerHandler
 
 
 def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
@@ -243,11 +243,11 @@ class MacroController:
             if self.player_pos_not_found_start is None:
                 self.player_pos_not_found_start = time.time()
                 if white_room:
+                    play_sound('white_room')
                     self.logger.info('white room detected')
                     self.save_current_screen('white_room')
 
             if white_room:
-                self.alert_sound(5)
                 return -3
             else:
                 raise MiniMapError('player pos not found')

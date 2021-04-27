@@ -6,17 +6,38 @@ import win32con
 import collections
 import logging
 import logging.handlers
-import winsound
 import os
 import multiprocessing as mp
 import math
+from ctypes import c_buffer, windll
+from random import random
 
 _config = None
 config_file = 'config.json'
 
 
+def _winmm_command(*command):
+    buf = c_buffer(255)
+    command = ' '.join(command).encode(sys.getfilesystemencoding())
+    errorCode = int(windll.winmm.mciSendStringA(command, buf, 254, 0))
+    if errorCode:
+        errorBuffer = c_buffer(255)
+        windll.winmm.mciGetErrorStringA(errorCode, errorBuffer, 254)
+        exceptionMessage = ('\n    Error ' + str(errorCode) + ' for command:'
+                                                              '\n        ' + command.decode() +
+                            '\n    ' + errorBuffer.value.decode())
+        raise Exception(exceptionMessage)
+    return buf.value
+
+
 def play_sound(name):
-    winsound.PlaySound('resources\\sound\\' + name + '.wav', winsound.SND_FILENAME | winsound.SND_ASYNC)
+    # https://github.com/TaylorSMarks/playsound
+    sound = 'resources\\sound\\' + name + '.mp3'
+    alias = 'playsound_' + str(random())
+    _winmm_command('open "' + sound + '" alias', alias)
+    _winmm_command('set', alias, 'time format milliseconds')
+    duration_in_ms = _winmm_command('status', alias, 'length')
+    _winmm_command('play', alias, 'from 0 to', duration_in_ms.decode())
 
 
 def get_config():
