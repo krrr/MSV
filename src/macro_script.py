@@ -156,9 +156,9 @@ class MacroController:
 
     def navigate_to_platform(self, platform_hash):
         """
+        Move to platform by various methods
         """
-
-        for i in range(3):
+        for i in range(3):  # retry up to 3 times
             if self.current_platform_hash == platform_hash:
                 return True
             elif self.current_platform_hash is None:
@@ -172,10 +172,15 @@ class MacroController:
             self.logger.debug("path to platform %s: %s" % (platform_hash, ", ".join(str(x.method) for x in solutions)))
             for solution in solutions:
                 curr_platform = self.terrain_analyzer.platforms[self.current_platform_hash]
+                next_platform = self.terrain_analyzer.platforms[solution.to_hash]
 
-                if solution.method == MoveMethod.TELEPORTR or solution.method == MoveMethod.JUMPR or solution.method == MoveMethod.MOVER:
+                if solution.method == MoveMethod.TELEPORTR:
+                    x = max(self.player_manager.x, next_platform.start_x + random.randint(4, 5) - PlayerController.TELEPORT_HORIZONTAL_RANGE)
+                elif solution.method == MoveMethod.TELEPORTL:
+                    x = min(self.player_manager.x, next_platform.end_x - random.randint(4, 5) + PlayerController.TELEPORT_HORIZONTAL_RANGE)
+                elif solution.method == MoveMethod.JUMPR or solution.method == MoveMethod.MOVER:
                     x = curr_platform.end_x - random.randint(2, 3)
-                elif solution.method == MoveMethod.TELEPORTL or solution.method == MoveMethod.JUMPL or solution.method == MoveMethod.MOVEL:
+                elif solution.method == MoveMethod.JUMPL or solution.method == MoveMethod.MOVEL:
                     x = curr_platform.start_x + random.randint(2, 3)
                 else:  # overlap platform (teleport up/down or drop)
                     if solution.lower_bound[0] < self.player_manager.x < solution.upper_bound[0]:

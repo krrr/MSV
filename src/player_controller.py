@@ -7,6 +7,7 @@ import time, math, random
 # simple jump vertical distance: about 6 pixels
 class PlayerController:
     TELEPORT_CD = 0.65
+    TELEPORT_HORIZONTAL_RANGE = 18
     SHIKIGAMI_HAUNTING_RANGE = 18
 
     """
@@ -223,12 +224,12 @@ class PlayerController:
     def stay(self, timeout, goal_x=None):
         start_time = time.time()
 
-        if goal_x is None:
-            self.update()
-            goal_x = self.x
-
         while True:
             self.update()
+            if goal_x is None:
+                goal_x = self.x
+                continue
+
             self.horizontal_move_goal(goal_x, time.time()-timeout)
 
             if time.time()-timeout > start_time:
