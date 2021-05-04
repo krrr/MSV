@@ -47,11 +47,15 @@ class MainWindow(ttk.Frame):
         self.auto_solve_rune = tk.BooleanVar()
         self.auto_solve_rune.set(get_config().get('auto_solve_rune', True))
         options_menu.add_checkbutton(label="Auto Solve Rune", onvalue=True, offvalue=False,
-                                     variable=self.auto_solve_rune, command=self._on_auto_solve_rune_check)
+                                     variable=self.auto_solve_rune, command=lambda: self._on_opt_change('auto_solve_rune'))
         self.debug_mode = tk.BooleanVar()
         self.debug_mode.set(get_config().get('debug', False))
+        self.limit_exp = tk.BooleanVar()
+        self.limit_exp.set(get_config().get('limit_exp', True))
         options_menu.add_checkbutton(label="Debug Mode", onvalue=True, offvalue=False,
-                                     variable=self.debug_mode, command=self._on_debug_mode_check)
+                                     variable=self.debug_mode, command=lambda: self._on_opt_change('debug', 'debug_mode'))
+        options_menu.add_checkbutton(label="Limit Exp.", onvalue=True, offvalue=False,
+                                     variable=self.limit_exp, command=lambda: self._on_opt_change('limit_exp'))
         self._menubar.add_cascade(label="Options", menu=options_menu)
 
         tools_menu = tk.Menu(tearoff=False)
@@ -295,12 +299,10 @@ class MainWindow(ttk.Frame):
         else:
             TerrainEditorWindow(self.master, self.platform_file_path.get())
 
-    def _on_auto_solve_rune_check(self):
-        get_config()['auto_solve_rune'] = self.auto_solve_rune.get()
-        save_config()  # let macro process read new value
-
-    def _on_debug_mode_check(self):
-        get_config()['debug'] = self.debug_mode.get()
+    def _on_opt_change(self, config_name, var_name=None):
+        if var_name is None:
+            var_name = config_name
+        get_config()[config_name] = getattr(self, var_name).get()
         save_config()  # let macro process read new value
 
     def _popup_about(self):

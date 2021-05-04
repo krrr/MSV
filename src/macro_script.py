@@ -72,6 +72,7 @@ class MacroController:
         self.log_queue = log_queue
         self.cmd_queue = cmd_queue
         self.debug = config.get('debug', True)
+        self.limit_exp = config.get('limit_exp', True)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
         if not self.logger.hasHandlers():
@@ -293,7 +294,7 @@ class MacroController:
             self.keyhandler.single_press(dc.DIK_ESCAPE)
 
         ### Experience full check
-        if self.screen_processor.check_exp_full():
+        if self.limit_exp and self.screen_processor.check_exp_full():
             self.alert_sound(2)
             self.abort('exp nearly full')
 
