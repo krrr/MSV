@@ -51,9 +51,9 @@ class LabyrinthInterior1(MacroController):
                 self.player_manager.shikigami_haunting_sweep_move(self.RIGHT_X)
             elif self.player_manager.x < self.LEFT_X + 6:
                 self.player_manager.shikigami_haunting(wait_delay=False)
-                time.sleep(0.02)
+                time.sleep(0.03)
                 self.player_manager.teleport_right()
-                time.sleep(0.07)
+                time.sleep(0.09)
                 self.update()
                 self.player_manager.horizontal_move_goal(self.RIGHT_X)
                 self.keyhandler.single_press(dc.DIK_RIGHT)
@@ -113,19 +113,20 @@ class LabyrinthInterior1(MacroController):
         self.check_cmd_queue()
         self.navigate_to_platform('8ff668b3')
 
+        ### top left
         p = self.terrain_analyzer.platforms['8ff668b3']
         middle = (p.end_x + p.start_x) / 2
         self.player_manager.horizontal_move_goal(middle-2)
-        self.player_manager.stay(0.7 + abs(self.player_manager.random_duration(0.05)))
+        self.player_manager.stay(0.85 + abs(self.player_manager.random_duration(0.05)), middle-2)
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
         self.player_manager.shikigami_haunting()
         self.player_manager.horizontal_move_goal(middle+2)
         self.player_manager.shikigami_haunting()
         self.player_manager.shikigami_haunting()
-        self.player_manager.stay(0.1 + abs(self.player_manager.random_duration(0.05)))
+        self.player_manager.stay(0.1 + abs(self.player_manager.random_duration(0.05)), middle+2)
         self.player_manager.teleport_left()
-        time.sleep(0.04)
+        time.sleep(0.06)
         self.update()
         self.check_cmd_queue()
         self.navigate_to_platform('4e54fb89')  # center left
