@@ -56,7 +56,11 @@ class ScreenProcessor:
         return win32gui.GetForegroundWindow() == self.hwnd
 
     def set_foreground(self):
-        win32gui.SetForegroundWindow(self.hwnd)
+        try:
+            win32gui.SetForegroundWindow(self.hwnd)
+        except Exception:
+            return False
+
         time.sleep(0.1)
         if win32gui.GetForegroundWindow() != self.hwnd:
             time.sleep(0.1)
