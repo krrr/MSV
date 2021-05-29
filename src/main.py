@@ -287,7 +287,7 @@ class MainWindow(ttk.Frame):
                 platforms = data["platforms"]
                 # minimap_coords = data["minimap"]
                 self.log("Terrain file loaded (platforms: %s)" % len(platforms.keys()))
-            except:
+            except Exception:
                 showerror(APP_TITLE, "File verification error\n file: %s\nFile verification failed. Please check if it is a broken file." % path)
             else:
                 self.platform_file_path.set(path)

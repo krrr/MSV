@@ -12,6 +12,7 @@ from .kerning_tower_2f_cafe4 import KerningTower2FCafe4
 from .kerning_tower_5f_shops4 import KerningTower5FShops4
 from .kerning_tower_b1_store2 import KerningTowerB1Store2
 from .labyrinth_interior1 import LabyrinthInterior1
+from .eastern_cave_path2 import EasternCavePath2
 
 
 map_scripts = {
@@ -29,6 +30,7 @@ map_scripts = {
     'bash_club3': BashClub3,
     'fox_tree_top_path': FoxTreeTopPath,
     'fox_tree_lower_path3': FoxTreeLowerPath3,
+    'ecp2': EasternCavePath2,
 }
 
 map2platform = {
@@ -46,4 +48,5 @@ map2platform = {
     'bash_club3': 'bash_club3',
     'fox_tree_top_path': 'fox_tree_top_path',
     'fox_tree_lower_path3': 'fox_tree_lower_path3',
+    'ecp2': 'eastern_cave_path2',
 }

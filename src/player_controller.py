@@ -192,7 +192,7 @@ class PlayerController:
                 self.teleport_left()
                 self.horizontal_move_goal(goal_x)
 
-    def horizontal_move_goal(self, goal_x, timeout=None):
+    def horizontal_move_goal(self, goal_x, timeout=None, precise=False):
         """
         Blocking call to move from current x position(self.x) to goal_x. Only counts x coordinates.
         Refactor notes: This function references self.screen_processor
@@ -200,8 +200,14 @@ class PlayerController:
         :return: None
         """
         dis = abs(self.x - goal_x)
-        if dis <= self.horizontal_goal_offset:
-            return True
+        if precise:
+            offset = min(dis, self.horizontal_goal_offset)
+            if offset == 0:
+                return True
+        else:
+            offset = self.horizontal_goal_offset
+            if dis <= offset:
+                return True
 
         start_time = time.time()
         time_limit = timeout or math.ceil(dis / self.x_movement_enforce_rate) + 3
@@ -212,8 +218,7 @@ class PlayerController:
             time.sleep(0.02)
             self.update()
 
-            if ((right and self.x >= goal_x - self.horizontal_goal_offset) or
-                    (not right and self.x <= goal_x + self.horizontal_goal_offset)):
+            if (right and self.x >= goal_x - offset) or (not right and self.x <= goal_x + offset):
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return True
 
