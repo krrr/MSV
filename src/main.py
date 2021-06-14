@@ -25,7 +25,7 @@ from tools.auto_star_force import AutoStarForceWindow
 # from macro_script_astar import MacroControllerAStar as MacroController
 
 
-APP_TITLE = "MSV Kanna Ver"
+APP_TITLE = "MSV"
 VERSION = 0.4
 
 
