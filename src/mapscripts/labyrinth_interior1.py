@@ -19,7 +19,7 @@ class LabyrinthInterior1(MacroController):
             return
 
         # set skills
-        if (not self.elite_boss_detected and self.current_platform_hash == '4e54fb89' and
+        if (not self.elite_boss_detected and self.current_platform_hash in ('4e54fb89', '6c45ab2d') and
                 self.set_skills(combine=True)):
             return
 
@@ -87,6 +87,7 @@ class LabyrinthInterior1(MacroController):
 
         self.check_cmd_queue()
 
+        ### center right
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6c45ab2d'].end_x - 4)
         self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.05)))
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6c45ab2d'].start_x + 5)
