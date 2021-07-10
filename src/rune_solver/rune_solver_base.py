@@ -68,7 +68,8 @@ class RuneSolverBase:
                 self.key_mgr.single_press(DIK_LEFT)
             elif inp == "right":
                 self.key_mgr.single_press(DIK_RIGHT)
-            time.sleep(0.17 + random.uniform(0, 0.1))
+            # https://www.reddit.com/r/Maplestory/comments/a9b0lj/nexons_new_autoban_system_explained/?st=JQ35N82V&sh=3eeba9e3
+            time.sleep(0.2 + random.uniform(0, 0.15))
 
         return len(result)
 
