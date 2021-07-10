@@ -72,7 +72,6 @@ class MacroController:
         self.log_queue = log_queue
         self.cmd_queue = cmd_queue
         self.debug = config.get('debug', True)
-        self.limit_exp = config.get('limit_exp', True)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
         if not self.logger.hasHandlers():
@@ -80,11 +79,15 @@ class MacroController:
             self.logger.addHandler(get_file_log_handler())
         self.logger.debug("%s init" % self.__class__.__name__)
 
+        kernel_driver = config.get('kernel_driver', False)
+        if kernel_driver:
+            self.logger.info('kernel driver enabled')
+
         self.auto_resolve_rune = config.get('auto_solve_rune', True)
         self.screen_capturer = ScreenProcessor()
         self.screen_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = terrain_analyzer.PathAnalyzer()
-        self.keyhandler = km.InputManager()
+        self.keyhandler = km.InputManager(use_driver=kernel_driver)
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
 
         self.last_platform_hash = None
@@ -292,11 +295,6 @@ class MacroController:
         ### Dialog box check
         if self.screen_processor.check_dialog():
             self.keyhandler.single_press(dc.DIK_ESCAPE)
-
-        ### Experience full check
-        if self.limit_exp and self.screen_processor.check_exp_full():
-            self.alert_sound(2)
-            self.abort('exp nearly full')
 
         self.current_platform_hash = self.find_current_platform()
         ### Check if player is on platform

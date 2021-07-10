@@ -127,6 +127,10 @@ DIK_APPS = 0xDD
 DIK_POWER = 0xDE
 DIK_SLEEP = 0xDF
 
+EXTENDED_KEYS = {DIK_LEFT, DIK_UP, DIK_RIGHT, DIK_DOWN,
+                 DIK_INSERT, DIK_DELETE, DIK_HOME, DIK_END, DIK_PRIOR, DIK_NEXT,
+                 DIK_DIVIDE, DIK_RCONTROL, DIK_RMENU}
+
 
 keysym_map = {  # tkinter event keysym to dik key code coversion table
     "escape": DIK_ESCAPE,

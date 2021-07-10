@@ -48,14 +48,14 @@ class MainWindow(ttk.Frame):
         self.auto_solve_rune.set(get_config().get('auto_solve_rune', True))
         options_menu.add_checkbutton(label="Auto Solve Rune", onvalue=True, offvalue=False,
                                      variable=self.auto_solve_rune, command=lambda: self._on_opt_change('auto_solve_rune'))
+        self.kernel_driver = tk.BooleanVar()
+        self.kernel_driver.set(get_config().get('kernel_driver', False))
+        options_menu.add_checkbutton(label="Kernel Driver", onvalue=True, offvalue=False,
+                                     variable=self.kernel_driver, command=lambda: self._on_opt_change('kernel_driver'))
         self.debug_mode = tk.BooleanVar()
         self.debug_mode.set(get_config().get('debug', False))
-        self.limit_exp = tk.BooleanVar()
-        self.limit_exp.set(get_config().get('limit_exp', True))
         options_menu.add_checkbutton(label="Debug Mode", onvalue=True, offvalue=False,
                                      variable=self.debug_mode, command=lambda: self._on_opt_change('debug', 'debug_mode'))
-        options_menu.add_checkbutton(label="Limit Exp.", onvalue=True, offvalue=False,
-                                     variable=self.limit_exp, command=lambda: self._on_opt_change('limit_exp'))
         self._menubar.add_cascade(label="Options", menu=options_menu)
 
         tools_menu = tk.Menu(tearoff=False)

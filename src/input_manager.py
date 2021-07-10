@@ -4,19 +4,13 @@ import win32api
 import win32con
 import math
 import random
+import driver
 
 
 SendInput = ctypes.windll.user32.SendInput
 GetCursorPos = ctypes.windll.user32.GetCursorPos
 # C struct redefinitions
 PUL = ctypes.POINTER(ctypes.c_ulong)
-KEYEVENTF_KEYUP = 0x0002
-KEYEVENTF_SCANCODE = 0x0008
-MOUSEEVENTF_MOVE = 0x0001
-MOUSEEVENTF_LEFTDOWN = 0x0002
-MOUSEEVENTF_LEFTUP = 0x0004
-MOUSEEVENTF_VIRTUALDESK = 0x4000
-MOUSEEVENTF_ABSOLUTE = 0x8000
 
 
 class KeyBdInput(ctypes.Structure):
@@ -53,48 +47,6 @@ class Input(ctypes.Structure):
                 ("ii", Input_I)]
 
 
-def PressKey(hexKeyCode):
-    extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.ki = KeyBdInput(0, hexKeyCode, 0x0008, 0, ctypes.pointer(extra) )
-    x = Input(ctypes.c_ulong(1), ii_)
-    SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
-
-
-def ReleaseKey(hexKeyCode):
-    extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.ki = KeyBdInput(0, hexKeyCode, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0, ctypes.pointer(extra))
-    x = Input(ctypes.c_ulong(1), ii_)
-    SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
-
-
-def MouseMoveAbsolute(x, y):
-    x = int(x * 65536.0 / win32api.GetSystemMetrics(win32con.SM_CXSCREEN))
-    y = int(y * 65536.0 / win32api.GetSystemMetrics(win32con.SM_CYSCREEN))
-    extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.mi = MouseInput(x, y, 0, MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, 0, ctypes.pointer(extra))
-    command = Input(ctypes.c_ulong(0), ii_)
-    SendInput(1, ctypes.pointer(command), ctypes.sizeof(command))
-
-
-def MouseLeftClick(down):
-    extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.mi = MouseInput(0, 0, 0, MOUSEEVENTF_LEFTDOWN if down else MOUSEEVENTF_LEFTUP, 0, ctypes.pointer(extra))
-    x = Input(ctypes.c_ulong(0), ii_)
-    SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
-
-
-def GetMouseCursorPos():
-    point = ctypes.wintypes.POINT()
-    if GetCursorPos(ctypes.pointer(point)) == 1:
-        return point.x, point.y
-    else:
-        return None
-
-
 # http://robertpenner.com/easing/
 # t: current_time
 def ease_in_out_quad(t, start, delta, duration):
@@ -110,7 +62,7 @@ class InputManager:
     This is an attempt to manage input from a single source. It remembers key "states" , which consists of keypress
     modifications, and actuates them in a single batch.
     """
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, use_driver=False):
         """
         Class variables:
         self.key_state: Temporary state dictionary before being actuated. Dictionary with DIK key names as keys with
@@ -122,6 +74,7 @@ class InputManager:
         self.key_state = {}
         self.actual_key_state = {}
         self.debug = debug
+        self.use_driver = use_driver
 
     def get_key_state(self, key_code=None):
         """
@@ -168,34 +121,31 @@ class InputManager:
             if keycode in self.actual_key_state.keys():
                 if self.actual_key_state[keycode] != state:
                     if state:
-                        PressKey(keycode)
+                        self.press_key(keycode)
                         self.actual_key_state[keycode] = 1
                     elif not state:
-                        ReleaseKey(keycode)
+                        self.release_key(keycode)
                         self.actual_key_state[keycode] = 0
             else:
                 if state:
-                    PressKey(keycode)
+                    self.press_key(keycode)
                     self.actual_key_state[keycode] = 1
                 elif not state:
-                    ReleaseKey(keycode)
+                    self.release_key(keycode)
                     self.actual_key_state[keycode] = 0
 
         self.key_state = {}
 
     def direct_press(self, key_code):
-        PressKey(key_code)
+        self.press_key(key_code)
         self.actual_key_state[key_code] = 1
 
     def direct_release(self, key_code):
-        ReleaseKey(key_code)
+        self.release_key(key_code)
         self.actual_key_state[key_code] = 0
 
-    def mouse_move_absolute(self, x, y):
-        MouseMoveAbsolute(x, y)
-
     def mouse_move(self, x, y):
-        start_pos = GetMouseCursorPos()
+        start_pos = self.get_cursor_pos()
         deltas = x - start_pos[0], y - start_pos[1]
         dis = int(math.sqrt(deltas[0]**2 + deltas[1]**2))
         step = max((dis // 50, 5))
@@ -204,12 +154,12 @@ class InputManager:
             pos_y = ease_in_out_quad(i, start_pos[1], deltas[1], step)
             self.mouse_move_absolute(pos_x, pos_y)
             time.sleep(0.02)
-        MouseMoveAbsolute(x, y)
+        self.mouse_move_absolute(x, y)
 
     def mouse_left_click(self):
-        MouseLeftClick(True)
+        self.mouse_click_left(True)
         time.sleep(0.02)
-        MouseLeftClick(False)
+        self.mouse_click_left(False)
 
     def mouse_left_click_at(self, x, y, rand=0):
         if rand != 0:
@@ -229,6 +179,49 @@ class InputManager:
         for keycode, state in self.actual_key_state.items():
             self.key_state[keycode] = 0
         self.translate_key_state()
+
+    def press_key(self, hexKeyCode):
+        extra = ctypes.c_ulong(0)
+        ii_ = Input_I()
+        ii_.ki = KeyBdInput(0, hexKeyCode, win32con.KEYEVENTF_SCANCODE, 0, ctypes.pointer(extra))
+        self._send_input(Input(win32con.INPUT_KEYBOARD, ii_))
+
+    def release_key(self, hexKeyCode):
+        extra = ctypes.c_ulong(0)
+        ii_ = Input_I()
+        ii_.ki = KeyBdInput(0, hexKeyCode, win32con.KEYEVENTF_SCANCODE | win32con.KEYEVENTF_KEYUP, 0, ctypes.pointer(extra))
+
+        self._send_input(Input(win32con.INPUT_KEYBOARD, ii_))
+
+    def mouse_move_absolute(self, x, y):
+        x = int(x * 65536.0 / win32api.GetSystemMetrics(win32con.SM_CXSCREEN))
+        y = int(y * 65536.0 / win32api.GetSystemMetrics(win32con.SM_CYSCREEN))
+        extra = ctypes.c_ulong(0)
+        ii_ = Input_I()
+        ii_.mi = MouseInput(x, y, 0, win32con.MOUSEEVENTF_MOVE | win32con.MOUSEEVENTF_ABSOLUTE, 0, ctypes.pointer(extra))
+        self._send_input(Input(win32con.INPUT_MOUSE, ii_))
+
+    def mouse_click_left(self, down):
+        extra = ctypes.c_ulong(0)
+        ii_ = Input_I()
+        ii_.mi = MouseInput(0, 0, 0, win32con.MOUSEEVENTF_LEFTDOWN if down else win32con.MOUSEEVENTF_LEFTUP, 0, ctypes.pointer(extra))
+        self._send_input(Input(win32con.INPUT_MOUSE, ii_))
+
+    def _send_input(self, input_struct):
+        if input_struct.ii.ki.wScan in dic.EXTENDED_KEYS:
+            input_struct.ii.ki.dwFlags |= win32con.KEYEVENTF_EXTENDEDKEY
+
+        if self.use_driver:
+            driver.send_input(1, ctypes.addressof(input_struct), ctypes.sizeof(input_struct))
+        else:
+            SendInput(1, ctypes.byref(input_struct), ctypes.sizeof(input_struct))
+
+    def get_cursor_pos(self):
+        point = ctypes.wintypes.POINT()
+        if GetCursorPos(ctypes.pointer(point)) == 1:
+            return point.x, point.y
+        else:
+            return None
 
 
 DEFAULT_KEY_MAP = {
