@@ -6,3 +6,6 @@ config.json
 /src/screenshots/
 /python/
 /Tesseract-OCR/
+driver/.vs
+driver/Output
+driver/MSVDriver/MSVDriver.dir

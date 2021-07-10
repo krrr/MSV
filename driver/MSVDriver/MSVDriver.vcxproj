@@ -25,7 +25,7 @@
     <MinimumVisualStudioVersion>12.0</MinimumVisualStudioVersion>
     <Configuration>Debug</Configuration>
     <Platform Condition="'$(Platform)' == ''">Win32</Platform>
-    <RootNamespace>DirectInput</RootNamespace>
+    <RootNamespace>MSVDriver</RootNamespace>
     <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
     <ProjectName>MSVDriver</ProjectName>
   </PropertyGroup>
