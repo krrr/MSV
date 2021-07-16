@@ -459,19 +459,16 @@ class MacroController:
         return 0
 
     def buff_skills(self, yuki=True):
-        delay = 0.35
-        # first buff skill to use, add extra delay
-        used = self.player_manager.holy_symbol(wait_before=delay)
-        # following skill should not add delay if already used any skill (any() for avoiding short-circuit)
-        self.check_cmd_queue()
-        used = any((used, self.player_manager.speed_infusion(wait_before=0 if used else delay)))
-        self.check_cmd_queue()
-        used = any((used, self.player_manager.haku_reborn(wait_before=0 if used else delay)))
-        self.check_cmd_queue()
+        skills = ['holy_symbol', 'speed_infusion', 'haku_reborn', 'mihaha_link']
         if yuki:
-            used = any((used, self.player_manager.yuki_musume(wait_before=0 if used else delay)))
-            self.check_cmd_queue()
-        used = any((used, self.player_manager.mihaha_link(wait_before=0 if used else delay)))
+            skills.append('yuki_musume')
+        random.shuffle(skills)
+        used = False
+        for i in skills:
+            # add extra delay to first buff skill; following skill should not add delay if already used any skill
+            temp = getattr(self.player_manager, i)(wait_before=0 if used else 0.35)
+            used = used or temp
+
         return used
 
     def _rune_detect_solve(self):
