@@ -13,6 +13,7 @@ from .kerning_tower_5f_shops4 import KerningTower5FShops4
 from .kerning_tower_b1_store2 import KerningTowerB1Store2
 from .labyrinth_interior1 import LabyrinthInterior1
 from .eastern_cave_path2 import EasternCavePath2
+from .end_of_the_world1_4 import EndOfTheWorld1_4
 
 
 map_scripts = {
@@ -21,6 +22,7 @@ map_scripts = {
     'dclp1_exorcist': Dclp1MacroControllerAlt,
     'fel4': Fel4MacroController,
     'interior1': LabyrinthInterior1,
+    'End of the World 1-4': EndOfTheWorld1_4,
     'tboy_train1': TBoyResearchTrain1,
     'b1_store2': KerningTowerB1Store2,
     '2f_cafe4': KerningTower2FCafe4,
@@ -39,6 +41,7 @@ map2platform = {
     'dclp1_exorcist': 'deep_cavern_lower_path1',
     'fel4': 'final_edge_of_light4',
     'interior1': 'labyrinth_interior1',
+    'End of the World 1-4': 'end_of_the_world1_4',
     'tboy_train1': 't_boys_research_train1',
     'b1_store2': 'kerning_tower_b1_store2',
     '2f_cafe4': 'kerning_tower_2f_cafe4',
