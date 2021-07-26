@@ -8,7 +8,6 @@ import threading
 import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
-import winsound
 import multiprocessing as mp
 from screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from player_controller import PlayerController
@@ -625,13 +624,13 @@ class MacroController:
 
         def func():
             for _ in range(times):
-                winsound.MessageBeep(winsound.MB_ICONASTERISK)
+                play_sound('beep')
                 time.sleep(0.5)
 
         thread = threading.Thread(target=func)
         thread.setDaemon(True)
         thread.start()
-        self.last_alert_sound = time.time() + 0.5 * times
+        self.last_alert_sound = time.time() + 0.5 * times + 2.5
 
     def exit_to_ch_select(self):
         for k in (dc.DIK_ESCAPE, dc.DIK_UP, dc.DIK_RETURN, dc.DIK_RETURN):

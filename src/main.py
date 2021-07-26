@@ -6,7 +6,6 @@ import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle, argparse
 import win32con
 import threading
-import winsound
 from collections import deque
 from tkinter import ttk
 from tkinter.constants import *
@@ -62,7 +61,7 @@ class MainWindow(ttk.Frame):
         self._menubar.add_cascade(label="Tools", menu=tools_menu)
         tools_menu.add_command(label='Auto Star Force', command=lambda: AutoStarForceWindow(self, self.master))
         test_sounds_menu = tk.Menu(tearoff=False)
-        test_sounds_menu.add_command(label='Normal Alert', command=lambda: winsound.MessageBeep(winsound.MB_ICONASTERISK))
+        test_sounds_menu.add_command(label='Normal Alert', command=lambda: play_sound('beep'))
         test_sounds_menu.add_command(label='White Room', command=lambda: play_sound('white_room'))
         tools_menu.add_cascade(label='Test Sounds', menu=test_sounds_menu)
 
