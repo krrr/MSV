@@ -129,7 +129,7 @@ class MainWindow(ttk.Frame):
         if selected_preset is not None:
             try:
                 self.preset_combobox.current(self.preset_names.index(selected_preset))
-            except tk.TclError:
+            except (ValueError, tk.TclError):
                 pass
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_close)

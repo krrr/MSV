@@ -3,7 +3,7 @@ from macro_script import MacroController
 import directinput_constants as dc
 
 
-# void current 3 script
+# Labyrinth Interior 1 script
 class LabyrinthInterior1(MacroController):
     LEFT_X = 66
     RIGHT_X = 85
