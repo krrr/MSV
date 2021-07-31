@@ -10,7 +10,8 @@ class PlayerController:
     TELEPORT_CD = 0.65
     TELEPORT_HORIZONTAL_RANGE = 18
     SHIKIGAMI_HAUNTING_RANGE = 18
-    SET_SKILL_COMMON_DELAY = 0.3
+    SET_SKILL_COMMON_DELAY = 0.35
+    BUFF_COMMON_DELAY = 0.7
 
     """
     This class keeps track of character location and manages advanced movement and attacks.
@@ -65,7 +66,6 @@ class PlayerController:
         self.last_rune_solve_time = 0
 
         self.v_buff_cd = 180  # common cool down for v buff
-        self.buff_common_delay = 2  # common delay for v buff
 
         self.last_skill_use_time = {
             'yaksha_boss': 0, 'kishin_shoukan': 0, 'nightmare_invite': 0,
@@ -261,7 +261,7 @@ class PlayerController:
         time.sleep(0.03)
         self.key_mgr.direct_press(self.keymap["teleport"])
         self.last_teleport_time = time.time()
-        time.sleep(0.03 + random_number(0.05))
+        time.sleep(0.04 + random_number(0.04))
         self.key_mgr.direct_release(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_release(self.keymap["teleport"])
@@ -402,7 +402,7 @@ class PlayerController:
                                           additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
-            time.sleep(self.buff_common_delay)
+            time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
             return True
 
         return False
