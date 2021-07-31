@@ -1,6 +1,7 @@
 from directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
 from input_manager import DEFAULT_KEY_MAP
 from screen_processor import MiniMapError
+from util import random_number
 import time, math, random
 
 
@@ -260,7 +261,7 @@ class PlayerController:
         time.sleep(0.03)
         self.key_mgr.direct_press(self.keymap["teleport"])
         self.last_teleport_time = time.time()
-        time.sleep(0.03 + abs(self.random_duration(0.05)))
+        time.sleep(0.03 + random_number(0.05))
         self.key_mgr.direct_release(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_release(self.keymap["teleport"])
@@ -291,7 +292,7 @@ class PlayerController:
         self.key_mgr.direct_press(self.keymap["jump"])
         time.sleep(0.1)
         self.key_mgr.direct_release(dir_key)
-        time.sleep(0.04 + abs(self.random_duration(0.1)))
+        time.sleep(0.04 + random_number(0.1))
         self.key_mgr.direct_release(self.keymap["jump"])
         if wait:
             self._wait_drop()
@@ -299,11 +300,11 @@ class PlayerController:
     def drop(self, wait=True):
         """Blocking call"""
         self.key_mgr.direct_press(DIK_DOWN)
-        time.sleep(0.05 + abs(self.random_duration()))
+        time.sleep(0.05 + random_number())
         self.key_mgr.direct_press(self.keymap["jump"])
-        time.sleep(0.05 + abs(self.random_duration()))
+        time.sleep(0.05 + random_number())
         self.key_mgr.direct_release(self.keymap["jump"])
-        time.sleep(0.1 + abs(self.random_duration()))
+        time.sleep(0.1 + random_number())
         self.key_mgr.direct_release(DIK_DOWN)
         if wait:
             self._wait_drop()
@@ -336,7 +337,7 @@ class PlayerController:
     def shikigami_haunting(self, wait_delay=True):
         for _ in range(3):
             self.key_mgr.single_press(self.keymap["shikigami_haunting"])
-            time.sleep(0.06 + abs(self.random_duration(0.005)))
+            time.sleep(0.06 + random_number(0.005))
         self.skill_cast_counter += 1
         if wait_delay:
             time.sleep(self.shikigami_haunting_delay)
@@ -353,24 +354,24 @@ class PlayerController:
         self.shikigami_haunting()
         time.sleep(0.05)
         self.exorcist_charm(False)
-        self.stay(1.22 + abs(self.random_duration(0.05)), x)
+        self.stay(1.22 + random_number(0.05), x)
         self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
         self.shikigami_haunting()
 
         if wait:
-            self.stay(1.22 + abs(self.random_duration(0.05)), x)
+            self.stay(1.22 + random_number(0.05), x)
         else:
             self.key_mgr.single_press(dir_)
             self.shikigami_haunting()
             self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
             self.shikigami_haunting()
-            self.stay(0.2 + abs(self.random_duration(0.05)), x)
+            self.stay(0.2 + random_number(0.05), x)
 
     def exorcist_charm(self, wait_delay=True):
         self.key_mgr.single_press(self.keymap["exorcist_charm"])
         self.skill_cast_counter += 1
         if wait_delay:
-            time.sleep(1.1 + abs(self.random_duration(0.01)))
+            time.sleep(1.1 + random_number(0.01))
 
     def kishin_shoukan(self):
         self._use_set_skill('kishin_shoukan')
@@ -383,11 +384,11 @@ class PlayerController:
 
     def _use_set_skill(self, skill_name):
         for i in range(2):
-            self.key_mgr.single_press(self.keymap[skill_name], duration=0.2,
-                                      additional_duration=0 if i == 1 else 0.2)
+            self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
+                                      additional_duration=0 if i == 1 else 0.2 + random_number(0.04))
         self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
-        time.sleep(self.SET_SKILL_COMMON_DELAY + self.random_duration(0.1))
+        time.sleep(self.SET_SKILL_COMMON_DELAY + random_number(0.1))
 
     def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
         if self.keymap.get(skill_name) is None:
@@ -397,8 +398,8 @@ class PlayerController:
             if wait_before:
                 time.sleep(wait_before)
             for i in range(2):
-                self.key_mgr.single_press(self.keymap[skill_name], duration=0.25,
-                                          additional_duration=0 if i == 1 else 0.1)
+                self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
+                                          additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.buff_common_delay)
@@ -427,15 +428,3 @@ class PlayerController:
 
     def is_skill_key_set(self, skill_name):
         return self.keymap.get(skill_name) is not None
-
-    def random_duration(self, gen_range=0.1, digits=2):
-        """
-        returns a random number x where -gen_range<=x<=gen_range rounded to digits number of digits under floating points
-        :param gen_range: float for generating number x where -gen_range<=x<=gen_range
-        :param digits: n digits under floating point to round. 0 returns integer as float type
-        :return: random number float
-        """
-        d = round(random.uniform(0, gen_range), digits)
-        if random.choice([1,-1]) == -1:
-            d *= -1
-        return d

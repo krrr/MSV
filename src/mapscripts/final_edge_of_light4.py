@@ -1,5 +1,6 @@
 import time
 from macro_script import MacroController
+from util import random_number
 import directinput_constants as dc
 
 
@@ -60,7 +61,7 @@ class Fel4MacroController(MacroController):
         self.navigate_to_platform('e4d256f5')  # middle right
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
-        self.player_manager.stay(0.35 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(0.35 + random_number(0.1))
         self.check_cmd_queue()
 
         # Quick other player sound notify
@@ -71,10 +72,10 @@ class Fel4MacroController(MacroController):
         self.navigate_to_platform('2531794a')  # top right
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
-        self.player_manager.stay(0.3 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(0.3 + random_number(0.1))
         self.check_cmd_queue()
 
         self.update()
         self.navigate_to_platform('cb718da9')  # top left
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['cb718da9'].start_x + 5)
-        self.player_manager.stay(0.45 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(0.45 + random_number(0.1))

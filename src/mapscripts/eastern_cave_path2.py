@@ -1,5 +1,6 @@
 import time
 from macro_script import MacroController
+from util import random_number
 import directinput_constants as dc
 
 
@@ -47,7 +48,7 @@ class EasternCavePath2(MacroController):
             self.player_manager.shikigami_haunting_sweep_move(x)
             self.player_manager.wait_teleport_cd()
         self.player_manager.exorcist_charm(wait_delay=False)
-        time.sleep(1 + abs(self.player_manager.random_duration(0.05)))
+        time.sleep(1 + random_number(0.05))
         self.player_manager.teleport_left() if is_left else self.player_manager.teleport_right()
         time.sleep(0.05)
         self.update()

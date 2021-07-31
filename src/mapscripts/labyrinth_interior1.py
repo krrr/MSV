@@ -1,5 +1,6 @@
 import time
 from macro_script import MacroController
+from util import random_number
 import directinput_constants as dc
 
 
@@ -36,14 +37,14 @@ class LabyrinthInterior1(MacroController):
                 self.keyhandler.single_press(dc.DIK_RIGHT)
                 self.player_manager.shikigami_haunting()
                 self.player_manager.exorcist_charm(False)
-                time.sleep(1.27 + abs(self.player_manager.random_duration(0.04)))
+                time.sleep(1.27 + random_number(0.04))
                 self.player_manager.teleport_left()
-                time.sleep(0.1 + abs(self.player_manager.random_duration(0.05)))
+                time.sleep(0.1 + random_number(0.05))
             else:
                 self.player_manager.horizontal_move_goal(self.LEFT_X)
 
             self.player_manager.shikigami_haunting(wait_delay=False)
-            time.sleep(0.1 + abs(self.player_manager.random_duration(0.05)))
+            time.sleep(0.1 + random_number(0.05))
             self.player_manager.teleport_down()
             time.sleep(0.07)
         elif self.current_platform_hash == 'd5ad102e':  # bottom
@@ -80,7 +81,7 @@ class LabyrinthInterior1(MacroController):
         self.logger.info('pick up money')
         self.navigate_to_platform('d5ad102e')
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['d5ad102e'].end_x - 2)
-        self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.05)))
+        self.player_manager.stay(0.5 + random_number(0.05))
         self.update()
         self.check_cmd_queue()
         self.navigate_to_platform('6c45ab2d')
@@ -89,13 +90,13 @@ class LabyrinthInterior1(MacroController):
 
         ### center right
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6c45ab2d'].end_x - 4)
-        self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.05)))
+        self.player_manager.stay(0.5 + random_number(0.05))
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6c45ab2d'].start_x + 5)
         if time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] >= 10:
             self.player_manager.last_skill_use_time['yaksha_boss'] = 0  # force setting yaksha boss
             self._place_set_skill('yaksha_boss')
         else:
-            self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.05)))
+            self.player_manager.stay(0.5 + random_number(0.05))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6923e252'].start_x + 5)
         self.update()
         self.check_cmd_queue()
@@ -103,7 +104,7 @@ class LabyrinthInterior1(MacroController):
 
         ### top right
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6923e252'].end_x - 4)
-        self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.05)))
+        self.player_manager.stay(0.5 + random_number(0.05))
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6923e252'].start_x)
         self.player_manager.jump_left(wait=False)
         time.sleep(0.06)
@@ -118,14 +119,14 @@ class LabyrinthInterior1(MacroController):
         p = self.terrain_analyzer.platforms['8ff668b3']
         middle = (p.end_x + p.start_x) / 2
         self.player_manager.horizontal_move_goal(middle-2)
-        self.player_manager.stay(0.85 + abs(self.player_manager.random_duration(0.05)), middle-2)
+        self.player_manager.stay(0.85 + random_number(0.05), middle - 2)
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
         self.player_manager.shikigami_haunting()
         self.player_manager.horizontal_move_goal(middle+2)
         self.player_manager.shikigami_haunting()
         self.player_manager.shikigami_haunting()
-        self.player_manager.stay(0.1 + abs(self.player_manager.random_duration(0.05)), middle+2)
+        self.player_manager.stay(0.1 + random_number(0.05), middle + 2)
         self.player_manager.teleport_left()
         time.sleep(0.06)
         self.update()
@@ -134,9 +135,9 @@ class LabyrinthInterior1(MacroController):
 
         x = self.terrain_analyzer.platforms['4e54fb89'].start_x + 5
         self.player_manager.shikigami_haunting_sweep_move(x)
-        self.player_manager.stay(0.7 + abs(self.player_manager.random_duration(0.05)), goal_x=x)
+        self.player_manager.stay(0.7 + random_number(0.05), goal_x=x)
         self.player_manager.teleport_down()
         time.sleep(0.02)
         self.player_manager.shikigami_haunting(wait_delay=False)
-        self.player_manager.stay(0.4 + abs(self.player_manager.random_duration(0.05)), goal_x=x)
+        self.player_manager.stay(0.4 + random_number(0.05), goal_x=x)
         self.player_manager.teleport_right()

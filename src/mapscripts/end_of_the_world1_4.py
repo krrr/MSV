@@ -1,5 +1,6 @@
 import random
 import time
+from util import random_number
 from macro_script import MacroController
 import directinput_constants as dc
 
@@ -54,14 +55,14 @@ class EndOfTheWorld1_4(MacroController):
             to_left = self.player_manager.x > self.CENTER_X
             self.keyhandler.single_press(dc.DIK_LEFT if to_left else dc.DIK_RIGHT)
             self.player_manager.shikigami_haunting(wait_delay=False)
-            time.sleep(0.1 + self.player_manager.random_duration(0.05))
+            time.sleep(0.1 + random_number(0.05, minus=True))
             self.player_manager.teleport_left() if to_left else self.player_manager.teleport_right()
             self.update()
             self.player_manager.horizontal_move_goal(self.LEFT_X+2 if to_left else self.RIGHT_X-9)
-            time.sleep(0.1 + self.player_manager.random_duration(0.05))
+            time.sleep(0.1 + random_number(0.05, minus=True))
             self.player_manager.shikigami_haunting()
             if self.loop_count > 3 and not to_left:  # at right side now
-                time.sleep(0.5 + self.player_manager.random_duration(0.15))
+                time.sleep(0.5 + random_number(0.15, minus=True))
         else:
             self.navigate_to_platform('5b53ae83')  # to bottom first
 
@@ -77,14 +78,14 @@ class EndOfTheWorld1_4(MacroController):
         self.logger.info('pick up money')
         self.navigate_to_platform('c214856a')  # above the platform
         ### above the platform
-        self.player_manager.stay(1 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(1 + random_number(0.1))
         target_x = self.terrain_analyzer.platforms['c214856a'].start_x + 16
         if self.player_manager.x < self.CENTER_X:
             target_x += 8
         else:
             target_x -= 8
         self.player_manager.horizontal_move_goal(target_x)
-        self.player_manager.stay(1 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(1 + random_number(0.1))
         self.update()
         self.check_cmd_queue()
         self.navigate_to_platform('5b53ae83')
@@ -93,9 +94,9 @@ class EndOfTheWorld1_4(MacroController):
 
         ### bottom
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['5b53ae83'].start_x + 4)
-        self.player_manager.stay(0.4 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(0.4 + random_number(0.1))
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['5b53ae83'].end_x - 1)
-        self.player_manager.stay(1 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(1 + random_number(0.1))
         self.navigate_to_platform('b70e34c7')  # center right
 
         ### center right
@@ -103,7 +104,7 @@ class EndOfTheWorld1_4(MacroController):
             self.player_manager.last_skill_use_time['yaksha_boss'] = 0  # force setting yaksha boss
             self._place_set_skill('yaksha_boss')
         else:
-            self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.1)))
+            self.player_manager.stay(0.5 + random_number(0.1))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 4)
         self.update()
         self.check_cmd_queue()
@@ -111,7 +112,7 @@ class EndOfTheWorld1_4(MacroController):
 
         ### top right
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 16)
-        self.player_manager.stay(1.1 + abs(self.player_manager.random_duration(0.1)))
+        self.player_manager.stay(1.1 + random_number(0.1))
         if random.random() >= 0.5:
             self.player_manager.teleport_down()
         else:

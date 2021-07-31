@@ -1,5 +1,6 @@
 import time
 from macro_script import MacroController
+from util import random_number
 import directinput_constants as dc
 
 
@@ -77,7 +78,7 @@ class Dclp1MacroController(MacroController):
         if no_attack:
             self.keyhandler.single_press(dc.DIK_RIGHT)
             self.check_cmd_queue()
-            time.sleep(0.95 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.95 + random_number(0.1))
             self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 3)  # right right middle
             self.keyhandler.single_press(dc.DIK_LEFT)
             time.sleep(0.6)
@@ -85,7 +86,7 @@ class Dclp1MacroController(MacroController):
             self.keyhandler.single_press(dc.DIK_RIGHT)
             self.player_manager.shikigami_haunting()
             self.check_cmd_queue()
-            time.sleep(0.6 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.6 + random_number(0.1))
             self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 6)  # right right middle
             self.player_manager.shikigami_haunting()
             self.keyhandler.single_press(dc.DIK_LEFT)
@@ -118,7 +119,7 @@ class Dclp1MacroController(MacroController):
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['a08fae82'].start_x + 3)  # left top
         self.keyhandler.single_press(dc.DIK_RIGHT)
         self.player_manager.shikigami_haunting()
-        time.sleep(0.15 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.15 + random_number(0.1))
         self.player_manager.teleport_right()
 
         if return1:  # alternative preset will stay at left middle platform
@@ -127,9 +128,9 @@ class Dclp1MacroController(MacroController):
 
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
-        time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.2 + random_number(0.1))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['b0d5f01d'].start_x - 5)  # left middle
-        time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.2 + random_number(0.1))
 
         self.update()
         self.navigate_to_platform('600f8ed9')  # center bottom

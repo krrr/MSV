@@ -1,5 +1,6 @@
 import time
 from macro_script import MacroController
+from util import random_number
 import directinput_constants as dc
 
 
@@ -31,7 +32,7 @@ class CupMacroController(MacroController):
             if self.player_manager.x >= 108:
                 self.player_manager.optimized_horizontal_move(108)
             self.player_manager.drop()
-            time.sleep(abs(self.player_manager.random_duration(0.08)))
+            time.sleep(random_number(0.08))
             self.keyhandler.single_press(dc.DIK_RIGHT)
             self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '9769210f':  # left top
@@ -52,20 +53,20 @@ class CupMacroController(MacroController):
         elif self.current_platform_hash == '4768c4f7':  # left left top
             self.player_manager.horizontal_move_goal(31)
             self.player_manager.teleport_down()
-            time.sleep(0.1 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.1 + random_number(0.1))
         elif self.current_platform_hash == 'c99d319c':  # left left middle
             self.keyhandler.single_press(dc.DIK_LEFT)
             self.player_manager.shikigami_haunting()
             self.player_manager.horizontal_move_goal(21)
-            time.sleep(0.4 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.4 + random_number(0.1))
             self.player_manager.teleport_down()
-            time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
+            time.sleep(0.2 + random_number(0.1))
             self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '4b5aa172':  # left bottom
             self.player_manager.shikigami_haunting_sweep_move(60)
             self.player_manager.drop(wait=False)
             self.player_manager.shikigami_haunting()
-            time.sleep(0.3 + abs(self.player_manager.random_duration(0.08)))
+            time.sleep(0.3 + random_number(0.08))
             self.player_manager.shikigami_haunting()
         else:
             self.navigate_to_platform('543f340d')
@@ -83,10 +84,10 @@ class CupMacroController(MacroController):
         self.navigate_to_platform('f8358df9')  # right bottom
 
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['f8358df9'].end_x - 9)
-        time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.2 + random_number(0.1))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['bb5c96fa'].end_x - 5)  # right top
         self.player_manager.teleport_up()
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['bb5c96fa'].start_x + 3)
-        time.sleep(0.2 + abs(self.player_manager.random_duration(0.1)))
+        time.sleep(0.2 + random_number(0.1))
         self.player_manager.teleport_left()
         self.money_picked = True

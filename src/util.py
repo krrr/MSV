@@ -9,8 +9,8 @@ import logging.handlers
 import os
 import multiprocessing as mp
 import math
+import random
 from ctypes import c_buffer, windll
-from random import random
 
 _config = None
 config_file = 'config.json'
@@ -33,7 +33,7 @@ def _winmm_command(*command):
 def play_sound(name):
     # https://github.com/TaylorSMarks/playsound
     sound = 'resources\\sound\\' + name + '.mp3'
-    alias = 'playsound_' + str(random())
+    alias = 'playsound_' + str(random.random())
     _winmm_command('open "' + sound + '" alias', alias)
     _winmm_command('set', alias, 'time format milliseconds')
     duration_in_ms = _winmm_command('status', alias, 'length')
@@ -150,3 +150,17 @@ class GlobalHotKeyListener:
 def color_distance(c1, c2):
     return math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2)
 
+
+def random_number(gen_range=0.1, digits=2, minus=False):
+    """
+    returns a random number x where 0<=x<=gen_range or -gen_range<=x<=gen_range rounded to digits number
+    of digits under floating points
+    :param gen_range: float for generating number x where -gen_range<=x<=gen_range
+    :param digits: n digits under floating point to round. 0 returns integer as float type
+    :param minus: include minus part
+    :return: random number float
+    """
+    d = round(random.uniform(0, gen_range), digits)
+    if minus:
+        d *= random.choice((1, -1))
+    return d
