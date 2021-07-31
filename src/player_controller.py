@@ -9,6 +9,7 @@ class PlayerController:
     TELEPORT_CD = 0.65
     TELEPORT_HORIZONTAL_RANGE = 18
     SHIKIGAMI_HAUNTING_RANGE = 18
+    SET_SKILL_COMMON_DELAY = 0.3
 
     """
     This class keeps track of character location and manages advanced movement and attacks.
@@ -58,7 +59,6 @@ class PlayerController:
         self.skill_cooldown = {
             'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60
         }
-        self.set_skill_common_delay = 1.4
 
         self.rune_fail_cooldown = 5
         self.last_rune_solve_time = 0
@@ -383,11 +383,11 @@ class PlayerController:
 
     def _use_set_skill(self, skill_name):
         for i in range(2):
-            self.key_mgr.single_press(self.keymap[skill_name], duration=0.25,
-                                      additional_duration=0 if i == 1 else 0.1)
+            self.key_mgr.single_press(self.keymap[skill_name], duration=0.2,
+                                      additional_duration=0 if i == 1 else 0.2)
         self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
-        time.sleep(self.set_skill_common_delay)
+        time.sleep(self.SET_SKILL_COMMON_DELAY + self.random_duration(0.1))
 
     def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
         if self.keymap.get(skill_name) is None:
