@@ -324,9 +324,9 @@ class StaticImageProcessor:
         return len(loc[0]) == 1
 
     def check_white_room(self):
-        """Assume in white room if 50% or more pixels are pure white. Percentage of sample in unittest is 79%"""
+        """Assume in white room if 40% or more pixels are pure white. Percentage of sample in unittest is 79%"""
         area = self.bgr_img.shape[0] * self.bgr_img.shape[1]
-        return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.5
+        return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.4
 
     def check_dialog(self):
         """Match 'End Chat' button of dialog (at left bottom)"""
