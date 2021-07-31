@@ -105,7 +105,7 @@ class LabyrinthInterior1(MacroController):
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6923e252'].end_x - 4)
         self.player_manager.stay(0.5 + abs(self.player_manager.random_duration(0.05)))
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6923e252'].start_x)
-        self.player_manager.jumpl()
+        self.player_manager.jump_left(wait=False)
         time.sleep(0.06)
         self.player_manager.shikigami_haunting(wait_delay=False)
         self.player_manager.teleport_left()

@@ -31,7 +31,7 @@ class CupMacroController(MacroController):
             if self.player_manager.x >= 108:
                 self.player_manager.optimized_horizontal_move(108)
             self.player_manager.drop()
-            time.sleep(0.35 + abs(self.player_manager.random_duration(0.08)))
+            time.sleep(abs(self.player_manager.random_duration(0.08)))
             self.keyhandler.single_press(dc.DIK_RIGHT)
             self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '9769210f':  # left top
@@ -44,7 +44,7 @@ class CupMacroController(MacroController):
                 self.player_manager.teleport_left()
                 self.money_picked = False
             else:
-                self.player_manager.jumpl()
+                self.player_manager.jump_left(wait=False)
                 time.sleep(0.04)
                 self.player_manager.shikigami_haunting()
                 time.sleep(0.058)
@@ -63,7 +63,7 @@ class CupMacroController(MacroController):
             self.player_manager.shikigami_haunting()
         elif self.current_platform_hash == '4b5aa172':  # left bottom
             self.player_manager.shikigami_haunting_sweep_move(60)
-            self.player_manager.drop()
+            self.player_manager.drop(wait=False)
             self.player_manager.shikigami_haunting()
             time.sleep(0.3 + abs(self.player_manager.random_duration(0.08)))
             self.player_manager.shikigami_haunting()

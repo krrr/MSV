@@ -510,13 +510,10 @@ class MacroController:
         move_method = solution.method
         if move_method == MoveMethod.DROP:
             self.player_manager.drop()
-            time.sleep(1)
         elif move_method == MoveMethod.JUMPL:
-            self.player_manager.jumpl()
-            time.sleep(0.7)
+            self.player_manager.jump_left()
         elif move_method == MoveMethod.JUMPR:
-            self.player_manager.jumpr()
-            time.sleep(0.7)
+            self.player_manager.jump_right()
         elif move_method in (MoveMethod.TELEPORTL, MoveMethod.TELEPORTR, MoveMethod.TELEPORTUP, MoveMethod.TELEPORTDOWN):
             self.player_manager.wait_teleport_cd()
 
@@ -597,8 +594,9 @@ class MacroController:
         """
         self.unstick_attempts += 1
         # jump right to try to get off ladder
-        for i in ['jumpr', 'teleport_up', 'teleport_left', 'teleport_right']:
-            getattr(self.player_manager, i)()
+        for method in (self.player_manager.jump_right, self.player_manager.teleport_up,
+                       self.player_manager.teleport_left, self.player_manager.teleport_right):
+            method()
             time.sleep(0.8)
             self.update()
             if self.current_platform_hash is not None:

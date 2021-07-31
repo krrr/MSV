@@ -1,3 +1,4 @@
+import random
 import time
 from macro_script import MacroController
 import directinput_constants as dc
@@ -42,11 +43,11 @@ class EndOfTheWorld1_4(MacroController):
                 self.player_manager.shikigami_haunting_sweep_move(self.RIGHT_X + self.player_manager.TELEPORT_HORIZONTAL_RANGE - 3)
 
             if self.player_manager.x < self.CENTER_X:
-                self.player_manager.jumpr()
+                self.player_manager.jump_right(wait=False)
                 time.sleep(0.05)
                 self.player_manager.teleport_right()
             else:
-                self.player_manager.jumpl()
+                self.player_manager.jump_left(wait=False)
                 time.sleep(0.05)
                 self.player_manager.teleport_left()
         elif self.current_platform_hash == '6865257d':  # the platform
@@ -77,12 +78,12 @@ class EndOfTheWorld1_4(MacroController):
         self.navigate_to_platform('c214856a')  # above the platform
         ### above the platform
         self.player_manager.stay(1 + abs(self.player_manager.random_duration(0.1)))
-        target_x = self.terrain_analyzer.platforms['c214856a'].start_x + 15
+        target_x = self.terrain_analyzer.platforms['c214856a'].start_x + 16
         if self.player_manager.x < self.CENTER_X:
             target_x += 8
         else:
             target_x -= 8
-        self.player_manager.shikigami_haunting_sweep_move(target_x)
+        self.player_manager.horizontal_move_goal(target_x)
         self.player_manager.stay(1 + abs(self.player_manager.random_duration(0.1)))
         self.update()
         self.check_cmd_queue()
@@ -111,3 +112,8 @@ class EndOfTheWorld1_4(MacroController):
         ### top right
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 16)
         self.player_manager.stay(1.1 + abs(self.player_manager.random_duration(0.1)))
+        if random.random() >= 0.5:
+            self.player_manager.teleport_down()
+        else:
+            self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 3)
+            self.player_manager.jump_left()

@@ -1,5 +1,4 @@
 from terrain_analyzer import MoveMethod
-import directinput_constants as dc
 import macro_script
 import time, random
 
@@ -88,7 +87,6 @@ class MacroControllerAStar(macro_script.MacroController):
                 self.player_manager.teleport_up()
             elif method == MoveMethod.DROP:
                 self.player_manager.drop()
-            time.sleep(1)
         # End inter-platform movement
 
         # Other buffs

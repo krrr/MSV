@@ -277,27 +277,26 @@ class PlayerController:
     def jump(self):
         self.key_mgr.single_press(self.keymap["jump"])
 
-    def jumpl(self):
+    def jump_left(self, wait=True):
         """Blocking call"""
-        self.key_mgr.direct_press(DIK_LEFT)
+        self._do_jump(DIK_LEFT, wait)
+
+    def jump_right(self, wait=True):
+        """Blocking call"""
+        self._do_jump(DIK_RIGHT, wait)
+
+    def _do_jump(self, dir_key, wait):
+        self.key_mgr.direct_press(dir_key)
         time.sleep(0.1)
         self.key_mgr.direct_press(self.keymap["jump"])
         time.sleep(0.1)
-        self.key_mgr.direct_release(DIK_LEFT)
+        self.key_mgr.direct_release(dir_key)
         time.sleep(0.04 + abs(self.random_duration(0.1)))
         self.key_mgr.direct_release(self.keymap["jump"])
+        if wait:
+            self._wait_drop()
 
-    def jumpr(self):
-        """Blocking call"""
-        self.key_mgr.direct_press(DIK_RIGHT)
-        time.sleep(0.1)
-        self.key_mgr.direct_press(self.keymap["jump"])
-        time.sleep(0.1)
-        self.key_mgr.direct_release(DIK_RIGHT)
-        time.sleep(0.04 + abs(self.random_duration(0.1)))
-        self.key_mgr.direct_release(self.keymap["jump"])
-
-    def drop(self):
+    def drop(self, wait=True):
         """Blocking call"""
         self.key_mgr.direct_press(DIK_DOWN)
         time.sleep(0.05 + abs(self.random_duration()))
@@ -306,6 +305,33 @@ class PlayerController:
         self.key_mgr.direct_release(self.keymap["jump"])
         time.sleep(0.1 + abs(self.random_duration()))
         self.key_mgr.direct_release(DIK_DOWN)
+        if wait:
+            self._wait_drop()
+
+    def _wait_drop(self):
+        """Wait until dropped to ground"""
+        y = self.y
+        eq_count = 0
+        dropping = False
+        jumped = False
+        for _ in range(200):
+            time.sleep(0.06)
+            self.update()
+            if self.y == y:
+                if not jumped or not dropping:
+                    continue
+                eq_count += 1
+                if eq_count == 3:
+                    break
+            elif self.y > y:
+                dropping = True
+                eq_count = 0
+            else:
+                if dropping:  # hit by monster after dropped to ground
+                    break
+                jumped = True
+                eq_count = 0
+            y = self.y
 
     def shikigami_haunting(self, wait_delay=True):
         for _ in range(3):
