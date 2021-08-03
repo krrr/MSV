@@ -17,7 +17,7 @@ for name in imgs:
 x, y, w, h = 450, 180, 500, 130
 while True:
     img = cap.capture(set_focus=False)
-    img_arr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    img_arr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     final_img = imutils.resize(img_arr, width = 200)
     cv2.imshow("s to automatically save 3 images in a row, d for just one", final_img)
     inp = cv2.waitKey(1)
@@ -31,7 +31,7 @@ while True:
             kbd.single_press(DIK_SPACE)
             time.sleep(0.3)
             ds = cap.capture(set_focus=False)
-            ds = cv2.cvtColor(np.array(ds), cv2.COLOR_RGB2BGR)
+            ds = cv2.cvtColor(ds, cv2.COLOR_RGB2BGR)
             ds = ds[y:y+h, x:x+w]
             ds = cv2.cvtColor(ds, cv2.COLOR_BGR2HSV)
             # Maximize saturation
@@ -51,7 +51,7 @@ while True:
         SetForegroundWindow(cap.ms_get_screen_hwnd())
         time.sleep(0.3)
         ds = cap.capture(set_focus=False)
-        ds = cv2.cvtColor(np.array(ds), cv2.COLOR_RGB2BGR)
+        ds = cv2.cvtColor(ds, cv2.COLOR_RGB2BGR)
         ds = ds[y:y + h, x:x + w]
         ds = cv2.cvtColor(ds, cv2.COLOR_BGR2HSV)
         # Maximize saturation

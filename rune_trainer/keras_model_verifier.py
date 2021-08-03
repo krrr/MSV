@@ -57,7 +57,7 @@ elif mode == str(2):
     ds = None
     while True:
         img = cap.capture(set_focus=False)
-        img_arr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+        img_arr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         img_arr = img_arr[y:y + h, x:x + w]
         final_img = imutils.resize(img_arr, width = 200)
         cv2.imshow("q to save image", final_img)
@@ -67,7 +67,7 @@ elif mode == str(2):
             SetForegroundWindow(cap.ms_get_screen_hwnd())
             time.sleep(0.3)
             ds = cap.capture(set_focus=False)
-            ds = cv2.cvtColor(np.array(ds), cv2.COLOR_RGB2BGR)
+            ds = cv2.cvtColor(ds, cv2.COLOR_RGB2BGR)
             ds = ds[y:y + h, x:x + w]
             print("saved")
             cv2.destroyAllWindows()

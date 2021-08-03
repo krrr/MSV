@@ -636,7 +636,7 @@ class MacroController:
             time.sleep(0.2)
 
     def save_current_screen(self, prefix):
-        img = self.screen_capturer.capture()
+        img = self.screen_capturer.capture_pil()
 
         if not os.path.isdir('screenshots'):
             os.mkdir('screenshots')

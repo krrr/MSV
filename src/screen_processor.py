@@ -3,7 +3,7 @@ import os
 import d3dshot
 import numpy as np, ctypes, ctypes.wintypes
 import sys
-from PIL import ImageGrab
+from PIL import Image, ImageGrab
 
 
 class GameCaptureError(Exception):
@@ -28,7 +28,7 @@ class ScreenProcessor:
             ctypes.windll.user32.SetProcessDPIAware()
 
         if sys.getwindowsversion().major == 10 and ScreenProcessor.d3dshot is None:
-            ScreenProcessor.d3dshot = d3dshot.create()
+            ScreenProcessor.d3dshot = d3dshot.create('numpy')
 
     def ms_get_screen_hwnd(self):
         return win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
@@ -85,9 +85,13 @@ class ScreenProcessor:
             self.set_foreground()
 
         if self.d3dshot is None:
-            return ImageGrab.grab(rect)
+            return np.array(ImageGrab.grab(rect))  # double conversion, slow
         else:
             return self.d3dshot.screenshot(rect)
+
+    def capture_pil(self, set_focus=True, hwnd=None, rect=None):
+        img = self.capture(set_focus, hwnd, rect)
+        return None if img is None else Image.fromarray(img)
 
 
 class StaticImageProcessor:
@@ -142,7 +146,7 @@ class StaticImageProcessor:
         if rgb_img is None:
             raise GameCaptureError('failed to capture game window')
 
-        self.bgr_img = cv2.cvtColor(np.array(rgb_img), cv2.COLOR_RGB2BGR)
+        self.bgr_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
         self.gray_img = cv2.cvtColor(self.bgr_img, cv2.COLOR_BGR2GRAY)
 
     def get_minimap_rect(self):
@@ -346,7 +350,7 @@ if __name__ == "__main__":
     hwnd = dx.ms_get_screen_hwnd()
     rect = dx.ms_get_screen_rect(hwnd)
     print('ms rect:', rect)
-    image = dx.capture(rect=rect)
+    image = dx.capture_pil(rect=rect)
     # image.show()
     processor = StaticImageProcessor(dx)
     processor.update_image()

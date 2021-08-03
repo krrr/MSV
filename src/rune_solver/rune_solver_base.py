@@ -41,7 +41,7 @@ class RuneSolverBase:
             self.rune_roi = self.rune_roi_800
 
         captured_image = self.screen_processor.capture(set_focus=False, rect=screen_rect)
-        captured_roi = cv2.cvtColor(np.array(captured_image), cv2.COLOR_RGB2BGR)
+        captured_roi = cv2.cvtColor(captured_image, cv2.COLOR_RGB2BGR)
         captured_roi = captured_roi[self.rune_roi[1]:self.rune_roi[1]+self.rune_roi[3], self.rune_roi[0]:self.rune_roi[0]+self.rune_roi[2]]
 
         return captured_roi

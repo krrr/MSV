@@ -51,6 +51,7 @@ class AutoStarForce:
     STAR_TRACK_COLOR = (204, 204, 204)
     SUCCESS_FONT_COLOR = (255, 255, 34)
     RESULT_TEXT_RECT = (55, 171, 293, 200)
+    DIALOG_BLUE_COLOR = (24, 139, 198)
 
     def __init__(self, screen_processor, log_level=logging.DEBUG, cmd_queue=None, log_queue=None):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -74,6 +75,7 @@ class AutoStarForce:
         self.img = None
         self.ms_rect = None
         self.rect = None
+        self.center_pos = None
 
     def run(self, target_star, star_catch, safe_guard):
         self.logger.info('start enhancing to %s', target_star)
@@ -97,20 +99,20 @@ class AutoStarForce:
             options = self.get_enhance_options()
             if (star_catch and options[0] == self.OPTION_CHECKED) or (not star_catch and options[0] == self.OPTION_UNCHECKED):
                 self.input_mgr.mouse_left_click_at(*self._map_pos(self.STAR_CATCH_OPTION_POINT), 4)
-                time.sleep(0.1)
+                time.sleep(0.08)
             if (safe_guard and options[1] == self.OPTION_UNCHECKED) or (not safe_guard and options[1] == self.OPTION_CHECKED):
                 self.input_mgr.mouse_left_click_at(*self._map_pos(self.SAFE_GUARD_OPTION_POINT), 4)
-                time.sleep(0.1)
+                time.sleep(0.08)
 
             if self.cmd_queue and not self.cmd_queue.empty():
                 return
 
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.ENHANCE_BTN_POS), 4)
-            time.sleep(0.08)
+            time.sleep(random.uniform(0.06, 0.09))
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.CONFIRM_OK_BTN_POS), 4)
 
-            time.sleep(random.uniform(0.1, 0.3))
-            self.input_mgr.mouse_move(self.rect[0] + random.randint(-20, 20), self.rect[3] + random.randint(-20, 20))
+            time.sleep(random.uniform(0.1, 0.2))
+            self.input_mgr.mouse_move(self.rect[0] + random.randint(-30, 40), self.rect[3] + random.randint(-40, 10))
 
             if star_catch:
                 time.sleep(0.1)
@@ -126,8 +128,8 @@ class AutoStarForce:
             if self.cmd_queue and not self.cmd_queue.empty():
                 return
 
-            time.sleep(random.uniform(0.1, 0.25))
-            self.input_mgr.mouse_left_click_at(*self._map_pos(self.RESULT_OK_BTN_POS), 4)
+            time.sleep(random.uniform(0.06, 0.09))
+            self.input_mgr.mouse_left_click_at(*self._map_pos(self.RESULT_OK_BTN_POS), 5)
             time.sleep(random.uniform(0.25, 0.35))
             if result == self.RESULT_SUCCESS:
                 self.logger.debug('success')
@@ -139,12 +141,23 @@ class AutoStarForce:
                         break
                 # maybe star is capped after this enhancement, so check again in the next iteration
                 next_star = None
-                time.sleep(0.4)
+                if safe_guard:
+                    self.input_mgr.single_press(dc.DIK_RETURN)
+                    time.sleep(random.uniform(0.04, 0.06))
+                    self.input_mgr.single_press(dc.DIK_RETURN)
             elif result == self.RESULT_FAILED:
                 self.logger.debug('fail')
                 next_star = curr - 1 if (curr > 10 and curr != 15 and curr != 20) else curr
                 time.sleep(0.8)
+
+                # self.logger.info(self.img.getpixel(self.center_pos))
+                # if color_distance(self.img.getpixel(self.center_pos), self.DIALOG_BLUE_COLOR) < 20:
+                if safe_guard:
+                    self.input_mgr.single_press(dc.DIK_RETURN)
+                    time.sleep(random.uniform(0.04, 0.06))
+                    self.input_mgr.single_press(dc.DIK_RETURN)
             elif result == self.RESULT_DESTROYED:
+                self.logger.info('destroyed!!!')
                 return
             else:
                 raise Exception('unknown result')
@@ -172,10 +185,11 @@ class AutoStarForce:
                 raise GameCaptureError
             x, y = self.ms_rect[0] + self.AREA_POS[0], self.ms_rect[1] + self.AREA_POS[1]
             self.rect = (x, y, x+self.AREA_SIZE[0], y+self.AREA_SIZE[1])
+            self.center_pos = (self.AREA_SIZE[0] // 2, self.AREA_SIZE[1] // 2)
 
             self.screen_processor.set_foreground()
 
-        self.img = self.screen_processor.capture(set_focus=False, rect=self.rect)
+        self.img = self.screen_processor.capture_pil(set_focus=False, rect=self.rect)
 
     def get_enhance_options(self):
         star_catch_pixel = self.img.getpixel(self.STAR_CATCH_OPTION_POINT)[:3]
@@ -218,7 +232,7 @@ class AutoStarForce:
         rect = (self.rect[0]+x, self.rect[1]+y, self.rect[0]+x+w, self.rect[1]+y+h)
         start = time.time()
         while True:
-            img = self.screen_processor.capture(rect=rect)  # faster than self.update_image
+            img = self.screen_processor.capture_pil(rect=rect)  # faster than self.update_image
             if any(color_distance(img.getpixel((x, 0)), self.STAR_TRACK_COLOR) > 50 for x in range(w)):
                 break
 
