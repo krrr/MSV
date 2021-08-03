@@ -295,7 +295,7 @@ class PlayerController:
         time.sleep(0.04 + random_number(0.1))
         self.key_mgr.direct_release(self.keymap["jump"])
         if wait:
-            self._wait_drop()
+            self._wait_drop(True)
 
     def drop(self, wait=True):
         """Blocking call"""
@@ -307,15 +307,15 @@ class PlayerController:
         time.sleep(0.1 + random_number())
         self.key_mgr.direct_release(DIK_DOWN)
         if wait:
-            self._wait_drop()
+            self._wait_drop(False)
 
-    def _wait_drop(self):
+    def _wait_drop(self, wait_jump):
         """Wait until dropped to ground"""
         y = self.y
         eq_count = 0
         dropping = False
-        jumped = False
-        for _ in range(200):
+        jumped = not wait_jump
+        for _ in range(100):
             time.sleep(0.06)
             self.update()
             if self.y == y:
