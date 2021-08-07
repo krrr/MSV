@@ -261,7 +261,7 @@ class PlayerController:
         time.sleep(0.03)
         self.key_mgr.direct_press(self.keymap["teleport"])
         self.last_teleport_time = time.time()
-        time.sleep(0.04 + random_number(0.04))
+        time.sleep(0.06 + random_number(0.02))
         self.key_mgr.direct_release(dir_key)
         time.sleep(0.03)
         self.key_mgr.direct_release(self.keymap["teleport"])
