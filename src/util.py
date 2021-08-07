@@ -22,10 +22,10 @@ def _winmm_command(*command):
     errorCode = int(windll.winmm.mciSendStringA(command, buf, 254, 0))
     if errorCode:
         errorBuffer = c_buffer(255)
-        windll.winmm.mciGetErrorStringA(errorCode, errorBuffer, 254)
-        exceptionMessage = ('\n    Error ' + str(errorCode) + ' for command:'
+        windll.winmm.mciGetErrorStringW(errorCode, errorBuffer, 254)
+        exceptionMessage = ('Error ' + str(errorCode) + ' for command:'
                                                               '\n        ' + command.decode() +
-                            '\n    ' + errorBuffer.value.decode())
+                            '\n    ' + errorBuffer.value.decode('utf-16'))
         raise Exception(exceptionMessage)
     return buf.value
 
@@ -161,6 +161,6 @@ def random_number(gen_range=0.1, digits=2, minus=False):
     :return: random number float
     """
     d = round(random.uniform(0, gen_range), digits)
-    if minus:
-        d *= random.choice((1, -1))
+    if minus and random.random() < 0.5:
+        d *= -1
     return d

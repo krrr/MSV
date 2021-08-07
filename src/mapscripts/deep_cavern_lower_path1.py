@@ -101,7 +101,7 @@ class Dclp1MacroController(MacroController):
         self.update()
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
-            self.alert_sound()
+            self.alert_sound(2)
 
         self.navigate_to_platform('600f8ed9')  # ensure at center bottom
 

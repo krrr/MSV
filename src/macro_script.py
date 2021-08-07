@@ -12,7 +12,7 @@ import multiprocessing as mp
 from screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from player_controller import PlayerController
 from rune_solver.rune_solver_simple import RuneSolverSimple
-from util import get_config, get_file_log_handler, play_sound, QueueLoggerHandler
+from util import get_config, get_file_log_handler, play_sound, QueueLoggerHandler, random_number
 
 
 def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
@@ -270,7 +270,7 @@ class MacroController:
             if self.other_player_detected_start is None:
                 self.logger.info('other player detected')
                 self.other_player_detected_start = time.time()
-            self.alert_sound()
+            self.alert_sound(2)
         else:
             self.other_player_detected_start = None
 
@@ -280,7 +280,7 @@ class MacroController:
                 self.logger.info('elite boss detected')
             self.elite_boss_detected = True
             if other_pos:
-                if time.time() - self.other_player_detected_start >= 10:
+                if time.time() - self.other_player_detected_start >= 5:
                     self.save_current_screen('eboss_people')
                     self.exit_to_ch_select()
                     self.abort('eboss present and other player staying')
@@ -616,24 +616,24 @@ class MacroController:
         if raise_:
             raise Aborted
 
-    def alert_sound(self, times=3):
-        if 0 <= time.time() - self.last_alert_sound <= self.ALERT_SOUND_CD:
+    def alert_sound(self, times):
+        print(time.time() - self.last_alert_sound)
+        if time.time() - self.last_alert_sound <= self.ALERT_SOUND_CD:
             return
 
         def func():
             for _ in range(times):
                 play_sound('beep')
-                time.sleep(0.5)
+                time.sleep(0.3)
 
-        thread = threading.Thread(target=func)
-        thread.setDaemon(True)
+        thread = threading.Thread(target=func, daemon=True)
         thread.start()
-        self.last_alert_sound = time.time() + 0.5 * times + 2.5
+        self.last_alert_sound = time.time() + 0.3 * times
 
     def exit_to_ch_select(self):
         for k in (dc.DIK_ESCAPE, dc.DIK_UP, dc.DIK_RETURN, dc.DIK_RETURN):
             self.keyhandler.single_press(k)
-            time.sleep(0.2)
+            time.sleep(0.2 + random_number(0.04, minus=True))
 
     def save_current_screen(self, prefix):
         img = self.screen_capturer.capture_pil()

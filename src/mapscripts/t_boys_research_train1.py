@@ -59,7 +59,7 @@ class TBoyResearchTrain1(MacroController):
         self.update()
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
-            self.alert_sound()
+            self.alert_sound(2)
 
         self.navigate_to_platform('1b6295e0')  # ensure at bottom
 

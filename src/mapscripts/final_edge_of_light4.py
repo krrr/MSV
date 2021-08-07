@@ -66,7 +66,7 @@ class Fel4MacroController(MacroController):
 
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
-            self.alert_sound()
+            self.alert_sound(2)
 
         self.update()
         self.navigate_to_platform('2531794a')  # top right
