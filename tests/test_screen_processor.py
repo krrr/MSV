@@ -1,6 +1,7 @@
 from unittest import TestCase
 from src.screen_processor import StaticImageProcessor, ScreenProcessor
 from PIL import Image
+import time
 
 
 class MockScreenProcessor(ScreenProcessor):
@@ -50,14 +51,20 @@ class TestScreenProcessor(TestCase):
         self.processor.update_image(Image.open('unittest_data/white_room.png'))
         self.assertTrue(self.processor.check_white_room())
         self.processor.update_image(Image.open('unittest_data/white_room1.png'))
+        t = time.perf_counter()
         self.assertTrue(self.processor.check_white_room())
+        print('check_white_room took %.3fs' % (time.perf_counter() - t,))
 
     def test_check_dialog(self):
+        t = time.perf_counter()
         self.processor.update_image(Image.open('unittest_data/bounty_hunter_dialog.png'))
+        print('test_check_dialog took %.3fs' % (time.perf_counter() - t,))
         self.assertTrue(self.processor.check_dialog())
 
-    def test_exp_full(self):
-        self.processor.update_image(Image.open('unittest_data/exp_full.png'))
-        self.assertTrue(self.processor.check_exp_full())
-        self.processor.update_image(Image.open('unittest_data/bounty_hunter_dialog.png'))
-        self.assertFalse(self.processor.check_exp_full())
+    def test_check_gm_cap(self):
+        self.processor.update_image(Image.open('unittest_data/white_room1.png'))
+        self.assertTrue(self.processor.check_gm_cap())
+        self.processor.update_image(Image.open('unittest_data/white_room2.png'))
+        t = time.perf_counter()
+        self.assertTrue(self.processor.check_gm_cap())
+        print('check_gm_cap took %.3fs' % (time.perf_counter() - t,))

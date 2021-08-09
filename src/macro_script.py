@@ -231,6 +231,7 @@ class MacroController:
             -1: problem in image processing
             -2: problem in navigation/pathing
             -3: white room detected
+            -4: GM detected
         """
         self.check_cmd_queue()
 
@@ -263,6 +264,13 @@ class MacroController:
         else:
             self.player_pos_not_found_start = None
         self.player_manager.update(player_pos[0], player_pos[1])
+
+        ### GM check
+        if self.screen_processor.check_gm_cap():
+            play_sound('white_room')
+            self.logger.info('GM detected')
+            self.save_current_screen('gm')
+            return -4
 
         ### Other player check
         other_pos = self.screen_processor.find_other_player_marker()

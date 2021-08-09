@@ -6,6 +6,12 @@ import sys
 from PIL import Image, ImageGrab
 
 
+def read_alpha_as_mask(filename):
+    image_4channel = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+    alpha_channel = image_4channel[:,:,3]
+    return alpha_channel
+
+
 class GameCaptureError(Exception):
     pass
 
@@ -114,9 +120,13 @@ class StaticImageProcessor:
         self.minimap_area = 0
         self.minimap_rect = None
 
-        self.eboss_min_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/eboss_minute_tpl.png', cv2.IMREAD_GRAYSCALE)
-        self.eboss_sec_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/eboss_second_tpl.png', cv2.IMREAD_GRAYSCALE)
-        self.dialog_end_btn_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/dialog_end_chat_button.png', cv2.IMREAD_GRAYSCALE)
+        self.cv_templates = {}
+        for i in ('gm_cap', 'dialog_end_chat', 'eboss_minute', 'eboss_second'):
+            self.cv_templates[i] = cv2.imread(os.path.dirname(__file__) + '/resources/' + i + '_tpl.png', cv2.IMREAD_GRAYSCALE)
+        self.gm_cap_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/gm_cap.png', cv2.IMREAD_GRAYSCALE)
+        self.cv_templates['gm_cap_r'] = np.fliplr(self.cv_templates['gm_cap'])
+        self.cv_templates['gm_cap_mask'] = read_alpha_as_mask(os.path.dirname(__file__) + '/resources/gm_cap_tpl.png')
+        self.cv_templates['gm_cap_r_mask'] = np.fliplr(self.cv_templates['gm_cap_mask'])
 
         self.maximum_minimap_area = 40000
 
@@ -139,7 +149,7 @@ class StaticImageProcessor:
         :param src : rgb image data from PIL ImageGrab
         :param set_focus : True if win32api setfocus shall be called before capturing"""
         if src:
-            rgb_img = src
+            rgb_img = np.array(src)
         else:
             rgb_img = self.img_handle.capture(set_focus, self.hwnd)
 
@@ -318,12 +328,12 @@ class StaticImageProcessor:
         area_h //= 2
 
         cropped = self.gray_img[y:y+area_h, x:x+area_w]
-        match_res = cv2.matchTemplate(cropped, self.eboss_min_tpl, cv2.TM_SQDIFF_NORMED)
+        match_res = cv2.matchTemplate(cropped, self.cv_templates['eboss_minute'], cv2.TM_SQDIFF_NORMED)
         loc = np.where(match_res < 0.03)
         if len(loc[0]) != 1:
             return False
 
-        match_res = cv2.matchTemplate(cropped, self.eboss_sec_tpl, cv2.TM_SQDIFF_NORMED)
+        match_res = cv2.matchTemplate(cropped, self.cv_templates['eboss_second'], cv2.TM_SQDIFF_NORMED)
         loc = np.where(match_res < 0.03)
         return len(loc[0]) == 1
 
@@ -332,6 +342,15 @@ class StaticImageProcessor:
         area = self.bgr_img.shape[0] * self.bgr_img.shape[1]
         return ((self.bgr_img == (255, 255, 255)).all(axis=-1).sum() / area) > 0.4
 
+    def check_gm_cap(self):
+        """Check Game Master's white cap with letter 'W'"""
+        for i in ('gm_cap', 'gm_cap_r'):
+            match_res = cv2.matchTemplate(self.gray_img, self.cv_templates[i], cv2.TM_SQDIFF_NORMED, mask=self.cv_templates[i+'_mask'])
+            loc = np.where(match_res < 0.001)
+            if len(loc[0]) == 1:
+                return True
+        return False
+
     def check_dialog(self):
         """Match 'End Chat' button of dialog (at left bottom)"""
         h, w = self.gray_img.shape
@@ -339,7 +358,7 @@ class StaticImageProcessor:
         y = (h // 2) - (self.DIALOG_H // 2)
         cropped = self.gray_img[y+self.DIALOG_H-28:y+self.DIALOG_H, x:x+103]
 
-        match_res = cv2.matchTemplate(cropped, self.dialog_end_btn_tpl, cv2.TM_SQDIFF_NORMED)
+        match_res = cv2.matchTemplate(cropped, self.cv_templates['dialog_end_chat'], cv2.TM_SQDIFF_NORMED)
         loc = np.where(match_res < 0.015)
 
         return len(loc[0] == 1)
