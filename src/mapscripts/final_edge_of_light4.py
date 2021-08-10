@@ -40,10 +40,8 @@ class Fel4MacroController(MacroController):
 
         ### Other buffs
         self.buff_skills(yuki=False)
-        time.sleep(0.05)
 
         # Finished
-        self.loop_count += 1
         return 0
 
     def pickup_money(self):

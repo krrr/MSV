@@ -335,6 +335,7 @@ class MacroController:
 
                 retry_err_count = 0
                 self.loop()
+                self.loop_count += 1
             except (GameCaptureError, MiniMapError) as e:
                 if retry_err_count > self.ERROR_RETRY_LIMIT:
                     self.abort(str(e))

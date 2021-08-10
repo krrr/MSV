@@ -1,4 +1,3 @@
-import time
 from macro_script import MacroController
 
 
@@ -22,8 +21,6 @@ class FoxTreeLowerPath3(MacroController):
 
         ### Other buffs
         self.buff_skills(yuki=False)
-        time.sleep(0.05)
 
         # Finished
-        self.loop_count += 1
         return 0
