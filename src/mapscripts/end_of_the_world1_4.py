@@ -62,16 +62,14 @@ class EndOfTheWorld1_4(MacroController):
             time.sleep(0.1 + random_number(0.05, minus=True))
             self.player_manager.shikigami_haunting()
             if self.loop_count > 3 and not to_left:  # at right side now
-                time.sleep(0.5 + random_number(0.15, minus=True))
+                time.sleep(0.65 + random_number(0.15, minus=True))
         else:
             self.navigate_to_platform('5b53ae83')  # to bottom first
 
         ### Other buffs
         self.buff_skills(yuki=False)
-        time.sleep(0.05)
 
         # Finished
-        self.loop_count += 1
         return 0
 
     def pickup_money(self):
@@ -87,6 +85,9 @@ class EndOfTheWorld1_4(MacroController):
         self.player_manager.horizontal_move_goal(target_x)
         self.player_manager.stay(1 + random_number(0.1))
         self.update()
+        # Quick other player sound notify
+        if self.screen_processor.find_other_player_marker():
+            self.alert_sound(2)
         self.check_cmd_queue()
         self.navigate_to_platform('5b53ae83')
 
@@ -107,12 +108,15 @@ class EndOfTheWorld1_4(MacroController):
             self.player_manager.stay(0.5 + random_number(0.1))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 4)
         self.update()
+        # Quick other player sound notify
+        if self.screen_processor.find_other_player_marker():
+            self.alert_sound(2)
         self.check_cmd_queue()
         self.navigate_to_platform('6a51d25a')
 
         ### top right
-        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 16)
-        self.player_manager.stay(1.1 + random_number(0.1))
+        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].end_x - 4)
+        self.player_manager.stay(1 + random_number(0.1))
         if random.random() >= 0.5:
             self.player_manager.teleport_down()
         else:
