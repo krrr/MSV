@@ -17,8 +17,6 @@ _driver_handle = None
 
 
 def load_driver():
-    global _driver_handle
-
     sc_manager = win32service.OpenSCManager(None, None, win32service.SC_MANAGER_ALL_ACCESS)
     while True:
         try:
@@ -36,13 +34,14 @@ def load_driver():
 
     win32service.CloseServiceHandle(srv)
     win32service.CloseServiceHandle(sc_manager)
-    _driver_handle = get_driver_handle()
+    get_driver_handle()
 
 
 def get_driver_handle():
-    return win32file.CreateFile(r"\\.\msvdriver",
-                                win32con.GENERIC_WRITE | win32con.GENERIC_READ,
-                                0, None, win32file.OPEN_EXISTING, win32con.FILE_ATTRIBUTE_DEVICE, 0)
+    global _driver_handle
+    _driver_handle = win32file.CreateFile(r"\\.\msvdriver",
+                                          win32con.GENERIC_WRITE | win32con.GENERIC_READ,
+                                          0, None, win32file.OPEN_EXISTING, win32con.FILE_ATTRIBUTE_DEVICE, 0)
 
 
 def unload_driver(delete=False):

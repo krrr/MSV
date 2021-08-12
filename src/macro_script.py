@@ -9,6 +9,7 @@ import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import multiprocessing as mp
+import driver
 from screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from player_controller import PlayerController
 from rune_solver.rune_solver_simple import RuneSolverSimple
@@ -80,7 +81,12 @@ class MacroController:
 
         kernel_driver = config.get('kernel_driver', False)
         if kernel_driver:
-            self.logger.info('kernel driver enabled')
+            # need to get driver handle on this new process
+            try:
+                driver.get_driver_handle()
+            except Exception as e:
+                self.logger.error('failed to get kernel driver handle: ' + str(e))
+                kernel_driver = False
 
         self.auto_resolve_rune = config.get('auto_solve_rune', True)
         self.screen_capturer = ScreenProcessor()

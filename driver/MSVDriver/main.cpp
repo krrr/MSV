@@ -3,6 +3,7 @@
 #include "main.tmh"
 
 #include "DirectInput.h"
+#include "Protect.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -31,6 +32,7 @@ static PDEVICE_OBJECT s_Nothing = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 
+
 _Dispatch_type_(IRP_MJ_CREATE)
 _Dispatch_type_(IRP_MJ_CLOSE)
 static NTSTATUS DeviceCreateClose(
@@ -41,6 +43,7 @@ static NTSTATUS DeviceCreateClose(
 
     return IoCompleteRequest(aIrp, IO_NO_INCREMENT), STATUS_SUCCESS;
 }
+
 
 _Dispatch_type_(IRP_MJ_DEVICE_CONTROL)
 static NTSTATUS DeviceControl(
@@ -119,6 +122,7 @@ static NTSTATUS DeviceControl(
     return IoCompleteRequest(aIrp, IO_NO_INCREMENT), vStatus;
 }
 
+
 static void DriverUnload(PDRIVER_OBJECT aDriverObject) {
     constexpr UNICODE_STRING cSymName = RTL_CONSTANT_STRING(s_SymName);
     IoDeleteSymbolicLink(const_cast<PUNICODE_STRING>(&cSymName));
@@ -127,8 +131,11 @@ static void DriverUnload(PDRIVER_OBJECT aDriverObject) {
         IoDeleteDevice(s_Nothing), s_Nothing = nullptr;
     }
 
+    Protect::Finalize();
+
     WPP_CLEANUP(aDriverObject);
 }
+
 
 extern"C"
 NTSTATUS DriverEntry(PDRIVER_OBJECT  aDriverObject, PUNICODE_STRING aRegistryPath) {
@@ -139,6 +146,12 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT  aDriverObject, PUNICODE_STRING aRegistryPat
 
         vStatus = DirectInput::Initialize();
         if (!NT_SUCCESS(vStatus)) {
+            break;
+        }
+
+        vStatus = Protect::Initialize();  // init process protect
+        if (!NT_SUCCESS(vStatus)) {
+            DbgPrint("process protect init failed: %d\n", vStatus);
             break;
         }
 

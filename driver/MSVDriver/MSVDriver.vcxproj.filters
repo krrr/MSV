@@ -19,6 +19,9 @@
     <ClCompile Include="DirectInput.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="Protect.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -28,6 +31,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="DirectInput.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="Protect.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

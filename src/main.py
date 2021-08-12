@@ -15,6 +15,7 @@ from tkinter.scrolledtext import ScrolledText
 
 import mapscripts
 import util
+import driver
 from util import get_config, save_config, GlobalHotKeyListener, play_sound, copy_ev_queue
 from keybind_setup_window import KeyBindSetupWindow
 from terrain_editor import TerrainEditorWindow
@@ -139,6 +140,13 @@ class MainWindow(ttk.Frame):
             GlobalHotKeyListener.HotKey(1, 0, win32con.VK_F1, lambda: self.stop_macro() if self.macro_running else self.start_macro()),
             GlobalHotKeyListener.HotKey(2, 0, win32con.VK_F2, lambda: self.toggle_macro_process())
         ])
+
+        if get_config().get('kernel_driver'):
+            try:
+                driver.load_driver()
+                self.log('kernel driver loaded')
+            except Exception as e:
+                showerror(APP_TITLE, 'Driver failed to load: ' + str(e))
 
     def on_close(self):
         self.master.unbind('<<ev>>')
