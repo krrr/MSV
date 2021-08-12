@@ -5,6 +5,8 @@ from .rune_solver_base import RuneSolverBase
 
 
 class RuneSolverSimple(RuneSolverBase):
+    THRESHOLD = 0.2
+
     """
     Using OpenCV's static template matching to solve rune.
     v216 update changed rune's pattern: circle is removed, arrow have no transparency anymore,
@@ -29,12 +31,7 @@ class RuneSolverSimple(RuneSolverBase):
     def do_match(self, img, template, threshold):
         # make mask
         __, mask = cv2.threshold(cv2.cvtColor(template, cv2.COLOR_BGR2GRAY), 1, 255, cv2.THRESH_BINARY)
-
-        res = None
-        for ch in range(3):  # b, g, r
-            match_res = cv2.matchTemplate(img[..., ch], template[..., ch], cv2.TM_SQDIFF_NORMED, mask=mask)
-            res = match_res if res is None else res * match_res
-
+        res = cv2.matchTemplate(img, template, cv2.TM_SQDIFF_NORMED, mask=mask)
         return np.where(res <= threshold)  # matched locations
 
     def solve(self):
@@ -59,8 +56,8 @@ class RuneSolverSimple(RuneSolverBase):
         template = self.templates[direction]
         template_sm = self.templates_small[direction]
 
-        loc = self.do_match(img, template, 0.05)
-        loc_sm = self.do_match(img, template_sm, 0.01)
+        loc = self.do_match(img, template, self.THRESHOLD)
+        loc_sm = self.do_match(img, template_sm, self.THRESHOLD)
         loc = (np.concatenate((loc[0], loc_sm[0])), np.concatenate((loc[1], loc_sm[1])))
 
         ret = []
