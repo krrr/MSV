@@ -385,7 +385,7 @@ class PlayerController:
     def _use_set_skill(self, skill_name):
         for i in range(2):
             self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
-                                      additional_duration=0 if i == 1 else 0.2 + random_number(0.04))
+                                      additional_duration=0 if i == 1 else 0.36 + random_number(0.04))
         self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.SET_SKILL_COMMON_DELAY + random_number(0.1))

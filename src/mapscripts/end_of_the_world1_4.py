@@ -58,11 +58,11 @@ class EndOfTheWorld1_4(MacroController):
             time.sleep(0.1 + random_number(0.05, minus=True))
             self.player_manager.teleport_left() if to_left else self.player_manager.teleport_right()
             self.update()
-            self.player_manager.horizontal_move_goal(self.LEFT_X+2 if to_left else self.RIGHT_X-9)
+            self.player_manager.horizontal_move_goal(self.LEFT_X+1 if to_left else self.RIGHT_X-9)
             time.sleep(0.1 + random_number(0.05, minus=True))
             self.player_manager.shikigami_haunting()
             if self.loop_count > 3 and not to_left:  # at right side now
-                time.sleep(0.65 + random_number(0.15, minus=True))
+                time.sleep(0.6 + random_number(0.15, minus=True))
         else:
             self.navigate_to_platform('5b53ae83')  # to bottom first
 
@@ -76,13 +76,13 @@ class EndOfTheWorld1_4(MacroController):
         self.logger.info('pick up money')
         self.navigate_to_platform('c214856a')  # above the platform
         ### above the platform
+        p = self.terrain_analyzer.platforms['c214856a']
+        center = (p.start_x + p.end_x) // 2
+        if self.player_manager.x - p.start_x <= 4 or p.end_x - self.player_manager.x <= 4:  # too close to edge
+            self.logger.info('%s %s %s', center, self.player_manager.x, p.end_x)
+            self.player_manager.horizontal_move_goal(p.start_x + 5 if self.player_manager.x < center else p.end_x - 5)
         self.player_manager.stay(1 + random_number(0.1))
-        target_x = self.terrain_analyzer.platforms['c214856a'].start_x + 16
-        if self.player_manager.x < self.CENTER_X:
-            target_x += 8
-        else:
-            target_x -= 8
-        self.player_manager.horizontal_move_goal(target_x)
+        self.player_manager.horizontal_move_goal(p.end_x - 6 if self.player_manager.x < center else p.start_x + 6)
         self.player_manager.stay(1 + random_number(0.1))
         self.update()
         # Quick other player sound notify
@@ -96,6 +96,7 @@ class EndOfTheWorld1_4(MacroController):
         ### bottom
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['5b53ae83'].start_x + 4)
         self.player_manager.stay(0.4 + random_number(0.1))
+        self.check_cmd_queue()
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['5b53ae83'].end_x - 1)
         self.player_manager.stay(1 + random_number(0.1))
         self.navigate_to_platform('b70e34c7')  # center right
