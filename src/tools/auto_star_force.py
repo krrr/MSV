@@ -70,7 +70,7 @@ class AutoStarForce:
         self.current_star_regexp = re.compile('(\\d+)\\s?Star\\s?>\\s?\\d+\\s?Star')
         self.cmd_queue = cmd_queue
         self.screen_processor = screen_processor
-        self.screen_processor.hwnd = self.screen_processor.ms_get_screen_hwnd()
+        self.screen_processor.get_game_hwnd()
         self.input_mgr = InputManager()
         self.img = None
         self.ms_rect = None
@@ -189,7 +189,7 @@ class AutoStarForce:
 
             self.screen_processor.set_foreground()
 
-        self.img = self.screen_processor.capture_pil(set_focus=False, rect=self.rect)
+        self.img = self.screen_processor.capture_pil(rect=self.rect)
 
     def get_enhance_options(self):
         star_catch_pixel = self.img.getpixel(self.STAR_CATCH_OPTION_POINT)[:3]

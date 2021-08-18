@@ -7,7 +7,7 @@ from win32gui import SetForegroundWindow
 
 wcap = ScreenProcessor()
 scrp = StaticImageProcessor(wcap)
-hwnd = wcap.ms_get_screen_hwnd()
+hwnd = wcap.get_game_hwnd()
 kbd_mgr = InputManager()
 player_con = PlayerController(kbd_mgr, scrp)
 

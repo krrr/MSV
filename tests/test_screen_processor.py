@@ -5,7 +5,7 @@ import time
 
 
 class MockScreenProcessor(ScreenProcessor):
-    def ms_get_screen_hwnd(self):
+    def get_game_hwnd(self):
         return 1
 
     def ms_get_screen_rect(self, _=None):

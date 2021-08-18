@@ -5,7 +5,6 @@ import player_controller as pc
 import input_manager as km
 import terrain_analyzer
 import threading
-import mapscripts
 from terrain_analyzer import MoveMethod
 import directinput_constants as dc
 import multiprocessing as mp
@@ -17,6 +16,8 @@ from util import get_config, get_file_log_handler, play_sound, QueueLoggerHandle
 
 
 def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
+    import mapscripts
+
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(get_file_log_handler())
@@ -246,7 +247,7 @@ class MacroController:
         self.log_skill_usage_statistics()
 
         # Check if MapleStory window is alive
-        if not self.screen_capturer.ms_get_screen_hwnd():
+        if not self.screen_capturer.get_game_hwnd():
             self.abort('failed to get MS screen rect')
 
         # Update Screen

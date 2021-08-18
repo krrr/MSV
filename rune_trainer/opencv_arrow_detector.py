@@ -12,8 +12,7 @@ from win32gui import SetForegroundWindow
 x, y, w, h = 450, 180, 500, 130
 ds = None
 while True:
-    img = cap.capture(rect=[0,0,1600,900], set_focus=False)
-    img_arr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img = cap.capture()
     final_img = imutils.resize(img_arr, width = 200)
     cv2.imshow("s to save image", final_img)
     inp = cv2.waitKey(1)
@@ -21,10 +20,9 @@ while True:
 
 
     if inp == ord("s"):
-        SetForegroundWindow(cap.ms_get_screen_hwnd())
+        SetForegroundWindow(cap.get_game_hwnd())
         time.sleep(0.3)
-        ds = cap.capture(set_focus=False)
-        ds = cv2.cvtColor(ds, cv2.COLOR_RGB2BGR)
+        ds = cap.capture()
         ds = ds[y:y + h, x:x + w]
         print("saved")
 

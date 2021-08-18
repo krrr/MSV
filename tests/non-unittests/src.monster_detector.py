@@ -12,8 +12,8 @@ playerdetector.create_template("medal1.png")
 capture_width = 700
 capture_height = 200
 while True:
-    img = wincap.capture(set_focus=False)
-    grayscale = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    img = wincap.capture()
+    grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     playerloc = playerdetector.find(grayscale)
     detected = []

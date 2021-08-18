@@ -196,23 +196,20 @@ class MainWindow(ttk.Frame):
             return
 
         cap = ScreenProcessor()
-        cap.hwnd = cap.ms_get_screen_hwnd()
-        if not cap.hwnd:
+        if not cap.get_game_hwnd():
             showerror(APP_TITLE, "MapleStory window not found")
             return
 
-        rect = cap.ms_get_screen_rect(cap.hwnd)
+        rect = cap.ms_get_screen_rect()
         if get_config().get('debug'):
-            self.log("MS hwnd", cap.hwnd)
-            self.log("MS rect", rect)
-            self.log("Out Queue put:", self.platform_file_path.get())
+            self.log("Game Window Rect:", rect)
         if rect is None:
             showerror(APP_TITLE, "Failed to get Maple Window location.\nMove MapleStory window so "
                                  "that the top left corner of the window is within the screen.")
             return
 
         play_sound('beep_up')
-        cap.capture()
+        cap.set_foreground()
         self.macro_process_in_q.put(("start", keymap, self.platform_file_path.get(), self._get_preset()))
         self._set_macro_status(True)
 

@@ -11,9 +11,6 @@ class TestScreenProcessor(TestCase):
     def test_tboy_train1(self):
         self._load("../src/mapscripts/t_boys_research_train1.platform")
 
-    def test_vc3(self):
-        self._load("../src/mapscripts/void_current3.platform")
-
     def test_dclp1(self):
         self._load("../src/mapscripts/deep_cavern_lower_path1.platform")
 

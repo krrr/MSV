@@ -112,8 +112,8 @@ if __name__ == "__main__":
 
         solver = RuneSolverCnn("../arrow_classifier_keras_gray.h5", label)
         print("Log start")
-        print("screen handle: " + str(solver.screen_processor.ms_get_screen_hwnd()))
-        print("screen rect: " + str(solver.screen_processor.ms_get_screen_rect(solver.screen_processor.ms_get_screen_hwnd())))
+        print("screen handle: " + str(solver.screen_processor.get_game_hwnd()))
+        print("screen rect: " + str(solver.screen_processor.ms_get_screen_rect()))
         # solver.scrp.screen_capture(800,600, save=True, save_name="dta.png")
         print("Start processing input...")
         while True:

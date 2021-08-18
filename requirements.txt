@@ -2,5 +2,4 @@ numpy
 opencv-python
 Pillow
 pywin32
-d3dshot
 pyocr

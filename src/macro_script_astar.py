@@ -24,7 +24,7 @@ class MacroControllerAStar(macro_script.MacroController):
             self.logger.debug("skills casted in duration %d: %d skill/s: %f skill/s"%(int(time.time() - self.player_manager.skill_counter_time), self.player_manager.skill_cast_counter, self.player_manager.skill_cast_counter/int(time.time() - self.player_manager.skill_counter_time)))
             self.player_manager.skill_cast_counter = 0
             self.player_manager.skill_counter_time = time.time()
-        if not self.screen_capturer.ms_get_screen_hwnd():
+        if not self.screen_capturer.get_game_hwnd():
             self.abort("failed to get MS screen rect")
 
         # Update Screen

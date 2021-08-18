@@ -1,9 +1,85 @@
 import cv2, win32gui, time, math
 import os
-import d3dshot
 import numpy as np, ctypes, ctypes.wintypes
-import sys
-from PIL import Image, ImageGrab
+from PIL import Image
+import winapi
+
+
+_bmp_info_header = None
+_rect = None
+
+
+def is_window_scaled(hwnd):
+    if hasattr(winapi, 'GetAwarenessFromDpiAwarenessContext'):  # win10 1607+
+        return winapi.GetAwarenessFromDpiAwarenessContext(winapi.GetWindowDpiAwarenessContext(hwnd)) == winapi.DPI_AWARENESS_UNAWARE
+    else:
+        return False
+
+
+def gdi_capture(hwnd, force_scaled=None):
+    """
+    Use Windows GDI API to capture singe window.
+    :return: BGR numpy array
+    """
+    global _rect, _bmp_info_header
+    if not hwnd:
+        raise ValueError('invalid hwnd')
+
+    game_hdc = winapi.GetDC(hwnd)  # client area only, not GetWindowDC
+    if not game_hdc:
+        raise GameCaptureError("can't get DC of game window")
+
+    # get window client size
+    if _rect is None:
+        _rect = ctypes.wintypes.RECT()
+    if not winapi.GetClientRect(hwnd, ctypes.byref(_rect)):
+        raise GameCaptureError("can't get rect of game window")
+    width = _rect.right - _rect.left
+    height = _rect.bottom - _rect.top
+    # fix window size if scaled
+    is_scaled = is_window_scaled(hwnd) if force_scaled is None else force_scaled
+    if is_scaled:
+        screen_dpi = winapi.GetDeviceCaps(game_hdc, winapi.LOGPIXELSX)
+        if screen_dpi != 96:
+            width = round(width * 96 / screen_dpi)
+            height = round(height * 96 / screen_dpi)
+
+    if _bmp_info_header is None:
+        _bmp_info_header = winapi.BITMAPINFOHEADER()
+        _bmp_info_header.biSize = 40  # ctypes.sizeof(hdr)
+        _bmp_info_header.biPlanes = 1
+        _bmp_info_header.biBitCount = 32
+        _bmp_info_header.biCompression = winapi.BI_RGB
+        _bmp_info_header.biClrUsed = 0
+        _bmp_info_header.biYPelsPerMeter = 0
+        _bmp_info_header.biClrImportant = 0
+    _bmp_info_header.biWidth = width
+    _bmp_info_header.biHeight = -height
+    _bmp_info_header.biSizeImage = width * height * 4
+
+    hbitmap = cdc = None
+    try:
+        bitmap_ptr = ctypes.c_void_p()
+        hbitmap = winapi.CreateDIBSection(game_hdc, ctypes.byref(_bmp_info_header), winapi.DIB_RGB_COLORS, ctypes.byref(bitmap_ptr), None, 0)
+        if not hbitmap:
+            raise GameCaptureError('CreateDIBSection error')
+        cdc = winapi.CreateCompatibleDC(game_hdc)
+        if not cdc or not winapi.SelectObject(cdc, hbitmap):  # selects bitmap into cdc
+            raise GameCaptureError()
+        if not winapi.BitBlt(cdc, 0, 0, width, height, game_hdc, 0, 0, winapi.SRCCOPY):  # copy game_dc to cdc
+            raise GameCaptureError('BitBlt error')
+        bitmap_ptr = ctypes.cast(bitmap_ptr, ctypes.POINTER(ctypes.c_uint8))
+        # highest byte of DWORD is not used... but can't set biBitCount to 24 instead of 32, because of stride
+        # (https://stackoverflow.com/a/3688558/3737373)
+        arr = np.ctypeslib.as_array(bitmap_ptr, (height, width, 4))
+        return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+    finally:
+        if cdc:
+            winapi.DeleteDC(cdc)
+        if game_hdc:
+            winapi.ReleaseDC(0, game_hdc)
+        if hbitmap:
+            winapi.DeleteObject(hbitmap)
 
 
 def read_alpha_as_mask(filename):
@@ -25,35 +101,36 @@ class MiniMapError(Exception):
 
 
 class ScreenProcessor:
-    d3dshot = None
-
-    """Container for capturing MS screen"""
+    """
+    Container for capturing MS screen
+    Capture methods speed comparison @ 4K resolution:
+     - GDI all screen to PIL.Image (PIL ImageGrab): 15FPS
+     - D3DShot to numpy array: 91FPS
+     - GDI single window to numpy array: 310FPS  (will double if D3DShot initialized)
+    """
     def __init__(self):
         self.hwnd = None
-        if not ctypes.windll.user32.IsProcessDPIAware():
-            ctypes.windll.user32.SetProcessDPIAware()
+        self.is_window_scaled = None
+        if not winapi.IsProcessDPIAware():
+            winapi.SetProcessDPIAware()
 
-        if sys.getwindowsversion().major == 10 and ScreenProcessor.d3dshot is None:
-            ScreenProcessor.d3dshot = d3dshot.create('numpy')
+    def get_game_hwnd(self):
+        self.hwnd = win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
+        self.is_window_scaled = is_window_scaled(self.hwnd) if self.hwnd else None
+        return self.hwnd
 
-    def ms_get_screen_hwnd(self):
-        return win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
-
-    def ms_get_screen_rect(self, hwnd=None):
+    def ms_get_screen_rect(self):
         """
         Get client rect of game window
-        :param hwnd: window handle from self.ms_get_screen_hwnd
         :return: window rect (x1, y1, x2, y2) of MS rect.
         """
-        hwnd = self.hwnd if hwnd is None else hwnd
-
         try:
-            rect = win32gui.GetClientRect(hwnd)
+            rect = win32gui.GetClientRect(self.hwnd)
         except Exception:
             return None
         if rect[2] == 0:  # (0, 0, width, height)
             return None
-        pos = win32gui.ClientToScreen(hwnd, (0, 0))
+        pos = win32gui.ClientToScreen(self.hwnd, (0, 0))
 
         return pos[0], pos[1], pos[0]+rect[2], pos[1]+rect[3]  # returns x1, y1, x2, y2
 
@@ -73,31 +150,24 @@ class ScreenProcessor:
             return False
         return True
 
-    def capture(self, set_focus=True, hwnd=None, rect=None):
-        """Returns MapleStory window screenshot (not np.array!)
-        :param set_focus : True if MapleStory window is to be focusesd before capture, False if not
-        :param hwnd : Default: None Win32API screen handle to use. If None, sets and uses self.hwnd
-        :param rect : If defined, captures specified ScreenRect area (x1, y1, x2, y2). Else, uses MS window rect.
-        :return : returns PIL Image"""
+    def capture(self, hwnd=None, rect=None):
+        """Capture game window content
+        :param hwnd : Default: None win32 window handle. If None, sets and uses self.hwnd
+        :return : numpy BGR Image"""
         if hwnd:
             self.hwnd = hwnd
         if not self.hwnd:
-            self.hwnd = self.ms_get_screen_hwnd()
-        if not rect:
-            rect = self.ms_get_screen_rect(self.hwnd)
-            if rect is None:  # window not visible etc.
-                return None
-        if set_focus and win32gui.GetForegroundWindow() != self.hwnd:
-            self.set_foreground()
+            self.hwnd = self.get_game_hwnd()
 
-        if self.d3dshot is None:
-            return np.array(ImageGrab.grab(rect))  # double conversion, slow
-        else:
-            return self.d3dshot.screenshot(rect)
+        ret = gdi_capture(self.hwnd, self.is_window_scaled)
+        if rect:  # need optimization
+            ret = ret[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
 
-    def capture_pil(self, set_focus=True, hwnd=None, rect=None):
-        img = self.capture(set_focus, hwnd, rect)
-        return None if img is None else Image.fromarray(img)
+        return ret
+
+    def capture_pil(self, rect=None):
+        img = self.capture(rect=rect)
+        return None if img is None else Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
 
 class StaticImageProcessor:
@@ -115,7 +185,7 @@ class StaticImageProcessor:
 
         self.img_handle = img_handle
         self.bgr_img = None
-        self.gray_img = None
+        self._gray_img = None
         self.processed_img = None
         self.minimap_area = 0
         self.minimap_rect = None
@@ -138,26 +208,38 @@ class StaticImageProcessor:
         self.lower_rune_marker = np.array([254, 101, 220])  # B G R
         self.upper_rune_marker = np.array([255, 103, 222])
 
-        self.hwnd = self.img_handle.ms_get_screen_hwnd()
-
-        if not self.hwnd:
+        self.img_handle.get_game_hwnd()
+        if not self.img_handle.hwnd:
             raise MapleWindowNotFoundError
+
+    @property
+    def gray_img(self):
+        if self._gray_img is not None:
+            return self._gray_img
+        elif self.bgr_img is not None:
+            self._gray_img = cv2.cvtColor(self.bgr_img, cv2.COLOR_BGR2GRAY)
+            return self._gray_img
+        else:
+            return None
 
     def update_image(self, src=None, set_focus=True):
         """
         Calls ScreenCapturer's update function and updates images.
         :param src : rgb image data from PIL ImageGrab
         :param set_focus : True if win32api setfocus shall be called before capturing"""
-        if src:
-            rgb_img = np.array(src)
-        else:
-            rgb_img = self.img_handle.capture(set_focus, self.hwnd)
+        if set_focus and not self.img_handle.is_foreground():
+            self.img_handle.set_foreground()
 
-        if rgb_img is None:
+        if src:
+            bgr_img = cv2.cvtColor(np.array(src), cv2.COLOR_RGB2BGR)
+        else:
+            bgr_img = self.img_handle.capture()
+
+        if bgr_img is None:
             raise GameCaptureError('failed to capture game window')
 
-        self.bgr_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2BGR)
-        self.gray_img = cv2.cvtColor(self.bgr_img, cv2.COLOR_BGR2GRAY)
+        self.bgr_img = bgr_img
+        self._gray_img = None
 
     def get_minimap_rect(self):
         """
@@ -366,10 +448,10 @@ class StaticImageProcessor:
 
 if __name__ == "__main__":
     dx = ScreenProcessor()
-    hwnd = dx.ms_get_screen_hwnd()
-    rect = dx.ms_get_screen_rect(hwnd)
+    dx.get_game_hwnd()
+    rect = dx.ms_get_screen_rect()
     print('ms rect:', rect)
-    image = dx.capture_pil(rect=rect)
+    image = dx.capture_pil()
     # image.show()
     processor = StaticImageProcessor(dx)
     processor.update_image()

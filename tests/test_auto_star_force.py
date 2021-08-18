@@ -8,13 +8,13 @@ import time
 class MockScreenProcessor(ScreenProcessor):
     img = None
 
-    def ms_get_screen_hwnd(self):
+    def get_game_hwnd(self):
         return 1
 
     def ms_get_screen_rect(self, hwnd=None):
         return (0, 0, 1366, 768)
 
-    def capture(self, set_focus=True, hwnd=None, rect=None):
+    def capture_pil(self, hwnd=None, rect=None):
         return self.img.crop(rect) if rect else self.img
 
 

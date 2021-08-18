@@ -31,7 +31,7 @@ class TerrainEditorWindow(tk.Toplevel):
         self.other_attrs = {}
 
         self.screen_capturer = ScreenProcessor()
-        if not self.screen_capturer.ms_get_screen_hwnd():
+        if not self.screen_capturer.get_game_hwnd():
             showerror('Error', 'The MapleStory window was not found.')
             self.destroy()
             return
