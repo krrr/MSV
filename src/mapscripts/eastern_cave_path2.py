@@ -61,6 +61,7 @@ class EasternCavePath2(MacroController):
             time.sleep(0.05)
             self.update()
             if self.current_platform_hash != platform or abs(self.player_manager.x - x) > 6:
+                self.player_manager.last_teleport_time = time.time()  # use portal will cause teleport enter cd
                 break
             self.player_manager.horizontal_move_goal(x, precise=True)
 
