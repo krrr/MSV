@@ -10,7 +10,7 @@ class RuneSolverSimple(RuneSolverBase):
     """
     Using OpenCV's static template matching to solve rune.
     v216 update changed rune's pattern: circle is removed, arrow have no transparency anymore,
-    arrow's color is fixed (!!may change soon!!).
+    arrow's color is fixed.
     """
     def __init__(self, screen_capturer=None, key_mgr=None):
         super().__init__(screen_capturer, key_mgr)
@@ -46,11 +46,11 @@ class RuneSolverSimple(RuneSolverBase):
                 result.append({'dir': dir, 'pos': i})
 
         if len(result) != 4:
-            self.logger.warn('wrong rune result: ' + str(result))
+            self.logger.warning('wrong rune result: ' + str(result))
             return None
 
         result.sort(key=lambda i: i['pos'][0])
-        return [i['dir'] for i in result]
+        return tuple(i['dir'] for i in result)
 
     def match_one_direction(self, img, direction):
         template = self.templates[direction]
