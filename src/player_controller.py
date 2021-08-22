@@ -125,12 +125,12 @@ class PlayerController:
                 self.horizontal_move_goal(goal_x)
             else:
                 last_teleport_x = self.x
-                time.sleep(0.03)  # can teleport immediately after 3rd hit of shikigami haunting
+                # can teleport immediately after 3rd hit of shikigami haunting
                 if loc_delta > 0:
                     self.teleport_left()
                 else:
                     self.teleport_right()
-                time.sleep(0.09)  # not affected by latency anymore, can be very tight
+                time.sleep(0.12)  # not affected by latency anymore, can be very tight
 
             self.update()
             if time.time() - start_time > time_limit:
@@ -270,7 +270,7 @@ class PlayerController:
     def wait_teleport_cd(self):
         elapsed = time.time() - self.last_teleport_time
         if elapsed < self.TELEPORT_CD:
-            self.stay(self.TELEPORT_CD - elapsed, self.x)
+            self.stay(self.TELEPORT_CD - elapsed)
 
     def shikigami_charm(self):
         self.key_mgr.single_press(self.keymap["shikigami_charm"])
