@@ -313,16 +313,16 @@ class PlayerController:
         """Wait until dropped to ground"""
         y = self.y
         eq_count = 0
-        dropping = False
+        dropping = not wait_jump
         jumped = not wait_jump
-        for _ in range(100):
-            time.sleep(0.06)
+        for _ in range(250):
+            time.sleep(0.02)
             self.update()
             if self.y == y:
                 if not jumped or not dropping:
                     continue
                 eq_count += 1
-                if eq_count == 3:
+                if eq_count == 5:
                     break
             elif self.y > y:
                 dropping = True
