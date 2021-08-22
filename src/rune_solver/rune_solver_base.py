@@ -3,7 +3,7 @@
 import logging
 import random
 from screen_processor import ScreenProcessor
-import cv2, time
+import time
 from input_manager import InputManager
 from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK
 from win32con import VK_NUMLOCK
@@ -21,9 +21,9 @@ class RuneSolverBase:
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(get_file_log_handler())
 
-        self.rune_roi_1366 = [450, 180, 500, 130]  # x, y, w, h
-        self.rune_roi_1024 = [295, 180, 500, 133]
-        self.rune_roi_800 = [170, 200, 440, 135]
+        self.rune_roi_1366 = (450, 165, 500, 110)  # x, y, w, h
+        self.rune_roi_1024 = (295, 165, 500, 110)
+        self.rune_roi_800 = (170, 200, 440, 120)
         self.rune_roi = self.rune_roi_800  # set as default rune roi
         self.screen_processor = ScreenProcessor() if not screen_capturer else screen_capturer
         self.key_mgr = InputManager() if not key_mgr else key_mgr

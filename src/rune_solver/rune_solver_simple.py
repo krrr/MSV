@@ -63,7 +63,7 @@ class RuneSolverSimple(RuneSolverBase):
         ret = []
 
         for pt in zip(*loc[::-1]):
-            if any(abs(i[0]-pt[0]) < 10 and abs(i[1]-pt[1]) < 10 for i in ret):
+            if any(abs(i[0]-pt[0]) < 12 and abs(i[1]-pt[1]) < 12 for i in ret):
                 continue
             ret.append(pt)
         return ret
