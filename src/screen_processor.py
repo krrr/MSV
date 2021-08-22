@@ -186,14 +186,12 @@ class StaticImageProcessor:
         self.img_handle = img_handle
         self.bgr_img = None
         self._gray_img = None
-        self.processed_img = None
         self.minimap_area = 0
         self.minimap_rect = None
 
         self.cv_templates = {}
         for i in ('gm_cap', 'dialog_end_chat', 'eboss_minute', 'eboss_second'):
             self.cv_templates[i] = cv2.imread(os.path.dirname(__file__) + '/resources/' + i + '_tpl.png', cv2.IMREAD_GRAYSCALE)
-        self.gm_cap_tpl = cv2.imread(os.path.dirname(__file__) + '/resources/gm_cap.png', cv2.IMREAD_GRAYSCALE)
         self.cv_templates['gm_cap_r'] = np.fliplr(self.cv_templates['gm_cap'])
         self.cv_templates['gm_cap_mask'] = read_alpha_as_mask(os.path.dirname(__file__) + '/resources/gm_cap_tpl.png')
         self.cv_templates['gm_cap_r_mask'] = np.fliplr(self.cv_templates['gm_cap_mask'])
@@ -444,6 +442,39 @@ class StaticImageProcessor:
         loc = np.where(match_res < 0.015)
 
         return len(loc[0] == 1)
+
+
+class MockScreenProcessor(ScreenProcessor):
+    """For unit test"""
+    def __init__(self):
+        super().__init__()
+        self.hwnd = 1
+        self.img = None
+
+    def get_game_hwnd(self):
+        return self.hwnd
+
+    def set_test_img(self, path):
+        self.img = cv2.imread(path)
+
+    def set_foreground(self):
+        pass
+
+    def ms_get_screen_rect(self, _=None):
+        return (0, 0, 500, 500)
+
+    def capture(self, hwnd=None, rect=None):
+        return self.img
+
+
+class MockStaticImageProcessor(StaticImageProcessor):
+    """For unit test"""
+    def __init__(self):
+        super().__init__(MockScreenProcessor())
+
+    def set_test_img(self, path):
+        self.img_handle.set_test_img(path)
+        self.update_image()
 
 
 if __name__ == "__main__":
