@@ -409,12 +409,12 @@ class StaticImageProcessor:
 
         cropped = self.gray_img[y:y+area_h, x:x+area_w]
         match_res = cv2.matchTemplate(cropped, self.cv_templates['eboss_minute'], cv2.TM_SQDIFF_NORMED)
-        loc = np.where(match_res < 0.03)
+        loc = np.where(match_res < 0.06)
         if len(loc[0]) != 1:
             return False
 
         match_res = cv2.matchTemplate(cropped, self.cv_templates['eboss_second'], cv2.TM_SQDIFF_NORMED)
-        loc = np.where(match_res < 0.03)
+        loc = np.where(match_res < 0.06)
         return len(loc[0]) == 1
 
     def check_white_room(self):
