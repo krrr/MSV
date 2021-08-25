@@ -1,7 +1,7 @@
-import src.macro_script, time
+import msv.macro_script, time
 # time.sleep(2)
 
-macro = src.macro_script.MacroController(rune_model_dir='../../src/arrow_classifier_keras_gray.h5')
+macro = msv.macro_script.MacroController()
 macro.terrain_analyzer.load("../unittest_data/mirror_touched_sea2.platform")
 macro.terrain_analyzer.generate_solution_dict()
 

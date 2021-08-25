@@ -1,8 +1,8 @@
 import cv2, imutils, os
-from src.screen_processor import ScreenProcessor
-from src.screen_processor import StaticImageProcessor
-from src.input_manager import InputManager
-import src.directinput_constants
+from msv.screen_processor import ScreenProcessor
+from msv.screen_processor import StaticImageProcessor
+from msv.input_manager import InputManager
+import msv.directinput_constants
 import numpy as np, time
 
 screencap = ScreenProcessor()
@@ -11,7 +11,7 @@ scrp.update_image()
 area = scrp.get_minimap_rect()
 key_mgr = InputManager()
 
-testkey = src.directinput_constants.DIK_A
+testkey = msv.directinput_constants.DIK_A
 
 while True:
     scrp.update_image(set_focus=False)
@@ -39,14 +39,14 @@ while True:
         time.sleep(2)
         key_mgr.single_press(testkey)
         s = time.time()
-        key_mgr.direct_press(src.directinput_constants.DIK_RIGHT)
+        key_mgr.direct_press(msv.directinput_constants.DIK_RIGHT)
         last_coords = playerpos
         while True:
             scrp.update_image()
             cpos = scrp.find_player_minimap_marker(area)
             if last_coords != cpos:
                 print(time.time() - s)
-                key_mgr.direct_release(src.directinput_constants.DIK_RIGHT)
+                key_mgr.direct_release(msv.directinput_constants.DIK_RIGHT)
                 break
             else:
                 print(last_coords, cpos)

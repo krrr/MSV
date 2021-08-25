@@ -1,6 +1,6 @@
 import cv2, imutils, os
-from src.screen_processor import ScreenProcessor
-from src.screen_processor import StaticImageProcessor
+from msv.screen_processor import ScreenProcessor
+from msv.screen_processor import StaticImageProcessor
 from matplotlib import pyplot as plt
 import numpy as np
 

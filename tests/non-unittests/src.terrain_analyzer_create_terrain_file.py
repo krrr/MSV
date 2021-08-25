@@ -1,5 +1,5 @@
-from src.screen_processor import StaticImageProcessor, ScreenProcessor
-from src.terrain_analyzer import PathAnalyzer
+from msv.screen_processor import StaticImageProcessor, ScreenProcessor
+from msv.terrain_analyzer import PathAnalyzer
 import cv2, imutils
 
 wincap = ScreenProcessor()

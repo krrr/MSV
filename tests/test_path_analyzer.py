@@ -1,5 +1,5 @@
 from unittest import TestCase
-from src.terrain_analyzer import PathAnalyzer
+from msv.terrain_analyzer import PathAnalyzer
 import random
 TEST_VALID_PLATFORM__DIR = r"unittest_data/test_valid_data.platform"
 TEST_CORRUPT_PLATFORM_DIR = r"unittest_data/test_corrupt_data.platform"

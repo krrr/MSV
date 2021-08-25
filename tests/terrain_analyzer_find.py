@@ -9,13 +9,13 @@ class TestScreenProcessor(TestCase):
         self.pathextractor = PathAnalyzer()
 
     def test_tboy_train1(self):
-        self._load("../src/mapscripts/t_boys_research_train1.platform")
+        self._load("../msv/mapscripts/t_boys_research_train1.platform")
 
     def test_dclp1(self):
-        self._load("../src/mapscripts/deep_cavern_lower_path1.platform")
+        self._load("../msv/mapscripts/deep_cavern_lower_path1.platform")
 
     def test_cup(self):
-        self._load("../src/mapscripts/cavern_upper_path.platform")
+        self._load("../msv/mapscripts/cavern_upper_path.platform")
 
         solution = self.pathextractor.pathfind('9769210f', '4768c4f7')
         # teleport between platforms with high y position diff

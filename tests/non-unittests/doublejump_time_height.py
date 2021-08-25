@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt, time
-from src.screen_processor import ScreenProcessor, StaticImageProcessor
-from src.directinput_constants import DIK_ALT, DIK_UP
-from src.input_manager import InputManager
+from msv.screen_processor import ScreenProcessor, StaticImageProcessor
+from msv.directinput_constants import DIK_LSHIFT, DIK_UP
+from msv.input_manager import InputManager
 
 cap = ScreenProcessor()
 scrp = StaticImageProcessor(cap)
@@ -17,7 +17,7 @@ while start_delay > 0:
     scrp.update_image(set_focus=False)
     current_y = scrp.find_player_minimap_marker(rect)[1]
     start_time = time.time()
-    inp.single_press(DIK_ALT)
+    inp.single_press(DIK_LSHIFT)
     time.sleep(start_delay)
     inp.single_press(DIK_UP)
     time.sleep(0.01)

@@ -1,8 +1,8 @@
-from src.player_controller import PlayerController
-from src.input_manager import InputManager
+from msv.player_controller import PlayerController
+from msv.input_manager import InputManager
 import time
-from src.screen_processor import ScreenProcessor
-from src.screen_processor import StaticImageProcessor
+from msv.screen_processor import ScreenProcessor
+from msv.screen_processor import StaticImageProcessor
 from win32gui import SetForegroundWindow
 
 wcap = ScreenProcessor()

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from src.screen_processor import MockStaticImageProcessor
+from msv.screen_processor import MockStaticImageProcessor
 import time
 
 

@@ -1,5 +1,5 @@
 from unittest import TestCase
-from src.macro_script import MacroController
+from msv.macro_script import MacroController
 
 
 class TestMacroController(TestCase):

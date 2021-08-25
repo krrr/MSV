@@ -1,7 +1,7 @@
-from src.screen_processor import ScreenProcessor
+from msv.screen_processor import ScreenProcessor
 import cv2, imutils, os
-from src.monster_detector import MonsterTemplateDetector
-from src.player_medal_detector import PlayerMedalDetector
+from msv.monster_detector import MonsterTemplateDetector
+from msv.player_medal_detector import PlayerMedalDetector
 import numpy as np
 os.chdir("../src")
 wincap = ScreenProcessor()

@@ -1,6 +1,6 @@
 import imutils, cv2, numpy as np, time
-from src.screen_processor import ScreenProcessor
-from src.screen_processor import StaticImageProcessor
+from msv.screen_processor import ScreenProcessor
+from msv.screen_processor import StaticImageProcessor
 
 
 screencap = ScreenProcessor()

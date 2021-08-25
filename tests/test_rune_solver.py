@@ -1,6 +1,6 @@
 from unittest import TestCase
-from src.screen_processor import MockScreenProcessor
-from src.rune_solver.rune_solver_simple import RuneSolverSimple
+from msv.screen_processor import MockScreenProcessor
+from msv.rune_solver.rune_solver_simple import RuneSolverSimple
 import time
 
 

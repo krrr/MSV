@@ -1,4 +1,4 @@
-from src.screen_processor import ScreenProcessor, StaticImageProcessor
+from msv.screen_processor import ScreenProcessor, StaticImageProcessor
 import cv2, numpy as np
 mcap = ScreenProcessor()
 

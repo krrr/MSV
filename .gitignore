@@ -1,11 +1,11 @@
-.idea
-venv
+.idea/
+build/
 *.log
 *.platform
 config.json
-/src/screenshots/
-/python/
-/Tesseract-OCR/
+screenshots/
+python/
+Tesseract-OCR/
 driver/.vs
 driver/Output
 driver/MSVDriver/MSVDriver.dir
