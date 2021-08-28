@@ -10,6 +10,7 @@ import os
 import multiprocessing as mp
 import math
 import random
+import winapi
 from ctypes import c_buffer, windll
 
 _config = None
@@ -24,9 +25,8 @@ def _winmm_command(*command):
     if errorCode:
         errorBuffer = c_buffer(255)
         windll.winmm.mciGetErrorStringW(errorCode, errorBuffer, 254)
-        exceptionMessage = ('Error ' + str(errorCode) + ' for command:'
-                                                              '\n        ' + command.decode() +
-                            '\n    ' + errorBuffer.value.decode('utf-16'))
+        exceptionMessage = ('Error ' + str(errorCode) + ' for command:\n' + command.decode() +
+                            '\n' + errorBuffer.value.decode('utf-16'))
         raise Exception(exceptionMessage)
     return buf.value
 
@@ -101,9 +101,6 @@ def setup_tesseract_ocr():
     return True
 
 
-_user32 = ctypes.windll.user32
-
-
 class GlobalHotKeyListener:
     """bind windows global hotkey
     https://stackoverflow.com/questions/6023172/ending-a-program-mid-run/40177310#40177310
@@ -119,7 +116,7 @@ class GlobalHotKeyListener:
     def loop(hotkeys):
         # register hotkey with Win API
         for i in hotkeys:
-            if not _user32.RegisterHotKey(None, i.id, i.modifier_key, i.virtual_key):
+            if not winapi.RegisterHotKey(None, i.id, i.modifier_key, i.virtual_key):
                 print("Unable to register hotkey with id " + str(i.id), file=sys.stderr)
 
         callback_map = {i.id: i.callback for i in hotkeys}
@@ -128,29 +125,29 @@ class GlobalHotKeyListener:
         msg = ctypes.wintypes.MSG()
         try:
             # blocking call, will return 0 if received WM_QUIT
-            while _user32.GetMessageA(ctypes.byref(msg), None, 0, 0) != 0:
+            while winapi.GetMessageA(ctypes.byref(msg), None, 0, 0) != 0:
                 if msg.message == win32con.WM_HOTKEY:
                     vk = msg.lParam >> 16
                     if not hotkey_down.get(vk):
                         hotkey_down[vk] = True
-                        _user32.SetTimer(None, 0, 200, None)
+                        winapi.SetTimer(None, 0, 200, None)
                         callback = callback_map.get(msg.wParam)
                         if callback:
                             callback()
                 elif msg.message == win32con.WM_TIMER:
                     for i in list(hotkey_down.keys()):
-                        if not _user32.GetKeyState(i) & 0x8000:  # key is not down
+                        if not winapi.GetKeyState(i) & 0x8000:  # key is not down
                             del hotkey_down[i]
                     if len(hotkey_down) == 0:
-                        _user32.KillTimer(None, msg.wParam)
-                _user32.TranslateMessage(ctypes.byref(msg))
-                _user32.DispatchMessageA(ctypes.byref(msg))
+                        winapi.KillTimer(None, msg.wParam)
+                winapi.TranslateMessage(ctypes.byref(msg))
+                winapi.DispatchMessageA(ctypes.byref(msg))
         finally:
             for i in hotkeys:
-                _user32.UnregisterHotKey(None, i.id)
+                winapi.UnregisterHotKey(None, i.id)
 
     def unregister(self):
-        _user32.PostThreadMessageA(self.thread.ident, win32con.WM_QUIT, 0, 0)
+        winapi.PostThreadMessageA(self.thread.ident, win32con.WM_QUIT, 0, 0)
         self.thread.join()
 
 

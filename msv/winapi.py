@@ -71,6 +71,22 @@ except AttributeError:
     pass
 
 
+RegisterHotKey = ctypes.windll.user32.RegisterHotKey
+GetMessageA = ctypes.windll.user32.GetMessageA
+SetTimer = ctypes.windll.user32.SetTimer
+KillTimer = ctypes.windll.user32.KillTimer
+TranslateMessage = ctypes.windll.user32.TranslateMessage
+GetKeyState = ctypes.windll.user32.GetKeyState
+DispatchMessageA = ctypes.windll.user32.DispatchMessageA
+UnregisterHotKey = ctypes.windll.user32.UnregisterHotKey
+PostThreadMessageA = ctypes.windll.user32.PostThreadMessageA
+SetProcessDPIAware = ctypes.windll.user32.SetProcessDPIAware
+SendInput = ctypes.windll.user32.SendInput
+GetCursorPos = ctypes.windll.user32.GetCursorPos
+
+IsUserAnAdmin = ctypes.windll.shell32.IsUserAnAdmin
+
+
 class BITMAPINFOHEADER(ctypes.Structure):
     _pack_ = 2
     _fields_ = [

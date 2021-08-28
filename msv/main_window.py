@@ -1,4 +1,3 @@
-import ctypes
 import multiprocessing, tkinter as tk, time, os, signal, pickle
 import win32con
 import threading
@@ -17,7 +16,7 @@ from msv.terrain_editor import TerrainEditorWindow
 from msv.screen_processor import ScreenProcessor
 from msv.macro_script import macro_process_main
 from msv.tools.auto_star_force import AutoStarForceWindow
-from msv import APP_TITLE, __version__
+from msv import winapi, APP_TITLE, __version__
 
 
 class MainWindow(ttk.Frame):
@@ -171,7 +170,7 @@ class MainWindow(ttk.Frame):
                 self.log("Macro process terminated due to an error. Please check the log file.")
 
     def start_macro(self):
-        if not ctypes.windll.shell32.IsUserAnAdmin():
+        if not winapi.IsUserAnAdmin():
             showerror(APP_TITLE, 'Please run as administrator')
             return
 

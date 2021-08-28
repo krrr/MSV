@@ -1,12 +1,10 @@
 """Classifier model verifier"""
-import cv2, time, os
+import cv2
 import numpy as np
 from keras.models import load_model
 from tensorflow import device
 from input_manager import InputManager
 from directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK, DIK_PERIOD
-from win32con import VK_NUMLOCK
-from win32api import GetKeyState
 from msv.rune_solver.rune_solver_base import RuneSolverBase
 
 

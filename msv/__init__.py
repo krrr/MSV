@@ -6,12 +6,11 @@ __version__ = '0.4'
 
 
 def main_entry():
-    import ctypes
     import tkinter as tk, argparse
     from msv.main_window import MainWindow
-    from msv import util
+    from msv import util, winapi
 
-    ctypes.windll.user32.SetProcessDPIAware()
+    winapi.SetProcessDPIAware()
 
     parser = argparse.ArgumentParser(description="MSV-Kanna-Ver, a macro to farm MapleStory")
     parser.add_argument("-t", dest="title", help="change main window title to designated value")

@@ -3,12 +3,10 @@ import win32api
 import win32con
 import math
 import random
-from msv import driver
+from msv import driver, winapi
 import msv.directinput_constants as dic
 
 
-SendInput = ctypes.windll.user32.SendInput
-GetCursorPos = ctypes.windll.user32.GetCursorPos
 # C struct redefinitions
 PUL = ctypes.POINTER(ctypes.c_ulong)
 
@@ -214,11 +212,11 @@ class InputManager:
         if self.use_driver:
             driver.send_input(1, ctypes.addressof(input_struct), ctypes.sizeof(input_struct))
         else:
-            SendInput(1, ctypes.byref(input_struct), ctypes.sizeof(input_struct))
+            winapi.SendInput(1, ctypes.byref(input_struct), ctypes.sizeof(input_struct))
 
     def get_cursor_pos(self):
         point = ctypes.wintypes.POINT()
-        if GetCursorPos(ctypes.pointer(point)) == 1:
+        if winapi.GetCursorPos(ctypes.pointer(point)) == 1:
             return point.x, point.y
         else:
             return None

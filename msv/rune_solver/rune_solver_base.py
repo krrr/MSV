@@ -2,11 +2,9 @@
 import logging
 import random
 import time
-from win32con import VK_NUMLOCK
-from win32api import GetKeyState
 from msv.screen_processor import ScreenProcessor
 from msv.input_manager import InputManager
-from msv.directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT, DIK_NUMLOCK
+from msv.directinput_constants import DIK_UP, DIK_DOWN, DIK_LEFT, DIK_RIGHT
 from msv.util import get_file_log_handler
 
 
@@ -49,9 +47,6 @@ class RuneSolverBase:
         if result is None:
             return None
 
-        if GetKeyState(VK_NUMLOCK):
-            self.key_mgr.single_press(DIK_NUMLOCK)
-            time.sleep(0.2)
         self.logger.debug("Solved rune with solution %s" % str(result))
         for inp in result:
             if inp == "up":
