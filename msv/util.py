@@ -10,8 +10,8 @@ import os
 import multiprocessing as mp
 import math
 import random
-import winapi
 from ctypes import c_buffer, windll
+from msv import winapi
 
 _config = None
 config_file = '../config.json'
