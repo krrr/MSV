@@ -63,7 +63,7 @@ class Dclp1MacroController(MacroController):
         self.logger.info('pick up money')
 
         no_attack = self.other_player_detected_start and (self.player_manager.is_skill_key_set('yuki_musume')
-                                                          or self.player_manager.is_skill_key_set('mihaha_link'))
+                                                          or self.player_manager.is_skill_key_set('mihile_link'))
         if no_attack and self.player_manager.is_skill_key_set('yuki_musume'):
             self.player_manager.yuki_musume()
 

@@ -235,7 +235,7 @@ DEFAULT_KEY_MAP = {
     "interact": [dic.DIK_PERIOD, "Interact / Harvest"],
     "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"],
     "exorcist_charm": [dic.DIK_Y, "Exorcist Charm"],
-    "mihaha_link": [None, "Mihaha Link"],
+    "mihile_link": [None, "mihile Link"],
     "nightmare_invite": [None, "Nightmare Invite"]
 }
 

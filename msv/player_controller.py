@@ -69,7 +69,7 @@ class PlayerController:
 
         self.last_skill_use_time = {
             'yaksha_boss': 0, 'kishin_shoukan': 0, 'nightmare_invite': 0,
-            'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0, 'mihaha_link': 0
+            'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0, 'mihile_link': 0
         }
 
     def update(self, player_coords_x=None, player_coords_y=None):
@@ -413,8 +413,8 @@ class PlayerController:
     def speed_infusion(self, wait_before=0):
         return self._use_buff_skill('speed_infusion', self.v_buff_cd, wait_before)
 
-    def mihaha_link(self, wait_before=0):
-        return self._use_buff_skill('mihaha_link', self.v_buff_cd, wait_before)
+    def mihile_link(self, wait_before=0):
+        return self._use_buff_skill('mihile_link', self.v_buff_cd, wait_before)
 
     def haku_reborn(self, wait_before=0):
         return self._use_buff_skill('haku_reborn', 500, wait_before)
