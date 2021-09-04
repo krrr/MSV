@@ -576,13 +576,13 @@ class MacroController:
             return is_set
 
     def _place_set_skill(self, skill_name):
-        if self.player_manager.keymap.get(skill_name) is None:
-            return
-
-        coord = self.terrain_analyzer.set_skill_coord.get(skill_name)
-        if not coord or time.time() - self.player_manager.last_skill_use_time[skill_name] <= self.player_manager.skill_cooldown[skill_name]:
+        """Placing set skill at specific location"""
+        if not self.player_manager.is_skill_usable(skill_name):
             return False
 
+        coord = self.terrain_analyzer.set_skill_coord.get(skill_name)
+        if not coord:
+            return False
         platform = self.find_coord_platform(coord)
         if not platform:
             self.logger.warning('placing skill ' + skill_name + 'coord not found: ' + str(coord))
@@ -596,7 +596,7 @@ class MacroController:
             dir_ = dc.DIK_LEFT if self.terrain_analyzer.other_attrs.get('yaksha_boss_dir') == 'left' else dc.DIK_RIGHT
             self.keyhandler.single_press(dir_)
         time.sleep(0.1)
-        getattr(self.player_manager, skill_name)()
+        self.player_manager.use_set_skill(skill_name)
         self.player_manager.last_skill_use_time[skill_name] = time.time()
 
         return True

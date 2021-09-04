@@ -59,7 +59,7 @@ class PlayerController:
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60
+            'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60, 'true_arachnid_reflection': 250
         }
 
         self.rune_fail_cooldown = 5
@@ -69,7 +69,8 @@ class PlayerController:
 
         self.last_skill_use_time = {
             'yaksha_boss': 0, 'kishin_shoukan': 0, 'nightmare_invite': 0,
-            'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0, 'mihile_link': 0
+            'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0,
+            'mihile_link': 0, 'true_arachnid_reflection': 0
         }
 
     def update(self, player_coords_x=None, player_coords_y=None):
@@ -373,22 +374,19 @@ class PlayerController:
         if wait_delay:
             time.sleep(1.1 + random_number(0.01))
 
-    def kishin_shoukan(self):
-        self._use_set_skill('kishin_shoukan')
-
-    def yaksha_boss(self):
-        self._use_set_skill('yaksha_boss')
-
-    def nightmare_invite(self):
-        self._use_set_skill('nightmare_invite')
-
-    def _use_set_skill(self, skill_name):
+    def use_set_skill(self, skill_name):
         for i in range(2):
             self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
                                       additional_duration=0 if i == 1 else 0.36 + random_number(0.04))
         self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.SET_SKILL_COMMON_DELAY + random_number(0.1))
+
+        return True
+
+    def is_skill_usable(self, skill_name):
+        return (self.keymap.get(skill_name ) is not None
+                and time.time() - self.last_skill_use_time[skill_name] > self.skill_cooldown[skill_name])
 
     def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
         if self.keymap.get(skill_name) is None:
