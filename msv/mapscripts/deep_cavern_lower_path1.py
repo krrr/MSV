@@ -17,42 +17,31 @@ class Dclp1MacroController(MacroController):
             return
 
         # set skills
-        if self.current_platform_hash in ('ab2972bd', '600f8ed9'):  # at center top or bottom
-            if not self.elite_boss_detected and self.set_skills():
-                return
+        if not self.elite_boss_detected and self.set_skills(combine=True):
+            return
 
-        if self.current_platform_hash == '600f8ed9':  # center bottom
-            if self.player_manager.x <= 83 + self.player_manager.horizontal_goal_offset:
-                self.player_manager.shikigami_haunting_sweep_move(107)
-                self.player_manager.shikigami_haunting_sweep_move(83, 20)
-            else:
-                self.player_manager.shikigami_haunting_sweep_move(83)
+        # pickup money
+        if not self.elite_boss_detected and time.time() - self.last_pickup_money_time > self.pickup_money_interval:
+            self.navigate_to_platform('ab2972bd')  # center top
+            self.pickup_money(True)
+            self.last_pickup_money_time = time.time()
+            return
 
-            self.keyhandler.single_press(dc.DIK_LEFT)
-            self.player_manager.shikigami_haunting()
+        if self.current_platform_hash == 'b0d5f01d':  # left middle
+            self.player_manager.shiki_exo_shiki(73)
+        elif self.current_platform_hash == '600f8ed9':  # center bottom
+            self.player_manager.shikigami_haunting_sweep_move(70)
             self.player_manager.teleport_up()
         elif self.current_platform_hash == 'ab2972bd':  # center top
-            # pickup money
-            if not self.elite_boss_detected and time.time() - self.last_pickup_money_time > self.pickup_money_interval:
-                self.pickup_money()
-                self.last_pickup_money_time = time.time()
-                return
-
-            if self.player_manager.x <= 83 + self.player_manager.horizontal_goal_offset:
-                self.keyhandler.single_press(dc.DIK_LEFT)
-                self.player_manager.shikigami_haunting()
-                self.keyhandler.single_press(dc.DIK_RIGHT)
-                self.player_manager.shikigami_haunting()
-            else:
-                self.player_manager.shikigami_haunting_sweep_move(83)
-                self.player_manager.shikigami_haunting()
-
-            self.player_manager.teleport_down()
+            left_edge = self.terrain_analyzer.platforms['ab2972bd'].start_x
+            self.player_manager.shikigami_haunting_sweep_move(left_edge + 5)
+            self.player_manager.horizontal_move_goal(left_edge - 4)
+            time.sleep(0.095)
         else:
-            self.navigate_to_platform('600f8ed9')  # center bottom
+            self.navigate_to_platform('b0d5f01d')  # left middle
 
         ### Other buffs
-        self.buff_skills()
+        self.buff_skills(yuki=False)
 
         # Finished
         return 0

@@ -1,6 +1,5 @@
 from .cavern_upper_path import CupMacroController
 from .deep_cavern_lower_path1 import Dclp1MacroController
-from .deep_cavern_lower_path1_alt import Dclp1MacroControllerAlt
 from .t_boys_research_train1 import TBoyResearchTrain1
 from .bash_club3 import BashClub3
 from .fox_tree_top_path import FoxTreeTopPath
@@ -18,9 +17,8 @@ from .end_of_the_world1_4 import EndOfTheWorld1_4
 
 map_scripts = {
     'T-Boy Train 1': TBoyResearchTrain1,
-    'CUP': CupMacroController,
-    'DCLP1_charm': Dclp1MacroController,
-    'DCLP1_exorcist': Dclp1MacroControllerAlt,
+    'Cavern Upper Path': CupMacroController,
+    'Deep Cavern Lower Path 1': Dclp1MacroController,
     'Final Edge of Light 4': Fel4MacroController,
     'Interior 1': LabyrinthInterior1,
     'End of World 1-4': EndOfTheWorld1_4,
@@ -37,9 +35,8 @@ map_scripts = {
 
 map2platform = {
     'T-Boy Train 1': 't_boys_research_train1',
-    'CUP': 'cavern_upper_path',
-    'DCLP1_charm': 'deep_cavern_lower_path1',
-    'DCLP1_exorcist': 'deep_cavern_lower_path1',
+    'Cavern Upper Path': 'cavern_upper_path',
+    'Deep Cavern Lower Path 1': 'deep_cavern_lower_path1',
     'Final Edge of Light 4': 'final_edge_of_light4',
     'Interior 1': 'labyrinth_interior1',
     'End of World 1-4': 'end_of_the_world1_4',

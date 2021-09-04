@@ -102,8 +102,9 @@ class MainWindow(ttk.Frame):
             i.config(width=8)
 
         ttk.Label(self.macro_info_frame, text="Preset:").grid(row=2, column=0, sticky=N+S+E+W)
-        self.preset_names = list(mapscripts.map_scripts.keys())
-        self.preset_combobox = ttk.Combobox(self.macro_info_frame, values=self.preset_names, state="readonly")
+        self.preset_names = tuple(mapscripts.map_scripts.keys())
+        max_width = max(len(i) for i in self.preset_names)
+        self.preset_combobox = ttk.Combobox(self.macro_info_frame, values=self.preset_names, state="readonly", width=max_width)
         self.preset_combobox.grid(row=2, column=1, columnspan=2, sticky=W, padx=5)
         self.preset_combobox.bind("<<ComboboxSelected>>", self._on_preset_platform_set)
 
