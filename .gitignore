@@ -11,3 +11,6 @@ driver/Output
 driver/MSVDriver/MSVDriver.dir
 msv/ui/*_ui.py
 msv/resources_rc.py
+
+launcher/x64
+launcher/.vs
