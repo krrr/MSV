@@ -4,6 +4,7 @@ import os
 import pickle
 import enum
 import random
+from msv.util import read_qt_resource
 
 """
 PlatformScan, graph based least-visited-node-first traversal algorithm
@@ -129,21 +130,22 @@ class PathAnalyzer:
 
     def load(self, filename="mapdata.platform"):
         """Open a map data file and load data from file. Also sets class variables platform and minimap.
-        :param filename: Plath to map data file
+        :param filename: Path to map data file
         :return boundingRect tuple of minimap as stored on file (defaults to (x, y, w, h) if file is valid else 0"""
-        if not self.verify_data_file(filename):
-            return 0
+        if filename.startswith(':'):
+            content = read_qt_resource(filename, False)
+        else:
+            with open(filename, "rb") as f:
+                content = f.read()
 
-        with open(filename, "rb") as f:
-            data = pickle.load(f)
-            self.platforms = data['platforms']
-            minimap_coords = data['minimap']
-            self.astar_minimap_rect = minimap_coords
-            for i in data.keys():
-                if i.endswith('_coord'):
-                    self.set_skill_coord[i[:-6]] = data.get(i)
-            self.other_attrs = {k: v for (k, v) in data.items() if k != 'platforms' and not k.endswith('_coord')}
-            print(self.other_attrs)
+        data = pickle.loads(content)
+        self.platforms = data['platforms']
+        minimap_coords = data['minimap']
+        self.astar_minimap_rect = minimap_coords
+        for i in data.keys():
+            if i.endswith('_coord'):
+                self.set_skill_coord[i[:-6]] = data.get(i)
+        self.other_attrs = {k: v for (k, v) in data.items() if k != 'platforms' and not k.endswith('_coord')}
 
         self.generate_solution_dict()
         self.astar_map_grid = []
@@ -177,7 +179,6 @@ class PathAnalyzer:
             return minimap_coords
         else:
             return 0
-
 
     def hash(self, data):
         """

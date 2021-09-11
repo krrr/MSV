@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from msv.rune_solver.rune_solver_base import RuneSolverBase
-from msv.util import resource_path
+from msv.util import read_qt_resource
 
 
 class RuneSolverSimple(RuneSolverBase):
@@ -16,15 +16,13 @@ class RuneSolverSimple(RuneSolverBase):
         super().__init__(screen_capturer, key_mgr)
 
         # load template
-        down_tpl = cv2.imread(resource_path + 'down_arrow_template.png', cv2.IMREAD_COLOR)
-        if down_tpl is None:
-            raise FileNotFoundError(resource_path + 'down_arrow_template.png')
+        down_tpl = cv2.imdecode(read_qt_resource(':/template/down_arrow_template.png', True), cv2.IMREAD_COLOR)
         right_tpl = np.rot90(down_tpl)
         up_tpl = np.rot90(right_tpl)
         left_tpl = np.rot90(up_tpl)
         self.templates = {'left': left_tpl, 'up': up_tpl, 'right': right_tpl, 'down': down_tpl}
 
-        down_sm_tpl = cv2.imread(resource_path + 'down_arrow_template_small.png', cv2.IMREAD_COLOR)
+        down_sm_tpl = cv2.imdecode(read_qt_resource(':/template/down_arrow_template_small.png', True), cv2.IMREAD_COLOR)
         right_sm_tpl = np.rot90(down_sm_tpl)
         up_sm_tpl = np.rot90(right_sm_tpl)
         left_sm_tpl = np.rot90(up_sm_tpl)

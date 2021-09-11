@@ -7,6 +7,8 @@ LOGPIXELSX = 88
 LOGPIXELSY = 90
 DPI_AWARENESS_UNAWARE = 0
 
+MSG = ctypes.wintypes.MSG
+
 IsProcessDPIAware = ctypes.windll.user32.IsProcessDPIAware
 IsProcessDPIAware.restype = ctypes.wintypes.BOOL
 

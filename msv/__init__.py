@@ -6,9 +6,9 @@ __version__ = '0.5'
 
 
 def main_entry():
-    import tkinter as tk, argparse
-    from msv.main_window import MainWindow
+    import argparse
     from msv import util, winapi
+    from msv.ui import gui_loop
 
     winapi.SetProcessDPIAware()
 
@@ -20,20 +20,4 @@ def main_entry():
     if args['config']:
         util.config_file = args['config']
 
-    root = tk.Tk()
-
-    root.title(args["title"] if args["title"] else APP_TITLE)
-    try:
-        root.iconbitmap(util.resource_path + 'appicon.ico')
-    except tk.TclError:
-        pass
-    root.wm_minsize(400, 600)
-
-    MainWindow(root)
-
-    geo = util.get_config().get('geometry')
-    if geo:
-        root.geometry(geo)
-    root.mainloop()
-
-    return 0
+    return gui_loop(args)

@@ -1,7 +1,6 @@
 import os
 import datetime
 import logging, math, time, random
-import threading
 import multiprocessing as mp
 import msv.directinput_constants as dc
 import msv.player_controller as pc
@@ -11,11 +10,13 @@ from msv import driver
 from msv.screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from msv.player_controller import PlayerController
 from msv.rune_solver.rune_solver_simple import RuneSolverSimple
-from msv.util import get_config, get_file_log_handler, play_sound, QueueLoggerHandler, random_number
+from msv.util import get_config, get_file_log_handler, QueueLoggerHandler, random_number
 
 
 def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
     from msv import mapscripts
+    # noinspection PyUnresolvedReferences
+    import msv.resources_rc  # for reading qt resource in child process
 
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
@@ -62,7 +63,6 @@ class Aborted(Exception):
 
 
 class MacroController:
-    ALERT_SOUND_CD = 2
     FIND_PLATFORM_OFFSET = 2
     ERROR_RETRY_LIMIT = 5
 
@@ -117,7 +117,6 @@ class MacroController:
         self.unstick_attempts_threshold = 5  # abort if unstick after this amount fails to get us on a known platform
 
         self.pickup_money_interval = 90
-        self.last_alert_sound = 0
         self.other_player_detected_start = None
         self.player_pos_not_found_start = None
         self.elite_boss_detected = False
@@ -259,7 +258,7 @@ class MacroController:
             if self.player_pos_not_found_start is None:
                 self.player_pos_not_found_start = time.time()
                 if white_room:
-                    play_sound('white_room')
+                    self.log_queue.put(('play', 'white_room'))
                     self.logger.info('white room detected')
                     self.save_current_screen('white_room')
 
@@ -273,7 +272,7 @@ class MacroController:
 
         ### GM check
         if self.screen_processor.check_gm_cap():
-            play_sound('white_room')
+            self.log_queue.put(('play', 'white_room'))
             self.logger.info('GM detected')
             self.save_current_screen('gm')
             return -4
@@ -632,18 +631,7 @@ class MacroController:
             raise Aborted
 
     def alert_sound(self, times):
-        print(time.time() - self.last_alert_sound)
-        if time.time() - self.last_alert_sound <= self.ALERT_SOUND_CD:
-            return
-
-        def func():
-            for _ in range(times):
-                play_sound('beep')
-                time.sleep(0.3)
-
-        thread = threading.Thread(target=func, daemon=True)
-        thread.start()
-        self.last_alert_sound = time.time() + 0.3 * times
+        self.log_queue.put(('alert_sound', times))
 
     def exit_to_ch_select(self):
         for k in (dc.DIK_ESCAPE, dc.DIK_UP, dc.DIK_RETURN, dc.DIK_RETURN):

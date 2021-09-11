@@ -1,7 +1,5 @@
 import json
-import ctypes
 import sys
-import threading
 import win32con
 import collections
 import logging
@@ -10,12 +8,26 @@ import os
 import multiprocessing as mp
 import math
 import random
+import numpy as np
 from ctypes import c_buffer, windll
+from PyQt5.QtCore import QFile, QAbstractNativeEventFilter, QTimer
 from msv import winapi
 
 _config = None
-config_file = '../config.json'
+config_file = 'config.json'
 resource_path = os.path.dirname(__file__) + '\\resources\\'
+
+
+def read_qt_resource(path, numpy=False):
+    file = QFile(path)
+    if file.open(QFile.ReadOnly):
+        ret = file.readAll()
+        file.close()
+        if numpy:
+            ret = np.frombuffer(ret, np.uint8)
+        return ret
+    else:
+        raise Exception(file.errorString() + ': ' + path)
 
 
 def _winmm_command(*command):
@@ -29,16 +41,6 @@ def _winmm_command(*command):
                             '\n' + errorBuffer.value.decode('utf-16'))
         raise Exception(exceptionMessage)
     return buf.value
-
-
-def play_sound(name):
-    # https://github.com/TaylorSMarks/playsound
-    sound = resource_path + 'sound\\' + name + '.mp3'
-    alias = 'playsound_' + str(random.random())
-    _winmm_command('open "' + sound + '" alias', alias)
-    _winmm_command('set', alias, 'time format milliseconds')
-    duration_in_ms = _winmm_command('status', alias, 'length')
-    _winmm_command('play', alias, 'from 0 to', duration_in_ms.decode())
 
 
 def get_config():
@@ -101,54 +103,49 @@ def setup_tesseract_ocr():
     return True
 
 
-class GlobalHotKeyListener:
+class GlobalHotKeyListener(QAbstractNativeEventFilter):
     """bind windows global hotkey
-    https://stackoverflow.com/questions/6023172/ending-a-program-mid-run/40177310#40177310
+    https://github.com/Skycoder42/QHotkey/blob/master/QHotkey/qhotkey_win.cpp
     """
     HotKey = collections.namedtuple('HotKey', ('id', 'modifier_key', 'virtual_key', 'callback'))
 
     def __init__(self, hotkeys):
-        self.thread = threading.Thread(target=GlobalHotKeyListener.loop, args=(hotkeys,))
-        self.thread.setDaemon(True)
-        self.thread.start()
-
-    @staticmethod
-    def loop(hotkeys):
-        # register hotkey with Win API
+        super().__init__()
+        self.hotkeys = hotkeys
         for i in hotkeys:
             if not winapi.RegisterHotKey(None, i.id, i.modifier_key, i.virtual_key):
                 print("Unable to register hotkey with id " + str(i.id), file=sys.stderr)
 
-        callback_map = {i.id: i.callback for i in hotkeys}
-        hotkey_down = {}  # virtual_key -> bool
+        self.callback_map = {i.id: i.callback for i in hotkeys}
+        self.hotkey_down = {}  # virtual_key -> bool
+        self.pollTimer = QTimer()
+        self.pollTimer.setInterval(100)
+        self.pollTimer.timeout.connect(self.pollForKeyRelease)
 
-        msg = ctypes.wintypes.MSG()
-        try:
-            # blocking call, will return 0 if received WM_QUIT
-            while winapi.GetMessageA(ctypes.byref(msg), None, 0, 0) != 0:
-                if msg.message == win32con.WM_HOTKEY:
-                    vk = msg.lParam >> 16
-                    if not hotkey_down.get(vk):
-                        hotkey_down[vk] = True
-                        winapi.SetTimer(None, 0, 200, None)
-                        callback = callback_map.get(msg.wParam)
-                        if callback:
-                            callback()
-                elif msg.message == win32con.WM_TIMER:
-                    for i in list(hotkey_down.keys()):
-                        if not winapi.GetKeyState(i) & 0x8000:  # key is not down
-                            del hotkey_down[i]
-                    if len(hotkey_down) == 0:
-                        winapi.KillTimer(None, msg.wParam)
-                winapi.TranslateMessage(ctypes.byref(msg))
-                winapi.DispatchMessageA(ctypes.byref(msg))
-        finally:
-            for i in hotkeys:
-                winapi.UnregisterHotKey(None, i.id)
+    def nativeEventFilter(self, eventType, message):  # PyQt specific
+        if eventType == b'windows_generic_MSG':
+            msg = winapi.MSG.from_address(message.__int__())
+            if msg.message == win32con.WM_HOTKEY:
+                vk = msg.lParam >> 16
+                if not self.hotkey_down.get(vk):
+                    self.hotkey_down[vk] = True
+                    self.pollTimer.start()
+                    callback = self.callback_map.get(msg.wParam)
+                    if callback:
+                        callback()
+                return True, 0
+        return False, 0
+
+    def pollForKeyRelease(self):
+        for i in list(self.hotkey_down.keys()):
+            if not winapi.GetKeyState(i) & 0x8000:  # key is not down
+                del self.hotkey_down[i]
+        if len(self.hotkey_down) == 0:
+            self.pollTimer.stop()
 
     def unregister(self):
-        winapi.PostThreadMessageA(self.thread.ident, win32con.WM_QUIT, 0, 0)
-        self.thread.join()
+        for i in self.hotkeys:
+            winapi.UnregisterHotKey(None, i.id)
 
 
 def color_distance(c1, c2):

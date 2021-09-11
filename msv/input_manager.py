@@ -3,7 +3,7 @@ import win32api
 import win32con
 import math
 import random
-from msv import driver, winapi
+from msv import driver, winapi, util
 import msv.directinput_constants as dic
 
 
@@ -53,6 +53,17 @@ def ease_in_out_quad(t, start, delta, duration):
         return delta / 2 * t * t + start
     t -= 1
     return -delta / 2 * (t * (t - 2) - 1) + start
+
+
+def load_keymap():
+    saved = util.get_config().get('keymap')
+    if saved:
+        for k, v in saved.items():  # convert config from old version
+            if isinstance(v, list):
+                saved[k] = v[0]
+        return saved.copy()
+    else:
+        return DEFAULT_KEY_MAP.copy()
 
 
 class InputManager:
@@ -223,20 +234,37 @@ class InputManager:
 
 
 DEFAULT_KEY_MAP = {
-    "jump": [dic.DIK_RSHIFT, "Jump"],
-    "teleport": [dic.DIK_SPACE, "Teleport"],
-    "shikigami_haunting": [dic.DIK_RCONTROL, "Shikigami Haunting"],
-    "kishin_shoukan": [dic.DIK_Q, "Kishin Shoukan"],
-    "yaksha_boss": [dic.DIK_O, "Yaksha Boss"],
-    "holy_symbol": [dic.DIK_PRIOR, "Holy Symbol"],
-    "speed_infusion": [dic.DIK_HOME, "Speed Infusion"],
-    "haku_reborn": [dic.DIK_END, "Haku Reborn"],
-    "yuki_musume": [dic.DIK_1, "Yuki-musume Shoukan"],
-    "interact": [dic.DIK_PERIOD, "Interact / Harvest"],
-    "shikigami_charm": [dic.DIK_SEMICOLON, "Shikigami Charm"],
-    "exorcist_charm": [dic.DIK_Y, "Exorcist Charm"],
-    "mihile_link": [None, "Mihile Link"],
-    "nightmare_invite": [None, "Nightmare Invite"],
-    "true_arachnid_reflection": [None, "True Arachnid Reflection"],
+    "jump": dic.DIK_RSHIFT,
+    "teleport": dic.DIK_SPACE,
+    "shikigami_haunting": dic.DIK_RCONTROL,
+    "kishin_shoukan": dic.DIK_Q,
+    "yaksha_boss": dic.DIK_O,
+    "exorcist_charm": dic.DIK_Y,
+    "yuki_musume": dic.DIK_1,
+    "shikigami_charm": dic.DIK_SEMICOLON,
+    "interact": dic.DIK_PERIOD,
+    "speed_infusion": dic.DIK_HOME,
+    "haku_reborn": dic.DIK_END,
+    "holy_symbol": dic.DIK_PRIOR,
+    "mihile_link": None,
+    "nightmare_invite": None,
+    "true_arachnid_reflection": None,
 }
 
+KEY2DISPLAY_NAME = {
+    "jump": "Jump",
+    "teleport": "Teleport",
+    "shikigami_haunting": "Shikigami Haunting",
+    "kishin_shoukan": "Kishin Shoukan",
+    "yaksha_boss": "Yaksha Boss",
+    "exorcist_charm": "Exorcist Charm",
+    "yuki_musume": "Yuki-musume Shoukan",
+    "shikigami_charm": "Shikigami Charm",
+    "interact": "Interact / Harvest",
+    "speed_infusion": "Speed Infusion",
+    "haku_reborn": "Haku Reborn",
+    "holy_symbol": "Holy Symbol",
+    "mihile_link": "Mihile Link",
+    "nightmare_invite": "Nightmare Invite",
+    "true_arachnid_reflection": "True Arachnid Reflection",
+}

@@ -9,3 +9,5 @@ Tesseract-OCR/
 driver/.vs
 driver/Output
 driver/MSVDriver/MSVDriver.dir
+msv/ui/*_ui.py
+msv/resources_rc.py

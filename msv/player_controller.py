@@ -38,9 +38,7 @@ class PlayerController:
         self.x = self.y = None
         self.last_teleport_time = 0
 
-        self.keymap = {}
-        for key, value in keymap.items():
-            self.keymap[key] = value[0]
+        self.keymap = keymap.copy()
         self.key_mgr = key_mgr
         self.screen_processor = screen_processor
         self.goal_x = self.goal_y = None

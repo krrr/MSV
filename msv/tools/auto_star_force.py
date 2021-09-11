@@ -1,17 +1,11 @@
-import tkinter as tk
-import tkinter.ttk as ttk
-from tkinter.constants import *
-from tkinter.messagebox import showerror
 import re
 import time
 import logging
 import random
 import multiprocessing as mp
-import threading
 from PIL import ImageOps
-from collections import deque
 import msv.directinput_constants as dc
-from msv.util import get_config, copy_ev_queue, setup_tesseract_ocr, color_distance, QueueLoggerHandler
+from msv.util import get_config, setup_tesseract_ocr, color_distance, QueueLoggerHandler
 from msv.macro_script import Aborted
 from msv.screen_processor import ScreenProcessor, GameCaptureError
 from msv.input_manager import InputManager
@@ -72,6 +66,7 @@ class AutoStarForce:
         self.screen_processor = screen_processor
         self.screen_processor.get_game_hwnd()
         self.input_mgr = InputManager()
+        self.scale_ratio = None
         self.img = None
         self.ms_rect = None
         self.rect = None
@@ -112,7 +107,7 @@ class AutoStarForce:
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.CONFIRM_OK_BTN_POS), 4)
 
             time.sleep(random.uniform(0.1, 0.2))
-            self.input_mgr.mouse_move(self.rect[0] + random.randint(-30, 40), self.rect[3] + random.randint(-40, 10))
+            self.input_mgr.mouse_move(*self._map_pos((random.randint(-30, 40), self.AREA_SIZE[1]+random.randint(-40, 10))))
 
             if star_catch:
                 time.sleep(0.1)
@@ -169,7 +164,8 @@ class AutoStarForce:
             count += 1
 
     def _map_pos(self, pos):
-        return self.ms_rect[0] + self.AREA_POS[0] + pos[0], self.ms_rect[1] + self.AREA_POS[1] + pos[1]
+        return (self.ms_rect[0] + (self.AREA_POS[0]+pos[0]) * self.scale_ratio,
+                self.ms_rect[1] + (self.AREA_POS[1]+pos[1]) * self.scale_ratio)
 
     def get_current_star(self):
         curr_star_img = ImageOps.invert(self.img.crop(self.CURR_STAR_RECT).convert('L'))
@@ -180,6 +176,7 @@ class AutoStarForce:
 
     def update_image(self):
         if self.rect is None:  # setup window rect
+            self.scale_ratio = self.screen_processor.get_scale_ratio()
             self.ms_rect = self.screen_processor.ms_get_screen_rect()
             if self.ms_rect is None:
                 raise GameCaptureError
@@ -258,100 +255,6 @@ class AutoStarForce:
             if time.time() - start > 10:
                 raise Exception('timeout')
             time.sleep(0.02)
-
-
-class AutoStarForceWindow(tk.Toplevel):
-    def __init__(self, main_win, master):
-        tk.Toplevel.__init__(self, master)
-        self.main_win = main_win
-        self.event_queue = deque()  # tkinter custom event can't pass data, it sucks
-        self.bind("<<ev>>", lambda _: self._check_event_queue())
-        self.wm_minsize(400, 80)
-        self.geometry('+%d+%d' % (master.winfo_x(), master.winfo_y()))
-        self.title("Auto Star Force")
-        self.running = False
-        self.macro_process = None
-        self.macro_process_in_q = None
-
-        self.frame = ttk.Frame(self)
-        self.frame.pack(expand=NO, fill=BOTH)
-
-        ttk.Label(self.frame, text="Open enhance window (leave it at initial position)\n and set equipment first.").pack(padx=5)
-
-        self.opt_frame = ttk.Frame(self.frame, borderwidth=4, relief=GROOVE)
-        self.opt_frame.pack(anchor=S, expand=NO, pady=5)
-
-        ttk.Label(self.opt_frame, text="Target Star:").grid(row=1, column=0, sticky=N+S+E+W, pady=3)
-        vcmd = (self.register(lambda x: x == '' or str.isdigit(x)))
-        self.target_star_input = ttk.Entry(self.opt_frame, validate='all', validatecommand=(vcmd, '%P'))
-        self.target_star_input.grid(row=1, column=1, sticky=W, padx=5)
-
-        self.star_catch_opt = tk.BooleanVar()
-        self.star_catch_opt.set(True)
-        self.safe_guard_opt = tk.BooleanVar()
-        self.safe_guard_opt.set(False)
-
-        self.star_catch_btn = ttk.Checkbutton(self.opt_frame, variable=self.star_catch_opt, text='Star Catch',
-                                              offvalue=False, onvalue=True)
-        self.star_catch_btn.grid(row=2, column=0, sticky=E, padx=6)
-        self.safe_guard_btn = ttk.Checkbutton(self.opt_frame, variable=self.safe_guard_opt, text='Safe Guard',
-                                              offvalue=False, onvalue=True)
-        self.safe_guard_btn.grid(row=2, column=1, padx=6)
-
-        self.action_btn_frame = ttk.Frame(self)
-        self.action_btn_frame.pack(side=BOTTOM, anchor=S, expand=NO, fill=BOTH, pady=5)
-        self.toggle_btn = ttk.Button(self.action_btn_frame, text="Enhance", width=18,
-                                     command=lambda: self.toggle_macro())
-        self.toggle_btn.pack()
-
-        self.focus_set()
-
-        self.master.event_generate("<<log>>", when="tail", data='ss')
-        self.protocol("WM_DELETE_WINDOW", self.on_close)
-
-    def toggle_macro(self):
-        if self.running:
-            self.macro_process_in_q.put(('stop',))
-            self._set_macro_status(False)
-        else:
-            target_star = self.target_star_input.get()
-            if not target_star:
-                showerror('Error', 'target star not set')
-                return
-            target_star = int(target_star)
-            if not 1 <= target_star <= 22:
-                showerror('Error', 'target star not valid')
-                return
-
-            out_q = mp.Queue()
-            self.macro_process_in_q = mp.Queue()
-            args = (self.macro_process_in_q, out_q, target_star,
-                    self.star_catch_opt.get(), self.safe_guard_opt.get())
-            self.macro_process = mp.Process(target=macro_process_main, args=args, daemon=True)
-            self.macro_process.start()
-            threading.Thread(target=copy_ev_queue, args=(out_q, self.event_queue, self), daemon=True).start()
-            self._set_macro_status(True)
-
-    def _check_event_queue(self):
-        while len(self.event_queue) > 0:
-            ev = self.event_queue.popleft()
-            if ev[0] == "log":
-                self.main_win.log(ev[1])
-            elif ev[0] == "stopped":
-                self._set_macro_status(False)
-                self.main_win.log('enhancing stopped')
-            elif ev[0] == "exception":
-                self._set_macro_status(False)
-                self.macro_process = None
-                self.main_win.log(str(ev[1]))
-
-    def _set_macro_status(self, running):
-        self.running = running
-        self.toggle_btn.configure(text="Stop" if running else "Enhance")
-
-    def on_close(self):
-        self.unbind('<<ev>>')
-        self.destroy()
 
 
 if __name__ == "__main__":

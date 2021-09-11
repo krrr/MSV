@@ -2,7 +2,7 @@ import cv2, win32gui, time, math
 import numpy as np, ctypes, ctypes.wintypes
 from PIL import Image
 from msv import winapi
-from msv.util import resource_path
+from msv.util import read_qt_resource
 
 
 _bmp_info_header = None
@@ -82,8 +82,8 @@ def gdi_capture(hwnd, force_scaled=None):
             winapi.DeleteObject(hbitmap)
 
 
-def read_alpha_as_mask(filename):
-    image_4channel = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
+def read_alpha_as_mask(path):
+    image_4channel = cv2.imdecode(read_qt_resource(path, True), cv2.IMREAD_UNCHANGED)
     alpha_channel = image_4channel[:,:,3]
     return alpha_channel
 
@@ -133,6 +133,16 @@ class ScreenProcessor:
         pos = win32gui.ClientToScreen(self.hwnd, (0, 0))
 
         return pos[0], pos[1], pos[0]+rect[2], pos[1]+rect[3]  # returns x1, y1, x2, y2
+
+    def get_scale_ratio(self):
+        if not self.is_window_scaled:
+            return 1
+
+        game_hdc = winapi.GetDC(self.hwnd)
+        if not game_hdc:
+            return None
+        screen_dpi = winapi.GetDeviceCaps(game_hdc, winapi.LOGPIXELSX)
+        return screen_dpi / 96
 
     def is_foreground(self):
         return win32gui.GetForegroundWindow() == self.hwnd
@@ -191,12 +201,12 @@ class StaticImageProcessor:
 
         self.cv_templates = {}
         for i in ('gm_cap', 'dialog_end_chat', 'eboss_minute', 'eboss_second'):
-            path = resource_path + i + '_tpl.png'
-            self.cv_templates[i] = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+            path = ':/template/' + i + '_tpl.png'
+            self.cv_templates[i] = cv2.imdecode(read_qt_resource(path, True), cv2.IMREAD_GRAYSCALE)
             if self.cv_templates[i] is None:
                 raise FileNotFoundError(path)
         self.cv_templates['gm_cap_r'] = np.fliplr(self.cv_templates['gm_cap'])
-        self.cv_templates['gm_cap_mask'] = read_alpha_as_mask(resource_path + 'gm_cap_tpl.png')
+        self.cv_templates['gm_cap_mask'] = read_alpha_as_mask(':/template/gm_cap_tpl.png')
         self.cv_templates['gm_cap_r_mask'] = np.fliplr(self.cv_templates['gm_cap_mask'])
 
         self.maximum_minimap_area = 40000

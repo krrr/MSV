@@ -15,6 +15,7 @@ from .eastern_cave_path2 import EasternCavePath2
 from .end_of_the_world1_4 import EndOfTheWorld1_4
 
 
+# dict is ordered in py3.7+
 map_scripts = {
     'T-Boy Train 1': TBoyResearchTrain1,
     'Cavern Upper Path': CupMacroController,
