@@ -239,7 +239,7 @@ DEFAULT_KEY_MAP = {
     "shikigami_haunting": dic.DIK_RCONTROL,
     "kishin_shoukan": dic.DIK_Q,
     "yaksha_boss": dic.DIK_O,
-    "exorcist_charm": dic.DIK_Y,
+    "exorcist_charm": dic.DIK_K,
     "yuki_musume": dic.DIK_1,
     "shikigami_charm": dic.DIK_SEMICOLON,
     "interact": dic.DIK_PERIOD,

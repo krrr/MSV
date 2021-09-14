@@ -37,6 +37,7 @@ class AutoStarForceWindow(QWidget):
 
         helpLabel = QLabel(frame)
         helpLabel.setText("Open enhance window (leave it at initial position)\n and set equipment first.")
+        helpLabel.setMinimumHeight(28)
         layout.addWidget(helpLabel)
         spacer = QWidget(frame)
         spacer.setFixedHeight(6)
