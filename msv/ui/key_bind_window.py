@@ -15,14 +15,20 @@ class KeyListener(QObject):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress:
-            self.callback(event.nativeScanCode())
-            obj.removeEventFilter(self)
+            scanCode = event.nativeScanCode()
+            if scanCode & 0x100:  # is extended key
+                scanCode = (scanCode & 0xFF) + 0x80  # why this works?
+            ret = self.callback(scanCode)
+            if ret:
+                obj.removeEventFilter(self)
             return True
         else:
             return super().eventFilter(obj, event)
 
 
 class KeyBindWindow(QDialog, Ui_KeyBindWindow):
+    PLEASE_INPUT_TXT = 'Please input...'
+
     def __init__(self, parent):
         super().__init__(parent, Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.setupUi(self)
@@ -84,16 +90,20 @@ class KeyBindWindow(QDialog, Ui_KeyBindWindow):
         if scanCode == directinput_constants.DIK_ESCAPE:  # unbind this key
             self.keymap[keyName] = None
             btn.setText('')
+            return True
         elif scanCode in directinput_constants.DIK2NAME:
             self.keymap[keyName] = scanCode
             btn.setText(directinput_constants.DIK2NAME[scanCode])
+            return True
         else:
-            QMessageBox.critical(self, "Key Settings", "Unsupported key. Code: " + str(scanCode))
+            QMessageBox.critical(self, "Key Settings", "Unsupported key. Scan code: " + hex(scanCode))
+            return False
 
     def _onSetKeyBtnClicked(self):
         btn = self.sender()
-        btn.setText("Please input...")
-        btn.installEventFilter(KeyListener(self, lambda k: self._setKey(k, btn)))
+        if btn.text() != self.PLEASE_INPUT_TXT:
+            btn.setText(self.PLEASE_INPUT_TXT)
+            btn.installEventFilter(KeyListener(self, lambda k: self._setKey(k, btn)))
 
     @pyqtSlot()
     def on_resetBtn_clicked(self):
