@@ -57,7 +57,8 @@ class PlayerController:
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60, 'true_arachnid_reflection': 250
+            'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
+            'spirit_domain': 196
         }
 
         self.rune_fail_cooldown = 5
@@ -68,7 +69,7 @@ class PlayerController:
         self.last_skill_use_time = {
             'yaksha_boss': 0, 'kishin_shoukan': 0, 'nightmare_invite': 0,
             'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0,
-            'mihile_link': 0, 'true_arachnid_reflection': 0
+            'mihile_link': 0, 'true_arachnid_reflection': 0, 'spirit_domain': 0
         }
 
     def update(self, player_coords_x=None, player_coords_y=None):
@@ -371,6 +372,18 @@ class PlayerController:
         self.skill_cast_counter += 1
         if wait_delay:
             time.sleep(1.1 + random_number(0.01))
+
+    def vanquisher_move(self, dir_key, timeout):
+        if not self.is_skill_key_set('vanquisher_charm'):
+            return
+        self.key_mgr.direct_press(self.keymap['vanquisher_charm'])
+        time.sleep(0.02)
+        self.key_mgr.direct_press(dir_key)
+        time.sleep(timeout)
+        self.key_mgr.direct_release(dir_key)
+        time.sleep(0.02)
+        self.key_mgr.direct_release(self.keymap['vanquisher_charm'])
+        time.sleep(0.15 + random_number(0.05))
 
     def use_set_skill(self, skill_name):
         for i in range(2):

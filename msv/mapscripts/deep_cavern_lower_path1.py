@@ -22,8 +22,7 @@ class Dclp1MacroController(MacroController):
 
         # pickup money
         if not self.elite_boss_detected and time.time() - self.last_pickup_money_time > self.pickup_money_interval:
-            self.navigate_to_platform('ab2972bd')  # center top
-            self.pickup_money(True)
+            self.pickup_money()
             self.last_pickup_money_time = time.time()
             return
 
@@ -46,8 +45,10 @@ class Dclp1MacroController(MacroController):
         # Finished
         return 0
 
-    def pickup_money(self, return1=False):
-        # assume at center top now
+    def pickup_money(self):
+        if self.player_manager.is_skill_usable('true_arachnid_reflection'):
+            self.player_manager.use_set_skill('true_arachnid_reflection')
+        self.navigate_to_platform('ab2972bd')  # center top
         # right platforms first
         self.logger.info('pick up money')
 
@@ -108,16 +109,3 @@ class Dclp1MacroController(MacroController):
         self.player_manager.shikigami_haunting()
         time.sleep(0.15 + random_number(0.1))
         self.player_manager.teleport_right()
-
-        if return1:  # alternative preset will stay at left middle platform
-            time.sleep(0.05)
-            return
-
-        self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.shikigami_haunting()
-        time.sleep(0.2 + random_number(0.1))
-        self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['b0d5f01d'].start_x - 5)  # left middle
-        time.sleep(0.2 + random_number(0.1))
-
-        self.update()
-        self.navigate_to_platform('600f8ed9')  # center bottom

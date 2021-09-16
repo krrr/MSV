@@ -77,7 +77,15 @@ class LabyrinthInterior1(MacroController):
 
     def pickup_money(self):
         self.logger.info('pick up money')
-        self.navigate_to_platform('d5ad102e')
+        if self.player_manager.is_skill_usable('true_arachnid_reflection'):
+            self.player_manager.use_set_skill('true_arachnid_reflection')
+            self.navigate_to_platform('d5ad102e')
+        elif self.player_manager.is_skill_usable('spirit_domain'):
+            self.navigate_to_platform('d5ad102e')  # go to bottom first
+            self.player_manager.use_set_skill('spirit_domain')
+            self.player_manager.vanquisher_move(dc.DIK_RIGHT, 5 + random_number(0.5))
+        else:
+            self.navigate_to_platform('d5ad102e')
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['d5ad102e'].end_x - 2)
         self.player_manager.stay(0.5 + random_number(0.05))
         self.update()

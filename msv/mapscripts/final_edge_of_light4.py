@@ -46,6 +46,8 @@ class Fel4MacroController(MacroController):
 
     def pickup_money(self):
         self.logger.info('pick up money')
+        if self.player_manager.is_skill_usable('true_arachnid_reflection'):
+            self.player_manager.use_set_skill('true_arachnid_reflection')
         self.navigate_to_platform('0ee7b532')  # bottom
 
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['0ee7b532'].start_x + 2)

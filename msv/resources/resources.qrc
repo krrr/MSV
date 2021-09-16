@@ -35,6 +35,8 @@
     <file>skill_icon/true_arachnid_reflection.png</file>
     <file>skill_icon/yaksha_boss.png</file>
     <file>skill_icon/yuki_musume.png</file>
+    <file>skill_icon/vanquisher_charm.png</file>
+    <file>skill_icon/spirit_domain.png</file>
   </qresource>
   <qresource>
     <file>sound/beep.wav</file>

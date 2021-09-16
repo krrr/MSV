@@ -55,6 +55,8 @@ class KeyBindWindow(QDialog, Ui_KeyBindWindow):
             icoLabel.setFixedSize(32, 32)
             layout.addWidget(icoLabel)
             # skill text
+            if idx < 8:
+                displayName = displayName + ' <span style="color: red">*</span>'
             layout.addWidget(QLabel(displayName, container))
             # set button
             btn = QPushButton(self.keyListWidget)
