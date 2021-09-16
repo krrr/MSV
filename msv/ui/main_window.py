@@ -5,7 +5,7 @@ import threading
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtMultimedia import *
-from msv import driver, mapscripts, winapi, __name__, __version__
+from msv import driver, mapscripts, winapi, APP_TITLE, __version__
 from msv.ui import fix_sizes_for_high_dpi
 from msv.ui.main_window_ui import Ui_MainWindow
 from msv.util import get_config, save_config, GlobalHotKeyListener, read_qt_resource
@@ -39,7 +39,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.platform_file_path = None
         self.macro_process_in_q = multiprocessing.Queue()
 
-        self.log("MSV version: v" + __version__)
+        self.log(APP_TITLE + " version: v" + __version__)
         self.log('\n')
 
         self.preset_names = tuple(mapscripts.map_scripts.keys())
@@ -85,7 +85,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 driver.load_driver()
                 self.log('kernel driver loaded')
             except Exception as e:
-                QMessageBox.critical(self, __name__, 'Driver failed to load: ' + str(e))
+                QMessageBox.critical(self, 'Error', 'Driver failed to load: ' + str(e))
 
     def closeEvent(self, event):
         # lambda may cause leak
@@ -109,30 +109,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def start_macro(self):
         if not winapi.IsUserAnAdmin():
-            QMessageBox.critical(self, __name__, 'Please run as administrator')
+            QMessageBox.critical(self, 'Error', 'Please run as administrator')
             return
 
         if not self.macro_process:
             self.toggle_macro_process()
         keymap = get_config().get('keymap')
         if not keymap:
-            QMessageBox.critical(self, __name__, "The key setting could not be read. Please reset the key.")
+            QMessageBox.critical(self, 'Error', "The key setting could not be read. Please reset the key.")
             return
 
         if not self.platform_file_path:
-            QMessageBox.critical(self, __name__, "Please select a terrain file.")
+            QMessageBox.critical(self, 'Error', "Please select a terrain file.")
             return
 
         cap = ScreenProcessor()
         if not cap.get_game_hwnd():
-            QMessageBox.critical(self, __name__, "MapleStory window not found")
+            QMessageBox.critical(self, 'Error', "MapleStory window not found")
             return
 
         rect = cap.ms_get_screen_rect()
         if get_config().get('debug'):
             self.log("Game Window Rect:", rect)
         if rect is None:
-            QMessageBox.critical(self, __name__, "Failed to get Maple Window location.\nMove MapleStory window so "
+            QMessageBox.critical(self, 'Error', "Failed to get Maple Window location.\nMove MapleStory window so "
                                                  "that the top left corner of the window is within the screen.")
             return
 
@@ -156,7 +156,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def log(self, *args):
         txt = ' '.join(str(i) for i in args)
         self.logTextArea.append(txt)
-        self.logTextArea.ensureCursorVisible()
+        scrollbar = self.logTextArea.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
 
     def toggle_macro_process(self):
         if not self.macro_process:
@@ -217,7 +218,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # minimap_coords = data["minimap"]
             self.log("Terrain file loaded (platforms: %s)" % len(platforms.keys()))
         except Exception as e:
-            QMessageBox.critical(self, __name__, "Failed to load terrain file: %s\n%s" % (path, str(e)))
+            QMessageBox.critical(self, 'Error', "Failed to load terrain file: %s\n%s" % (path, str(e)))
         else:
             self.platform_file_path = path
             self.terrainFileLabel.setText(os.path.basename(path).split('.')[0])
@@ -267,7 +268,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_actionEditCurrent_triggered(self):
         if not self.platform_file_path:
-            QMessageBox.critical(self, __name__, 'No terrain file opened')
+            QMessageBox.critical(self, 'Error', 'No terrain file opened')
         else:
             # TerrainEditorWindow(self.master, self.platform_file_path)
             pass
