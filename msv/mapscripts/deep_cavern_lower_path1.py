@@ -1,4 +1,5 @@
 import time
+import random
 from msv.macro_script import MacroController
 from msv.util import random_number
 import msv.directinput_constants as dc
@@ -28,14 +29,19 @@ class Dclp1MacroController(MacroController):
 
         if self.current_platform_hash == 'b0d5f01d':  # left middle
             self.player_manager.shiki_exo_shiki(73)
+            time.sleep(random_number(0.08))
         elif self.current_platform_hash == '600f8ed9':  # center bottom
             self.player_manager.shikigami_haunting_sweep_move(70)
             self.player_manager.teleport_up()
         elif self.current_platform_hash == 'ab2972bd':  # center top
             left_edge = self.terrain_analyzer.platforms['ab2972bd'].start_x
-            self.player_manager.shikigami_haunting_sweep_move(left_edge + 5)
-            self.player_manager.horizontal_move_goal(left_edge - 4)
-            time.sleep(0.095)
+            if self.player_manager.x > left_edge + self.player_manager.TELEPORT_HORIZONTAL_RANGE - 6 and random.random() < 0.6:
+                self.player_manager.shikigami_haunting_sweep_move(left_edge + self.player_manager.TELEPORT_HORIZONTAL_RANGE - 6)
+                self.player_manager.teleport_left()
+            else:
+                self.player_manager.shikigami_haunting_sweep_move(left_edge + 5)
+                self.player_manager.horizontal_move_goal(left_edge - 4)
+            time.sleep(0.095 + random_number(0.02))
         else:
             self.navigate_to_platform('b0d5f01d')  # left middle
 
@@ -60,7 +66,7 @@ class Dclp1MacroController(MacroController):
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].end_x - 2)
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].end_x + 4)
         self.check_cmd_queue()
-        time.sleep(0.1)
+        time.sleep(0.1 + random_number(0.02))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['85e71f57'].start_x + 2)  # right middle
 
         if no_attack:
@@ -83,7 +89,7 @@ class Dclp1MacroController(MacroController):
 
         self.check_cmd_queue()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['600f8ed9'].end_x - 3)  # center bottom
-        time.sleep(0.55)
+        time.sleep(0.55 + random_number(0.03))
 
         self.check_cmd_queue()
         self.update()

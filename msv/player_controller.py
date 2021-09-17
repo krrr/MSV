@@ -349,7 +349,10 @@ class PlayerController:
         elif dis > 2:
             self.horizontal_move_goal(x)
 
-        dir_ = DIK_RIGHT if self.x < x else DIK_LEFT
+        if abs(self.x - x) < self.horizontal_goal_offset:
+            dir_ = random.choice((DIK_LEFT, DIK_RIGHT))
+        else:
+            dir_ = DIK_RIGHT if self.x < x else DIK_LEFT
         self.key_mgr.single_press(dir_)
         self.shikigami_haunting()
         time.sleep(0.05)
