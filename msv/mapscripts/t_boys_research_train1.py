@@ -3,8 +3,8 @@ from msv.macro_script import MacroController
 
 
 class TBoyResearchTrain1(MacroController):
-    def __init__(self, keymap, log_queue, cmd_queue, config):
-        super().__init__(keymap, log_queue, cmd_queue, config)
+    def __init__(self, keymap, conn, config):
+        super().__init__(keymap, conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
@@ -46,13 +46,13 @@ class TBoyResearchTrain1(MacroController):
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['48acf160'].start_x + 3)
         self.update()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['48acf160'].end_x + 3)
-        self.check_cmd_queue()
+        self.poll_conn()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['374d7c30'].start_x + 3)
         time.sleep(0.35)
         self.player_manager.exorcist_charm()
-        self.check_cmd_queue()
+        self.poll_conn()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['374d7c30'].end_x - 3)  # right middle
-        self.check_cmd_queue()
+        self.poll_conn()
 
         self.update()
         # Quick other player sound notify
@@ -67,7 +67,7 @@ class TBoyResearchTrain1(MacroController):
         self.update()
         self.navigate_to_platform('8e08385f')
 
-        self.check_cmd_queue()
+        self.poll_conn()
         self.update()
         self.navigate_to_platform('c26c0f47')
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['c26c0f47'].end_x - 4)

@@ -65,4 +65,4 @@ class EasternCavePath2(MacroController):
                 break
             self.player_manager.horizontal_move_goal(x, precise=True)
 
-            self.check_cmd_queue()
+            self.poll_conn()

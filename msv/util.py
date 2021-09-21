@@ -5,10 +5,10 @@ import collections
 import logging
 import logging.handlers
 import os
-import multiprocessing as mp
 import math
 import random
 import numpy as np
+from multiprocessing.connection import Connection
 from ctypes import c_buffer, windll
 from PyQt5.QtCore import QFile, QAbstractNativeEventFilter, QTimer
 from msv import winapi
@@ -69,23 +69,14 @@ def get_file_log_handler(level=logging.DEBUG):
     return fh
 
 
-class QueueLoggerHandler(logging.Handler):
-    def __init__(self, level, logger_queue):
+class ConnLoggerHandler(logging.Handler):
+    def __init__(self, level, conn: Connection):
         super().__init__(level)
-        self.logger_queue = logger_queue
+        self.conn = conn
 
     def emit(self, record):
-        if self.logger_queue:
-            self.logger_queue.put(("log", self.format(record)))
-
-
-def copy_ev_queue(src: mp.Queue, dst, root):
-    while True:
-        try:
-            dst.append(src.get())  # get() is blocking
-            root.event_generate("<<ev>>", when="tail")
-        except (ValueError, AssertionError):  # queue closed
-            return
+        if self.conn:
+            self.conn.send(("log", self.format(record)))
 
 
 def setup_tesseract_ocr():

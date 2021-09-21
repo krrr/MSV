@@ -8,18 +8,18 @@ from msv.tools.auto_star_force import macro_process_main
 
 
 class AutoStarForceWindow(QWidget):
-    macro_out_q_signal = pyqtSignal(object)
+    macroProcSignal = pyqtSignal(object)
 
     def __init__(self, parent=None):
         super().__init__(parent, Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
         self.setAttribute(Qt.WA_DeleteOnClose)
         self.setFixedSize(300, 130)
 
-        self.macro_out_q_signal.connect(self._onMacroQMessage)
+        self.macroProcSignal.connect(self._onMacroProcMessage)
         self.setWindowTitle("Auto Star Force")
         self.running = False
         self.macro_process = None
-        self.macro_process_in_q = None
+        self.macro_proc_conn = None
 
         mainLayout = QVBoxLayout(self)
         mainLayout.setContentsMargins(0, 0, 0, 4)
@@ -85,7 +85,7 @@ class AutoStarForceWindow(QWidget):
 
     def toggle_macro(self):
         if self.running:
-            self.macro_process_in_q.put(('stop',))
+            self.macro_proc_conn.send(('stop',))
             self._set_macro_status(False)
         else:
             if not self.targetStarInput.hasAcceptableInput():
@@ -93,26 +93,26 @@ class AutoStarForceWindow(QWidget):
                 return
             target_star = int(self.targetStarInput.text())
 
-            macro_process_out_q = mp.Queue()
-            self.macro_process_in_q = mp.Queue()
-            args = (self.macro_process_in_q, macro_process_out_q, target_star,
+            parent_conn, child_conn = mp.Pipe()
+            self.macro_proc_conn = parent_conn
+            args = (child_conn, target_star,
                     self.starCatchCheckbox.isChecked(), self.safeGuardCheckbox.isChecked())
             self.macro_process = mp.Process(target=macro_process_main, args=args, daemon=True)
             self.macro_process.start()
-            threading.Thread(target=self._macroOutQToSignal, args=(macro_process_out_q,), daemon=True).start()
+            threading.Thread(target=self._macroOutQToSignal, args=(parent_conn,), daemon=True).start()
             self._set_macro_status(True)
 
-    def _macroOutQToSignal(self, q):
+    def _macroOutQToSignal(self, conn):
         """Read from macro process out queue from separate thread, and notify main thread
         using signal"""
         while True:
             try:
-                self.macro_out_q_signal.emit(q.get())  # get() is blocking
-            except (ValueError, AssertionError):  # queue closed
+                self.macroProcSignal.emit(conn.recv())  # recv() is blocking
+            except EOFError:  # closed
                 return
 
     @pyqtSlot(object)
-    def _onMacroQMessage(self, ev):
+    def _onMacroProcMessage(self, ev):
         if ev[0] == "log":
             self.parent().log(ev[1])
         elif ev[0] == "stopped":

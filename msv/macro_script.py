@@ -1,19 +1,19 @@
 import os
 import datetime
 import logging, math, time, random
-import multiprocessing as mp
 import msv.directinput_constants as dc
 import msv.player_controller as pc
 import msv.input_manager as km
+from multiprocessing.connection import Connection
 from msv.terrain_analyzer import PathAnalyzer, MoveMethod
 from msv import driver
 from msv.screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from msv.player_controller import PlayerController
 from msv.rune_solver.rune_solver_simple import RuneSolverSimple
-from msv.util import get_config, get_file_log_handler, QueueLoggerHandler, random_number
+from msv.util import get_config, get_file_log_handler, ConnLoggerHandler, random_number
 
 
-def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
+def macro_process_main(conn: Connection):
     from msv import mapscripts
     # noinspection PyUnresolvedReferences
     import msv.resources_rc  # for reading qt resource in child process
@@ -25,16 +25,16 @@ def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
     macro = None
 
     while True:
-        command = input_q.get()
+        command = conn.recv()
         try:
             if command[0] == "start":
                 logger.debug("starting MacroController...")
                 keymap, platform_file_dir, preset = command[1:]
                 config = get_config()
                 if preset:
-                    macro = mapscripts.map_scripts[preset](keymap, output_q, input_q, config)
+                    macro = mapscripts.map_scripts[preset](keymap, conn, config)
                 else:
-                    macro = MacroController(keymap, output_q, input_q, config)
+                    macro = MacroController(keymap, conn, config)
                 macro.load_and_process_platform_map(platform_file_dir)
 
                 macro.loop_entry()
@@ -48,10 +48,10 @@ def macro_process_main(input_q: mp.Queue, output_q: mp.Queue):
             macro = None
         except Exception:  # unknown error
             logger.exception("Exception during loop execution:")
-            output_q.put(("exception", None))
+            conn.send(("exception", None))
             break
 
-    output_q.close()
+    conn.close()
 
 
 class CommandReceived(Exception):
@@ -66,16 +66,15 @@ class MacroController:
     FIND_PLATFORM_OFFSET = 2
     ERROR_RETRY_LIMIT = 5
 
-    def __init__(self, keymap=km.DEFAULT_KEY_MAP, log_queue=None, cmd_queue=None, config=None):
+    def __init__(self, keymap=km.DEFAULT_KEY_MAP, conn=None, config=None):
         if config is None:
             config = {}
-        self.log_queue = log_queue
-        self.cmd_queue = cmd_queue
+        self.conn = conn
         self.debug = config.get('debug', True)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
         if not self.logger.hasHandlers():
-            self.logger.addHandler(QueueLoggerHandler(logging.DEBUG, log_queue))
+            self.logger.addHandler(ConnLoggerHandler(logging.DEBUG, conn))
             self.logger.addHandler(get_file_log_handler())
         self.logger.debug("%s init" % self.__class__.__name__)
 
@@ -203,7 +202,7 @@ class MacroController:
 
                 self._player_move(solution)
 
-                self.check_cmd_queue()
+                self.poll_conn()
                 self.update()
                 if self.current_platform_hash != solution.to_hash:  # should retry
                     if self.current_platform_hash is None:  # in case stuck in ladder
@@ -238,7 +237,7 @@ class MacroController:
             -3: white room detected
             -4: GM detected
         """
-        self.check_cmd_queue()
+        self.poll_conn()
 
         random.seed((time.time() * 10**4) % 10 ** 3)
 
@@ -258,7 +257,7 @@ class MacroController:
             if self.player_pos_not_found_start is None:
                 self.player_pos_not_found_start = time.time()
                 if white_room:
-                    self.log_queue.put(('play', 'white_room'))
+                    self.conn.send(('play', 'white_room'))
                     self.logger.info('white room detected')
                     self.save_current_screen('white_room')
 
@@ -272,7 +271,7 @@ class MacroController:
 
         ### GM check
         if self.screen_processor.check_gm_cap():
-            self.log_queue.put(('play', 'white_room'))
+            self.conn.send(('play', 'white_room'))
             self.logger.info('GM detected')
             self.save_current_screen('gm')
             return -4
@@ -552,13 +551,13 @@ class MacroController:
 
         if combine:
             is_set = self._place_set_skill('yaksha_boss')
-            self.check_cmd_queue()
+            self.poll_conn()
             self.update()
             if self.current_platform_hash is None:
                 return is_set
             if is_set:
                 self._place_set_skill('nightmare_invite')
-                self.check_cmd_queue()
+                self.poll_conn()
                 self._place_set_skill('kishin_shoukan')
                 self.update()
                 return True
@@ -571,7 +570,7 @@ class MacroController:
                 self.update()
                 if self.current_platform_hash is None:
                     return is_set
-                self.check_cmd_queue()
+                self.poll_conn()
             return is_set
 
     def _place_set_skill(self, skill_name):
@@ -617,21 +616,21 @@ class MacroController:
                 return True
         return False
 
-    def check_cmd_queue(self):
-        if self.cmd_queue and not self.cmd_queue.empty():
+    def poll_conn(self):
+        if self.conn and self.conn.poll():
             self.keyhandler.reset()
             raise CommandReceived()
 
     def abort(self, reason='', raise_=True):
         self.keyhandler.reset()
         self.logger.info('macro stopped' + (': ' + reason if reason else ''))
-        if self.log_queue:
-            self.log_queue.put(('stopped', None))
+        if self.conn:
+            self.conn.send(('stopped', None))
         if raise_:
             raise Aborted
 
     def alert_sound(self, times):
-        self.log_queue.put(('alert_sound', times))
+        self.conn.send(('alert_sound', times))
 
     def exit_to_ch_select(self):
         for k in (dc.DIK_ESCAPE, dc.DIK_UP, dc.DIK_RETURN, dc.DIK_RETURN):

@@ -12,8 +12,8 @@ class EndOfTheWorld1_4(MacroController):
     LEFT_X = 60
     RIGHT_X = 91
 
-    def __init__(self, keymap, log_queue, cmd_queue, config):
-        super().__init__(keymap, log_queue, cmd_queue, config)
+    def __init__(self, keymap, conn, config):
+        super().__init__(keymap, conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
@@ -90,15 +90,15 @@ class EndOfTheWorld1_4(MacroController):
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
             self.alert_sound(2)
-        self.check_cmd_queue()
+        self.poll_conn()
         self.navigate_to_platform('5b53ae83')
 
-        self.check_cmd_queue()
+        self.poll_conn()
 
         ### bottom
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['5b53ae83'].start_x + 4)
         self.player_manager.stay(0.4 + random_number(0.1))
-        self.check_cmd_queue()
+        self.poll_conn()
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['5b53ae83'].end_x - 1)
         self.player_manager.stay(1 + random_number(0.1))
         self.navigate_to_platform('b70e34c7')  # center right
@@ -114,7 +114,7 @@ class EndOfTheWorld1_4(MacroController):
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
             self.alert_sound(2)
-        self.check_cmd_queue()
+        self.poll_conn()
         self.navigate_to_platform('6a51d25a')
 
         ### top right

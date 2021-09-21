@@ -2,30 +2,29 @@ import re
 import time
 import logging
 import random
-import multiprocessing as mp
 from PIL import ImageOps
+from multiprocessing.connection import Connection
 import msv.directinput_constants as dc
-from msv.util import get_config, setup_tesseract_ocr, color_distance, QueueLoggerHandler
+from msv.util import get_config, setup_tesseract_ocr, color_distance, ConnLoggerHandler
 from msv.macro_script import Aborted
 from msv.screen_processor import ScreenProcessor, GameCaptureError
 from msv.input_manager import InputManager
 
 
-def macro_process_main(input_q: mp.Queue, output_q: mp.Queue, target_star, star_catch, safe_guard):
+def macro_process_main(conn: Connection, target_star: int, star_catch: bool, safe_guard: bool):
     try:
-        auto_star_force = AutoStarForce(ScreenProcessor(), logging.DEBUG if get_config().get('debug') else logging.INFO,
-                                        cmd_queue=input_q, log_queue=output_q)
+        auto_star_force = AutoStarForce(ScreenProcessor(), logging.DEBUG if get_config().get('debug') else logging.INFO, conn=conn)
         auto_star_force.run(target_star, star_catch, safe_guard)
-        output_q.put(('stopped', None))
+        conn.send(('stopped', None))
     except GameCaptureError:
-        output_q.put(('log', 'failed to capture game window'))
-        output_q.put(('stopped', None))
+        conn.send(('log', 'failed to capture game window'))
+        conn.send(('stopped', None))
     except Aborted:
-        output_q.put(('stopped', None))
+        conn.send(('stopped', None))
     except Exception as e:
-        output_q.put(('exception', e))
+        conn.send(('exception', e))
 
-    output_q.close()
+    conn.close()
 
 
 class AutoStarForce:
@@ -47,11 +46,11 @@ class AutoStarForce:
     RESULT_TEXT_RECT = (55, 171, 293, 200)
     DIALOG_BLUE_COLOR = (24, 139, 198)
 
-    def __init__(self, screen_processor, log_level=logging.DEBUG, cmd_queue=None, log_queue=None):
+    def __init__(self, screen_processor, log_level=logging.DEBUG, conn=None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.setLevel(log_level)
-        if log_queue and not self.logger.hasHandlers():
-            self.logger.addHandler(QueueLoggerHandler(logging.DEBUG, log_queue))
+        if conn and not self.logger.hasHandlers():
+            self.logger.addHandler(ConnLoggerHandler(logging.DEBUG, conn))
 
         setup_tesseract_ocr()
         import pyocr.libtesseract
@@ -62,7 +61,7 @@ class AutoStarForce:
             raise Exception('tesseract english data not available')
 
         self.current_star_regexp = re.compile('(\\d+)\\s?Star\\s?>\\s?\\d+\\s?Star')
-        self.cmd_queue = cmd_queue
+        self.conn = conn
         self.screen_processor = screen_processor
         self.screen_processor.get_game_hwnd()
         self.input_mgr = InputManager()
@@ -99,7 +98,7 @@ class AutoStarForce:
                 self.input_mgr.mouse_left_click_at(*self._map_pos(self.SAFE_GUARD_OPTION_POINT), 4)
                 time.sleep(0.08)
 
-            if self.cmd_queue and not self.cmd_queue.empty():
+            if self.poll_conn():
                 return
 
             self.input_mgr.mouse_left_click_at(*self._map_pos(self.ENHANCE_BTN_POS), 4)
@@ -120,7 +119,7 @@ class AutoStarForce:
             self.wait(result=True)
             result = self.get_result()
 
-            if self.cmd_queue and not self.cmd_queue.empty():
+            if self.poll_conn():
                 return
 
             time.sleep(random.uniform(0.06, 0.09))
@@ -157,11 +156,17 @@ class AutoStarForce:
             else:
                 raise Exception('unknown result')
 
-            if self.cmd_queue and not self.cmd_queue.empty():
+            if self.poll_conn():
                 return
 
             self.logger.debug('-------------------------------')
             count += 1
+
+    def poll_conn(self):
+        try:
+            return self.conn and self.conn.poll()
+        except EOFError:
+            return True
 
     def _map_pos(self, pos):
         return (self.ms_rect[0] + (self.AREA_POS[0]+pos[0]) * self.scale_ratio,
@@ -222,9 +227,7 @@ class AutoStarForce:
                 break
 
         # print('target_zone_width:', target_zone_width)
-        x, y, w, h = 156, 215, 8, 1  # check this area on star track border
-        if target_zone_width <= 45:
-            x = 155
+        x, y, w, h = 163, 215, 8, 1  # check this area on star track border
 
         rect = (self.rect[0]+x, self.rect[1]+y, self.rect[0]+x+w, self.rect[1]+y+h)
         start = time.time()

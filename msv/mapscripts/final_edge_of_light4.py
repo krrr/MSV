@@ -6,8 +6,8 @@ import msv.directinput_constants as dc
 
 # the final edge of light 4 script
 class Fel4MacroController(MacroController):
-    def __init__(self, keymap, log_queue, cmd_queue, config):
-        super().__init__(keymap, log_queue, cmd_queue, config)
+    def __init__(self, keymap, conn, config):
+        super().__init__(keymap, conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
@@ -52,17 +52,17 @@ class Fel4MacroController(MacroController):
 
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['0ee7b532'].start_x + 2)
         time.sleep(0.1)
-        self.check_cmd_queue()
+        self.poll_conn()
 
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['e4d256f5'].end_x - 12)  # middle right
-        self.check_cmd_queue()
+        self.poll_conn()
 
         self.update()
         self.navigate_to_platform('e4d256f5')  # middle right
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
         self.player_manager.stay(0.35 + random_number(0.1))
-        self.check_cmd_queue()
+        self.poll_conn()
 
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():
@@ -73,7 +73,7 @@ class Fel4MacroController(MacroController):
         self.keyhandler.single_press(dc.DIK_LEFT)
         self.player_manager.shikigami_haunting()
         self.player_manager.stay(0.3 + random_number(0.1))
-        self.check_cmd_queue()
+        self.poll_conn()
 
         self.update()
         self.navigate_to_platform('cb718da9')  # top left

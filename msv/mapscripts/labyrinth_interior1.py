@@ -9,8 +9,8 @@ class LabyrinthInterior1(MacroController):
     LEFT_X = 66
     RIGHT_X = 85
 
-    def __init__(self, keymap, log_queue, cmd_queue, config):
-        super().__init__(keymap, log_queue, cmd_queue, config)
+    def __init__(self, keymap, conn, config):
+        super().__init__(keymap, conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
@@ -89,10 +89,10 @@ class LabyrinthInterior1(MacroController):
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['d5ad102e'].end_x - 2)
         self.player_manager.stay(0.5 + random_number(0.05))
         self.update()
-        self.check_cmd_queue()
+        self.poll_conn()
         self.navigate_to_platform('6c45ab2d')
 
-        self.check_cmd_queue()
+        self.poll_conn()
 
         ### center right
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6c45ab2d'].end_x - 4)
@@ -105,7 +105,7 @@ class LabyrinthInterior1(MacroController):
             self.player_manager.stay(0.5 + random_number(0.05))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6923e252'].start_x + 5)
         self.update()
-        self.check_cmd_queue()
+        self.poll_conn()
         self.navigate_to_platform('6923e252')
 
         ### top right
@@ -118,7 +118,7 @@ class LabyrinthInterior1(MacroController):
         self.player_manager.teleport_left()
         time.sleep(0.04)
         self.update()
-        self.check_cmd_queue()
+        self.poll_conn()
         self.navigate_to_platform('8ff668b3')
 
         ### top left
@@ -136,7 +136,7 @@ class LabyrinthInterior1(MacroController):
         self.player_manager.teleport_left()
         time.sleep(0.06)
         self.update()
-        self.check_cmd_queue()
+        self.poll_conn()
         self.navigate_to_platform('4e54fb89')  # center left
 
         x = self.terrain_analyzer.platforms['4e54fb89'].start_x + 5

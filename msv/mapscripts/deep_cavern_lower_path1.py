@@ -7,8 +7,8 @@ import msv.directinput_constants as dc
 
 # deep cavern lower path 1 script
 class Dclp1MacroController(MacroController):
-    def __init__(self, keymap, log_queue, cmd_queue, config):
-        super().__init__(keymap, log_queue, cmd_queue, config)
+    def __init__(self, keymap, conn, config):
+        super().__init__(keymap, conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
@@ -65,13 +65,13 @@ class Dclp1MacroController(MacroController):
 
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['ab2972bd'].end_x - 2)
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['ab2972bd'].end_x + 4)
-        self.check_cmd_queue()
+        self.poll_conn()
         time.sleep(0.1 + random_number(0.02))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['85e71f57'].start_x + 2)  # right middle
 
         if no_attack:
             self.keyhandler.single_press(dc.DIK_RIGHT)
-            self.check_cmd_queue()
+            self.poll_conn()
             time.sleep(0.95 + random_number(0.1))
             self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 3)  # right right middle
             self.keyhandler.single_press(dc.DIK_LEFT)
@@ -79,7 +79,7 @@ class Dclp1MacroController(MacroController):
         else:
             self.keyhandler.single_press(dc.DIK_RIGHT)
             self.player_manager.shikigami_haunting()
-            self.check_cmd_queue()
+            self.poll_conn()
             time.sleep(0.6 + random_number(0.1))
             self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['0269c864'].end_x - 6)  # right right middle
             self.player_manager.shikigami_haunting()
@@ -87,11 +87,11 @@ class Dclp1MacroController(MacroController):
             self.player_manager.shikigami_haunting()
             time.sleep(0.25)
 
-        self.check_cmd_queue()
+        self.poll_conn()
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['600f8ed9'].end_x - 3)  # center bottom
         time.sleep(0.55 + random_number(0.03))
 
-        self.check_cmd_queue()
+        self.poll_conn()
         self.update()
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():

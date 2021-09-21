@@ -9,7 +9,6 @@ from msv import driver, mapscripts, winapi, APP_TITLE, __version__
 from msv.ui import fix_sizes_for_high_dpi
 from msv.ui.main_window_ui import Ui_MainWindow
 from msv.util import get_config, save_config, GlobalHotKeyListener, read_qt_resource
-# from msv.screen_processor import ScreenProcessor
 from msv.macro_script import macro_process_main
 from msv.ui.key_bind_window import KeyBindWindow
 from msv.ui.auto_star_force_window import AutoStarForceWindow
@@ -19,7 +18,7 @@ from msv.screen_processor import ScreenProcessor
 
 class MainWindow(QMainWindow, Ui_MainWindow):
     ALERT_SOUND_CD = 2
-    macro_out_q_signal = pyqtSignal(object)
+    macroProcSignal = pyqtSignal(object)
 
     def __init__(self):
         super().__init__(None, Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)  # disable maximize button
@@ -31,13 +30,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionKernelDriver.triggered.connect(lambda x: self._onOptChange('kernel_driver', x))
         self.actionDebugMode.setChecked(get_config().get('debug_mode', False))
         self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug_mode', x))
-        self.macro_out_q_signal.connect(self._onMacroQMessage)
+        self.macroProcSignal.connect(self._onMacroProcMessage)
 
         self.keymap = None
         self.macro_running = False
         self.macro_process = None
         self.platform_file_path = None
-        self.macro_process_in_q = multiprocessing.Queue()
+        self.macro_proc_conn = None
 
         self.log(APP_TITLE + " version: v" + __version__)
         self.log('\n')
@@ -95,7 +94,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if self.macro_process:
             try:
-                self.macro_process_in_q.put(("stop",))
+                self.macro_proc_conn.send(("stop",))
                 os.kill(self.macro_process.pid, signal.SIGTERM)
             except Exception:
                 pass
@@ -138,12 +137,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.beepUpSound.play()
         cap.set_foreground()
-        self.macro_process_in_q.put(("start", keymap, self.platform_file_path, self._get_preset()))
+        self.macro_proc_conn.send(("start", keymap, self.platform_file_path, self._get_preset()))
         self._set_macro_status(True)
 
     def stop_macro(self):
         self.beepDownSound.play()
-        self.macro_process_in_q.put(("stop",))
+        self.macro_proc_conn.send(("stop",))
         self.log("Stopping.")
         self._set_macro_status(False)
 
@@ -165,12 +164,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.processStatusLabel.setText("Running..")
             self.processStatusLabel.setStyleSheet("color: orange")
             self.log("Macro process starting...")
-            self.macro_process_in_q = multiprocessing.Queue()
-            macro_process_out_q = multiprocessing.Queue()
-            self.macro_process = multiprocessing.Process(
-                target=macro_process_main, args=(self.macro_process_in_q, macro_process_out_q), daemon=True)
+
+            parent_conn, child_conn = multiprocessing.Pipe()
+            self.macro_proc_conn = parent_conn
+            self.macro_process = multiprocessing.Process(target=macro_process_main, args=(child_conn,), daemon=True)
             self.macro_process.start()
-            threading.Thread(target=self._macroOutQToSignal, args=(macro_process_out_q,), daemon=True).start()
+            threading.Thread(target=self._macroOutQToSignal, args=(parent_conn,), daemon=True).start()
 
             self.log("Process started (pid: %d)" % self.macro_process.pid)
             self.processStatusLabel.setText("Executed")
@@ -192,13 +191,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.processStatusLabel.setStyleSheet("color: red")
             self.processToggleBtn.setText("Run")
 
-    def _macroOutQToSignal(self, q):
+    def _macroOutQToSignal(self, conn):
         """Read from macro process out queue from separate thread, and notify main thread
         using signal"""
         while True:
             try:
-                self.macro_out_q_signal.emit(q.get())  # get() is blocking
-            except (ValueError, AssertionError):  # queue closed
+                self.macroProcSignal.emit(conn.recv())  # recv() is blocking
+            except EOFError:  # closed
                 return
 
     def _get_preset(self):
@@ -306,7 +305,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 get_config()['preset'] = None
 
     @pyqtSlot(object)
-    def _onMacroQMessage(self, ev):
+    def _onMacroProcMessage(self, ev):
         if ev[0] == "log":
             self.log(time.strftime('%H:%M:%S') + ' - ' + str(ev[1]))
         elif ev[0] == "stopped":
