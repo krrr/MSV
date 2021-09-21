@@ -38,6 +38,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.platform_file_path = None
         self.macro_proc_conn = None
 
+        self.logTextArea.document().setDefaultStyleSheet('.time-part { color: #808080 }')
         self.log(APP_TITLE + " version: v" + __version__)
         self.log('\n')
 
@@ -82,7 +83,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if get_config().get('kernel_driver'):
             try:
                 driver.load_driver()
-                self.log('kernel driver loaded')
+                self.log('Kernel driver loaded')
             except Exception as e:
                 QMessageBox.critical(self, 'Error', 'Driver failed to load: ' + str(e))
 
@@ -129,7 +130,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         rect = cap.ms_get_screen_rect()
         if get_config().get('debug'):
-            self.log("Game Window Rect:", rect)
+            self.log("Game Window Rect: "+ str(rect))
         if rect is None:
             QMessageBox.critical(self, 'Error', "Failed to get Maple Window location.\nMove MapleStory window so "
                                                  "that the top left corner of the window is within the screen.")
@@ -152,8 +153,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.openTerrainBtn.setDisabled(running)
         self.presetComboBox.setDisabled(running)
 
-    def log(self, *args):
-        txt = ' '.join(str(i) for i in args)
+    def log(self, txt):
         self.logTextArea.append(txt)
         scrollbar = self.logTextArea.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
@@ -182,7 +182,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.processStatusLabel.setText("Stopping..")
             self.processStatusLabel.setStyleSheet("color: orange")
 
-            self.log("SIGTERM %d" % self.macro_process.pid)
             os.kill(self.macro_process.pid, signal.SIGTERM)
             self.log("Process terminated")
             self.macro_process = None
@@ -307,7 +306,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot(object)
     def _onMacroProcMessage(self, ev):
         if ev[0] == "log":
-            self.log(time.strftime('%H:%M:%S') + ' - ' + str(ev[1]))
+            time_part = '<span class="time-part">' + time.strftime('%H:%M:%S') + '</span>'
+            self.log(time_part + ' - ' + str(ev[1]))
         elif ev[0] == "stopped":
             self._set_macro_status(False)
         elif ev[0] == "exception":
