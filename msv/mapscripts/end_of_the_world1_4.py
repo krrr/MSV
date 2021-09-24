@@ -63,8 +63,12 @@ class EndOfTheWorld1_4(MacroController):
             self.player_manager.horizontal_move_goal(self.LEFT_X+1 if to_left else self.RIGHT_X-9)
             time.sleep(0.1 + random_number(0.05, minus=True))
             self.player_manager.shikigami_haunting()
-            if self.loop_count > 3 and not to_left:  # at right side now
-                time.sleep(0.6 + random_number(0.15, minus=True))
+            if not to_left:  # at right side now
+                if random.random() < 0.4:
+                    time.sleep(random_number(0.15))
+                    self.keyhandler.single_press(dc.DIK_LEFT)
+                time.sleep(0.15 + random_number(0.05))
+                self.wait_monster('ascendion', 'l', 1.5)
         else:
             self.navigate_to_platform('5b53ae83')  # to bottom first
 

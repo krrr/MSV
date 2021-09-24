@@ -611,6 +611,15 @@ class MacroController:
 
         return True
 
+    def wait_monster(self, name, crop_dir=None, timeout=2):
+        """Wait until monster appears"""
+        t = time.time()
+        while True:
+            self.screen_processor.update_image()
+            if time.time() - t > timeout or self.screen_processor.check_monster(name, crop_dir):
+                break
+            time.sleep(0.02)
+
     def unstick(self):
         """
         Run when script can't find which platform we are at.

@@ -430,6 +430,34 @@ class StaticImageProcessor:
         loc = np.where(match_res < 0.06)
         return len(loc[0]) == 1
 
+    def check_monster(self, name, crop_dir=None):
+        tpl = self.cv_templates.get(name)
+        if tpl is None:  # lazy load
+            path = ':/template/monster/' + name + '_tpl.png'
+            tpl = self.cv_templates[name] = cv2.imdecode(read_qt_resource(path, True), cv2.IMREAD_GRAYSCALE)
+            if tpl is None:
+                raise FileNotFoundError(path)
+            tpl_mask = self.cv_templates[name + '_mask'] = read_alpha_as_mask(path)
+            tpl_r = self.cv_templates[name + '_r'] = np.fliplr(tpl)
+            tpl_r_mask = self.cv_templates[name + '_r_mask'] = np.fliplr(tpl_mask)
+        else:
+            tpl_mask = self.cv_templates[name + '_mask']
+            tpl_r = self.cv_templates[name + '_r']
+            tpl_r_mask = self.cv_templates[name + '_r_mask']
+
+        img_h, img_w = self.gray_img.shape[:2]
+        img = self.gray_img
+        if crop_dir == 'l':
+            img = img[50:img_h-100, 0:img_w//2]
+        elif crop_dir == 'r':
+            img = img[50:img_h-100, img_w//2:img_w]
+
+        res = cv2.matchTemplate(img, tpl, cv2.TM_SQDIFF_NORMED, mask=tpl_mask)
+        if len(np.where(res <= 0.04)[0]) > 0:
+            return True
+        res = cv2.matchTemplate(img, tpl_r, cv2.TM_SQDIFF_NORMED, mask=tpl_r_mask)
+        return len(np.where(res <= 0.04)[0]) > 0
+
     def check_white_room(self):
         """Assume in white room if 40% or more pixels are pure white. Percentage of sample in unittest is 79%"""
         area = self.bgr_img.shape[0] * self.bgr_img.shape[1]
