@@ -61,9 +61,6 @@ class PlayerController:
             'spirit_domain': 196
         }
 
-        self.rune_fail_cooldown = 5
-        self.last_rune_solve_time = 0
-
         self.v_buff_cd = 180  # common cool down for v buff
 
         self.last_skill_use_time = {
