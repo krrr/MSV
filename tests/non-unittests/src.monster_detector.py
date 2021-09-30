@@ -1,35 +1,27 @@
-from msv.screen_processor import ScreenProcessor
-import cv2, imutils, os
-from msv.monster_detector import MonsterTemplateDetector
-from msv.player_medal_detector import PlayerMedalDetector
+import time
+import cv2
 import numpy as np
-os.chdir("../src")
-wincap = ScreenProcessor()
-detector = MonsterTemplateDetector("img/ArcaneRiver/ChewChew/츄츄 아일랜드.json")
-playerdetector = PlayerMedalDetector()
-detector.create_template("mob1.png")
-playerdetector.create_template("medal1.png")
-capture_width = 700
-capture_height = 200
-while True:
-    img = wincap.capture()
-    grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+from matplotlib import pyplot as plt
 
-    playerloc = playerdetector.find(grayscale)
-    detected = []
-    if playerloc:
-        bbox = grayscale[max((playerloc[1] - int(capture_height / 2)), 0):max((playerloc[1] + int(capture_height / 2)), 0),
-               (playerloc[0] - int(capture_width / 2)):(playerloc[0] + int(capture_width / 2))]
-        cv2.rectangle(grayscale, (playerloc[0] - int(capture_width / 2), playerloc[1] - int(capture_height / 2)), (playerloc[0] + int(capture_width / 2), playerloc[1] + int(capture_height / 2)),(0,0,255), 3)
-        detected = detector.find(grayscale)
-        cv2.circle(grayscale, playerloc, 15, (0,0,255), -1)
+tpl = cv2.imread('../../msv/resources/template/monster/ascendion_tpl.png', cv2.IMREAD_GRAYSCALE)
+tpl_alpha = cv2.imread('../../msv/resources/template/monster/ascendion_tpl.png', cv2.IMREAD_UNCHANGED)[:,:,3]
 
-    if detected:
-        for point in detected:
-            cv2.circle(grayscale, (playerloc[0] - int(capture_width / 2)+point[0], playerloc[1] - int(capture_height / 2)+point[1]), 20, (0,0,255), -1)
+img = cv2.imread('../unittest_data/monster/dd.png', cv2.IMREAD_GRAYSCALE)
+img_h, img_w = img.shape[:2]
 
-    cv2.imshow("", imutils.resize(grayscale, width=500))
-    inp = cv2.waitKey(1)
-    if inp == ord('q'):
-        cv2.destroyAllWindows()
-        break
+
+t = time.perf_counter()
+img = img[0:img_h-100,0:img_w//2]
+res = cv2.matchTemplate(img, tpl, cv2.TM_SQDIFF_NORMED, mask=tpl_alpha)
+loc = np.where(res <= 0.04)
+print(len(np.where(res <= 0.04)[0]))
+print(time.perf_counter() - t)
+
+for pt in zip(*loc[::-1]):
+    h, w = tpl.shape[:2]
+    cv2.rectangle(img, pt, (pt[0] + w, pt[1] + h), (0, 0, 255), 2)
+
+plt.plot(122)
+plt.imshow(cv2.cvtColor(img, cv2.COLOR_GRAY2RGB))
+plt.title('Detected'), plt.xticks([]), plt.yticks([])
+plt.show()
