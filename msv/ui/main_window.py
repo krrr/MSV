@@ -16,11 +16,21 @@ from msv.ui.auto_star_force_window import AutoStarForceWindow
 from msv.screen_processor import ScreenProcessor
 
 
+ABOUT_TXT = '''\
+Version: %s
+Author: Dashadower, krrr
+Source code: https://github.com/krrr/MSV-Kanna-Ver
+
+Please be known that using this macro may get your account banned. By using this software,
+you acknowledge that the developers are not liable for any damages caused to you or your account.\
+'''
+
+
 class MainWindow(QMainWindow, Ui_MainWindow):
     ALERT_SOUND_CD = 2
     macroProcSignal = pyqtSignal(object)
 
-    def __init__(self):
+    def __init__(self, app_title=None, limit=False):
         super().__init__(None, Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)  # disable maximize button
         self.setupUi(self)
         fix_sizes_for_high_dpi(self)
@@ -32,6 +42,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug_mode', x))
         self.macroProcSignal.connect(self._onMacroProcMessage)
 
+        self.app_title = app_title or APP_TITLE
+        self.setWindowTitle(self.app_title)
+
         self.keymap = None
         self.macro_running = False
         self.macro_process = None
@@ -39,7 +52,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.macro_proc_conn = None
 
         self.logTextArea.document().setDefaultStyleSheet('.time-part { color: #808080 }')
-        self.log(APP_TITLE + " version: v" + __version__)
+        self.log(self.app_title + " version: v" + __version__)
         self.log('\n')
 
         self.preset_names = tuple(mapscripts.map_scripts.keys())
@@ -85,12 +98,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 driver.load_driver()
                 self.log('Kernel driver loaded')
             except Exception as e:
-                QMessageBox.critical(self, 'Error', 'Driver failed to load: ' + str(e))
+                QMessageBox.critical(self, self.app_title, 'Driver failed to load: ' + str(e))
+
+        self.limit = limit
+        if limit:
+            self.actionKernelDriver.setVisible(False)
 
     def closeEvent(self, event):
         # lambda may cause leak
         self.actionAutoSolveRune.triggered.disconnect()
-        self.actionKernelDriver.triggered.disconnect()
+        # self.actionKernelDriver.triggered.disconnect()
         self.actionDebugMode.triggered.disconnect()
 
         if self.macro_process:
@@ -109,30 +126,30 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     def start_macro(self):
         if not winapi.IsUserAnAdmin():
-            QMessageBox.critical(self, 'Error', 'Please run as administrator')
+            QMessageBox.critical(self, self.app_title, 'Please run as administrator')
             return
 
         if not self.macro_process:
             self.toggle_macro_process()
         keymap = get_config().get('keymap')
         if not keymap:
-            QMessageBox.critical(self, 'Error', "The key setting could not be read. Please reset the key.")
+            QMessageBox.critical(self, self.app_title, "The key setting could not be read. Please reset the key.")
             return
 
         if not self.platform_file_path:
-            QMessageBox.critical(self, 'Error', "Please select a terrain file.")
+            QMessageBox.critical(self, self.app_title, "Please select a terrain file.")
             return
 
         cap = ScreenProcessor()
         if not cap.get_game_hwnd():
-            QMessageBox.critical(self, 'Error', "MapleStory window not found")
+            QMessageBox.critical(self, self.app_title, "MapleStory window not found")
             return
 
         rect = cap.ms_get_screen_rect()
         if get_config().get('debug'):
             self.log("Game Window Rect: "+ str(rect))
         if rect is None:
-            QMessageBox.critical(self, 'Error', "Failed to get Maple Window location.\nMove MapleStory window so "
+            QMessageBox.critical(self, self.app_title, "Failed to get Maple Window location.\nMove MapleStory window so "
                                                  "that the top left corner of the window is within the screen.")
             return
 
@@ -216,7 +233,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             # minimap_coords = data["minimap"]
             self.log("Terrain file loaded (platforms: %s)" % len(platforms.keys()))
         except Exception as e:
-            QMessageBox.critical(self, 'Error', "Failed to load terrain file: %s\n%s" % (path, str(e)))
+            QMessageBox.critical(self, self.app_title, "Failed to load terrain file: %s\n%s" % (path, str(e)))
         else:
             self.platform_file_path = path
             self.terrainFileLabel.setText(os.path.basename(path).split('.')[0])
@@ -266,7 +283,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_actionEditCurrent_triggered(self):
         if not self.platform_file_path:
-            QMessageBox.critical(self, 'Error', 'No terrain file opened')
+            QMessageBox.critical(self, self.app_title, 'No terrain file opened')
         else:
             # TerrainEditorWindow(self.master, self.platform_file_path)
             pass
@@ -325,11 +342,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot()
     def on_actionAbout_triggered(self):
-        QMessageBox.information(self, 'About', '''\
-Version: v%s
-Author: Dashadower, krrr
-Source code: https://github.com/krrr/MSV-Kanna-Ver
-
-Please be known that using this macro may get your account banned. By using this software,
-you acknowledge that the developers are not liable for any damages caused to you or your account.
-''' % (__version__,))
+        if self.limit:
+            QMessageBox.information(self, 'About', 'Version: %s\n%s jioben' % (__version__, self.app_title))
+        else:
+            QMessageBox.information(self, 'About', ABOUT_TXT % (__version__,))

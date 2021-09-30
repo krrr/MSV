@@ -13,7 +13,7 @@ static const char SCRIPT[] =
 "    sys.exit(main_entry())\n"
 ;
 static const wchar_t* EXTRA_ARGS[] = {
-    L"-t", L"Aqua"
+    L"-t", L"Aqua", L"-l"
 };
 #define EXTRA_ARGS_LEN (sizeof(EXTRA_ARGS) / sizeof(EXTRA_ARGS[0]))
 
@@ -23,7 +23,6 @@ void init_python(int argc, wchar_t* argv[]) {
     PyConfig_InitPythonConfig(&config);
     config.user_site_directory = 0;
     config.parse_argv = 0;
-
     /* Set the program name. Implicitly preinitialize Python. */
     PyStatus status = PyConfig_SetString(&config, &config.program_name, argv[0]);
     if (PyStatus_Exception(status)) {

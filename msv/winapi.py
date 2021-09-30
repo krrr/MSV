@@ -6,6 +6,7 @@ SRCCOPY = 0x00CC0020
 LOGPIXELSX = 88
 LOGPIXELSY = 90
 DPI_AWARENESS_UNAWARE = 0
+WM_SETICON = 0x0080
 
 MSG = ctypes.wintypes.MSG
 
@@ -84,9 +85,15 @@ UnregisterHotKey = ctypes.windll.user32.UnregisterHotKey
 PostThreadMessageA = ctypes.windll.user32.PostThreadMessageA
 SetProcessDPIAware = ctypes.windll.user32.SetProcessDPIAware
 SendInput = ctypes.windll.user32.SendInput
+SendMessage = ctypes.windll.user32.SendMessageW
+LoadIcon = ctypes.windll.user32.LoadIconW
+LoadIcon.argtypes = [ctypes.wintypes.HINSTANCE, ctypes.wintypes.LPVOID]
 GetCursorPos = ctypes.windll.user32.GetCursorPos
 
 IsUserAnAdmin = ctypes.windll.shell32.IsUserAnAdmin
+
+GetModuleHandle = ctypes.windll.kernel32.GetModuleHandleW
+GetModuleHandle.restype = ctypes.wintypes.HMODULE
 
 
 class BITMAPINFOHEADER(ctypes.Structure):

@@ -2,7 +2,7 @@
 
 
 APP_TITLE = 'MSV'
-__version__ = '0.5'
+__version__ = '210930'
 
 
 def main_entry():
@@ -13,8 +13,9 @@ def main_entry():
     winapi.SetProcessDPIAware()
 
     parser = argparse.ArgumentParser(description="MSV-Kanna-Ver, a macro to farm MapleStory")
-    parser.add_argument("-t", dest="title", help="change main window title to designated value")
+    parser.add_argument("-t", dest="title", help="change application title")
     parser.add_argument("-c", dest="config", help="specify config file path")
+    parser.add_argument("-l", dest="limit", help="limited", action='store_true')
     args = vars(parser.parse_args())
 
     if args['config']:

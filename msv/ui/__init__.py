@@ -5,7 +5,7 @@ import logging
 from PyQt5.QtCore import QLibraryInfo, QByteArray
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget, QLayout, QGridLayout, QFormLayout
-from msv import APP_TITLE, util
+from msv import util, winapi
 # noinspection PyUnresolvedReferences
 import msv.resources_rc
 
@@ -42,16 +42,29 @@ def _fix_sizes_for_high_dpi_internal(widget, ratio):
             _fix_sizes_for_high_dpi_internal(i, ratio)
 
 
+def set_app_icon_exe(app):
+    from PyQt5.QtWinExtras import QtWin
+
+    hico = winapi.LoadIcon(winapi.GetModuleHandle(None), 1)
+    if hico != 0:
+        app.setWindowIcon(QIcon(QtWin.fromHICON(hico)))
+    else:
+        logging.error('LoadIcon failed')
+
+
 def gui_loop(args):
+    is_compiled = not os.path.isfile(__file__)
     logging.debug('Qt lib path: %s', QLibraryInfo.location(QLibraryInfo.LibrariesPath))
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon(":/appicon.ico"))
+    if is_compiled:
+        set_app_icon_exe(app)
+    else:
+        app.setWindowIcon(QIcon(":/appicon.ico"))
     app.setFont(QApplication.font('QMenu'))
     app.setStyle(QStyleFactory.create("Fusion"))
 
     from msv.ui.main_window import MainWindow
-    main_win = MainWindow()
-    main_win.setWindowTitle(args["title"] or APP_TITLE)
+    main_win = MainWindow(args['title'], args['limit'])
 
     geo = util.get_config().get('geometry')
     if geo:
@@ -60,7 +73,7 @@ def gui_loop(args):
         except Exception as e:
             logging.warning('restoreGeometry failed: %s', str(e))
 
-    if not os.path.isfile(__file__):  # compiled
+    if is_compiled:
         from msv.ui.login_dialog import LoginDialog
         dialog = LoginDialog()
         if args['title']:
