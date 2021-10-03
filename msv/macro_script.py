@@ -29,13 +29,16 @@ def macro_process_main(conn: Connection):
         try:
             if command[0] == "start":
                 logger.debug("starting MacroController...")
-                keymap, platform_file_dir, preset = command[1:]
+                keymap, platform_file, preset = command[1:]
                 config = get_config()
                 if preset:
                     macro = mapscripts.map_scripts[preset](keymap, conn, config)
                 else:
                     macro = MacroController(keymap, conn, config)
-                macro.load_and_process_platform_map(platform_file_dir)
+                if platform_file:
+                    macro.load_and_process_platform_map(platform_file)
+                else:
+                    logger.debug('Preset without terrain')
 
                 macro.loop_entry()
             elif command[0] == 'stop':
@@ -127,7 +130,7 @@ class MacroController:
         ret = self.terrain_analyzer.load(path)
         self.terrain_analyzer.generate_solution_dict()
         if ret != 0:
-            self.logger.info("Loaded platform data %s" % path)
+            self.logger.info("Loaded terrain %s (%s platforms)" % (path, len(self.terrain_analyzer.platforms)))
         else:
             raise Exception("Failed to load platform data %s" % path)
 

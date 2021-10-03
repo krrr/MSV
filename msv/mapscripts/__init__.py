@@ -13,6 +13,7 @@ from .kerning_tower_b1_store2 import KerningTowerB1Store2
 from .labyrinth_interior1 import LabyrinthInterior1
 from .eastern_cave_path2 import EasternCavePath2
 from .end_of_the_world1_4 import EndOfTheWorld1_4
+from .tool_kishin import ToolKishin
 
 
 # dict is ordered in py3.7+
@@ -32,6 +33,7 @@ map_scripts = {
     'Fox Tree Top Path': FoxTreeTopPath,
     'Fox Tree Lower Path 3': FoxTreeLowerPath3,
     'Eastern Cave Path 2': EasternCavePath2,
+    'Kishin': ToolKishin,
 }
 
 map2platform = {

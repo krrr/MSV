@@ -194,6 +194,7 @@ class StaticImageProcessor:
             raise Exception("img_handle must reference an MapleScreenCapturer class!!")
 
         self.img_handle = img_handle
+        self.detect_friend = True
         self.bgr_img = None
         self._gray_img = None
         self.minimap_area = 0
@@ -350,7 +351,7 @@ class StaticImageProcessor:
         guild = (np.array((255, 102, 102)), np.array((255, 153, 153)))
         friend = (np.array((238, 204, 0)), np.array((255, 221, 17)))
 
-        for i in (stranger, guild, friend):
+        for i in (stranger, guild, friend) if self.detect_friend else (stranger, guild):
             mask = cv2.inRange(cropped, i[0], i[1])
             td = np.transpose(np.where(mask > 0)).tolist()
 

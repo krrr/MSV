@@ -1,4 +1,4 @@
-import multiprocessing, time, os, signal, pickle
+import multiprocessing, time, os, signal
 import base64
 import win32con
 import threading
@@ -8,7 +8,7 @@ from PyQt5.QtMultimedia import *
 from msv import driver, mapscripts, winapi, APP_TITLE, __version__
 from msv.ui import fix_sizes_for_high_dpi
 from msv.ui.main_window_ui import Ui_MainWindow
-from msv.util import get_config, save_config, GlobalHotKeyListener, read_qt_resource
+from msv.util import get_config, save_config, GlobalHotKeyListener
 from msv.macro_script import macro_process_main
 from msv.ui.key_bind_window import KeyBindWindow
 from msv.ui.auto_star_force_window import AutoStarForceWindow
@@ -72,6 +72,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 self._setPlatformFile(saved_platform_file)
 
         self.presetComboBox.insertSeparator(6)  # insert will change index
+        self.presetComboBox.insertSeparator(16)
 
         # setup sounds
         self.beepUpSound = QSoundEffect(self)
@@ -136,7 +137,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.critical(self, self.app_title, "The key setting could not be read. Please reset the key.")
             return
 
-        if not self.platform_file_path:
+        if not self.platform_file_path and self.presetComboBox.currentIndex() == -1:
             QMessageBox.critical(self, self.app_title, "Please select a terrain file.")
             return
 
@@ -155,7 +156,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.beepUpSound.play()
         cap.set_foreground()
-        self.macro_proc_conn.send(("start", keymap, self.platform_file_path, self._get_preset()))
+        self.macro_proc_conn.send(("start", keymap, self.platform_file_path, self.presetComboBox.currentText()))
         self._set_macro_status(True)
 
     def stop_macro(self):
@@ -216,27 +217,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             except EOFError:  # closed
                 return
 
-    def _get_preset(self):
-        idx = self.presetComboBox.currentIndex()
-        return self.preset_names[idx] if idx != -1 else None
-
     def _setPlatformFile(self, path):
-        try:
-            if path.startswith(':'):
-                content = read_qt_resource(path, False)
-            else:
-                with open(path, "rb") as f:
-                    content = f.read()
-
-            data = pickle.loads(content)
-            platforms = data["platforms"]
-            # minimap_coords = data["minimap"]
-            self.log("Terrain file loaded (platforms: %s)" % len(platforms.keys()))
-        except Exception as e:
-            QMessageBox.critical(self, self.app_title, "Failed to load terrain file: %s\n%s" % (path, str(e)))
-        else:
-            self.platform_file_path = path
-            self.terrainFileLabel.setText(os.path.basename(path).split('.')[0])
+        self.platform_file_path = path
+        self.terrainFileLabel.setText(os.path.basename(path).split('.')[0])
 
     def _onOptChange(self, config_name, checked):
         get_config()[config_name] = checked
@@ -255,8 +238,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QTimer.singleShot(300, self._alertSoundInternal)
 
     def _loadPresetPlatform(self, preset):
-        path = ':/platform/' + mapscripts.map2platform[preset] + '.platform'
-        self._setPlatformFile(path)
+        file_name = mapscripts.map2platform.get(preset)
+        if file_name:
+            path = ':/platform/' + file_name + '.platform'
+            self._setPlatformFile(path)
+        else:
+            self.platform_file_path = None
+            self.terrainFileLabel.setText('')
 
     @pyqtSlot(str)
     def on_presetComboBox_activated(self, preset):
