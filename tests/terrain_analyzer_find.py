@@ -9,7 +9,7 @@ class TestScreenProcessor(TestCase):
         self.pathextractor = PathAnalyzer()
 
     def test_tboy_train1(self):
-        self._load("../msv/mapscripts/t_boys_research_train1.platform")
+        self._load("../msv/resources/platform/labyrinth_interior1.platform")
 
     def test_dclp1(self):
         self._load("../msv/mapscripts/deep_cavern_lower_path1.platform")

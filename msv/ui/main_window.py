@@ -11,6 +11,7 @@ from msv.ui.main_window_ui import Ui_MainWindow
 from msv.util import get_config, save_config, GlobalHotKeyListener
 from msv.macro_script import macro_process_main
 from msv.ui.key_bind_window import KeyBindWindow
+from msv.input_manager import DEFAULT_KEY_MAP
 from msv.ui.auto_star_force_window import AutoStarForceWindow
 # from msv.terrain_editor import TerrainEditorWindow
 from msv.screen_processor import ScreenProcessor
@@ -34,6 +35,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         super().__init__(None, Qt.CustomizeWindowHint | Qt.WindowMinimizeButtonHint | Qt.WindowCloseButtonHint)  # disable maximize button
         self.setupUi(self)
         fix_sizes_for_high_dpi(self)
+        self.menuTerain.setVisible(False)
+        self.actionSetKeys.setVisible(False)
         self.actionAutoSolveRune.setChecked(get_config().get('auto_solve_rune', True))
         self.actionAutoSolveRune.triggered.connect(lambda x: self._onOptChange('auto_solve_rune', x))
         self.actionKernelDriver.setChecked(get_config().get('kernel_driver', False))
@@ -42,7 +45,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug_mode', x))
         self.macroProcSignal.connect(self._onMacroProcMessage)
 
-        self.app_title = app_title or APP_TITLE
+        self.app_title = (app_title or APP_TITLE) + ' Night Lord'
         self.setWindowTitle(self.app_title)
 
         self.keymap = None
@@ -52,7 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.macro_proc_conn = None
 
         self.logTextArea.document().setDefaultStyleSheet('.time-part { color: #808080 }')
-        self.log(self.app_title + " version: v" + __version__)
+        self.log(self.app_title + " night lord version: v" + __version__)
         self.log('\n')
 
         self.preset_names = tuple(mapscripts.map_scripts.keys())
@@ -132,10 +135,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if not self.macro_process:
             self.toggle_macro_process()
-        keymap = get_config().get('keymap')
-        if not keymap:
-            QMessageBox.critical(self, self.app_title, "The key setting could not be read. Please reset the key.")
-            return
 
         if not self.platform_file_path and self.presetComboBox.currentIndex() == -1:
             QMessageBox.critical(self, self.app_title, "Please select a terrain file.")
@@ -156,7 +155,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.beepUpSound.play()
         cap.set_foreground()
-        self.macro_proc_conn.send(("start", keymap, self.platform_file_path, self.presetComboBox.currentText()))
+        self.macro_proc_conn.send(("start", DEFAULT_KEY_MAP, self.platform_file_path, self.presetComboBox.currentText()))
         self._set_macro_status(True)
 
     def stop_macro(self):
@@ -330,7 +329,4 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot()
     def on_actionAbout_triggered(self):
-        if self.limit:
-            QMessageBox.information(self, 'About', 'Version: %s\n%s jioben' % (__version__, self.app_title))
-        else:
-            QMessageBox.information(self, 'About', ABOUT_TXT % (__version__,))
+        QMessageBox.information(self, 'About', 'Version: %s\n%s night lord jioben' % (__version__, self.app_title))

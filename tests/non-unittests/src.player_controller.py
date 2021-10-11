@@ -20,8 +20,9 @@ player_con.update()
 
 print('player pos', player_con.x, player_con.y)
 
-player_con.holy_symbol()
-player_con.teleport_right()
+# player_con.dbl_jump_right(True, True)
+# player_con.teleport_up()
+
 # player_cntrlr.optimized_horizontal_move(36)
 # player_cntrlr.teleport_right()
 # time.sleep(0.5)

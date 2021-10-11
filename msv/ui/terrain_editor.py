@@ -1,28 +1,26 @@
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 import cv2, threading, os
-import tkinter as tk
 import time
-from tkinter.constants import *
-from PIL import Image, ImageTk
-from tkinter.messagebox import showinfo, showerror, showwarning
-from tkinter.filedialog import asksaveasfilename
-from tkinter.messagebox import askyesno
 from msv.screen_processor import StaticImageProcessor, ScreenProcessor
 from msv.terrain_analyzer import PathAnalyzer
 
 
-class TerrainEditorWindow(tk.Toplevel):
+class TerrainEditorWindow(QWidget):
     set_skill_color = {'kishin_shoukan': (107, 50, 135), 'yaksha_boss': (196, 0, 0),
                        'nightmare_invite': (226, 142, 185)}
 
-    def __init__(self, master=None, open_file_path=None):
-        tk.Toplevel.__init__(self, master)
-        self.wm_minsize(100, 30)
-        if master is not None:
-            self.geometry('+%d+%d' % (master.winfo_x(), master.winfo_y()))
-        self.resizable(0, 0)
-        self.focus_get()
-        self.grab_set()
-        self.title("Terrain file generator")
+    def __init__(self, parent=None, open_file_path=None):
+        super().__init__(parent, Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
+        self.setFixedSize(300, 130)
+
+        self.setMinimumSize(100, 30)
+        self.setWindowTitle("Terrain File Editor")
+
+        mainLayout = QVBoxLayout(self)
+        mainLayout.setContentsMargins(0, 0, 0, 4)
+        mainLayout.setSpacing(4)
 
         self.last_coord_x = None
         self.last_coord_y = None
@@ -31,17 +29,17 @@ class TerrainEditorWindow(tk.Toplevel):
 
         self.screen_capturer = ScreenProcessor()
         if not self.screen_capturer.get_game_hwnd():
-            showerror('Error', 'The MapleStory window was not found.')
-            self.destroy()
+            QMessageBox.critical(self, 'Error', 'The MapleStory window was not found.')
+            self.close()
             return
 
         self.image_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = PathAnalyzer()
-        self.image_label = tk.Label(self)
-        self.image_label.pack(expand=YES, fill=BOTH)
+        self.image_label = QLabel(self)
 
-        self.master_tool_frame = tk.Frame(self, borderwidth=2, relief=GROOVE)
-        self.master_tool_frame.pack(expand=YES, fill=BOTH)
+        self.master_tool_frame = QFrame(self)
+        self.master_tool_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
+        self.master_tool_frame.setLineWidth(2)
 
         self.tool_frame_1 = tk.Frame(self.master_tool_frame)
         self.tool_frame_1.pack(fill=X)
@@ -57,10 +55,10 @@ class TerrainEditorWindow(tk.Toplevel):
         self.stop_platform_record_button.pack(side=RIGHT, expand=YES, fill=X)
 
         self.set_yaksha_coord_button0 = tk.Button(self.master_tool_frame, text="Toggle yaksha boss pos (face left)",
-                                                 command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'left'))
+                                                  command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'left'))
         self.set_yaksha_coord_button0.pack(fill=X)
         self.set_yaksha_coord_button1 = tk.Button(self.master_tool_frame, text="Toggle yaksha boss pos (face right)",
-                                                 command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'right'))
+                                                  command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'right'))
         self.set_yaksha_coord_button1.pack(fill=X)
         self.set_kishin_coord_button = tk.Button(self.master_tool_frame, text="Toggle kishin shoukan pos",
                                                  command=lambda: self._set_place_skill_coord('kishin_shoukan'))
@@ -86,16 +84,13 @@ class TerrainEditorWindow(tk.Toplevel):
         self.image_processor.update_image(set_focus=False)
         self.minimap_rect = self.image_processor.get_minimap_rect()
         if not self.minimap_rect:
-            self.image_label.configure(text="Minimap not found", fg="red")
+            self.image_label.setText('<span style="color: red">Minimap not found</span>')
 
         self.stopEvent = threading.Event()
         self.thread = threading.Thread(target=self.update_image, args=())
         self.thread.start()
 
         self.record_mode = 0  # 0 if not recording, 1 if normal platform
-
-        self.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.focus_set()
 
         if open_file_path:
             self.load_platform_file(open_file_path)
@@ -119,9 +114,9 @@ class TerrainEditorWindow(tk.Toplevel):
                 self.other_attrs[i + '_coord'] = self.terrain_analyzer.set_skill_coord[i]
         self.update_listbox()
 
-    def on_close(self):
+    def closeEvent(self, ev):
         self.stopEvent.set()
-        self.after(200, self.destroy)
+        super().closeEvent(ev)
 
     def on_platform_list_rclick(self, event):
         try:
@@ -194,7 +189,7 @@ class TerrainEditorWindow(tk.Toplevel):
             self.other_attrs['minimap'] = minimap_rect
             self.terrain_analyzer.save(path, self.other_attrs)
             showinfo("Terrain file generator", "File path {0}\n has been saved.".format(path))
-            self.on_close()
+            self.close()
 
     def on_reset_platforms(self):
         if askyesno("Terrain file generator", "Really delete all terrain?"):
@@ -262,16 +257,16 @@ class TerrainEditorWindow(tk.Toplevel):
                     cv2.circle(cropped_img, (coord[0], coord[1]), 4, (255, 255, 255), -1)  # white border
                     cv2.circle(cropped_img, (coord[0], coord[1]), 3, color, -1)
 
-            img = Image.fromarray(cropped_img)
-            img_tk = ImageTk.PhotoImage(image=img)
-            self.image_label.image = img_tk
-            self.image_label.configure(image=img_tk)
+            h, w = cropped_img.shape[:2]
+            img = QImage(cropped_img.data, h, w, 3*h, QImage.Format_BGR888)
+            self.image_label.setPixmap(img)
 
             self.update()
             time.sleep(0.04)
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    TerrainEditorWindow()
-    root.mainloop()
+    app = QApplication([])
+    win = TerrainEditorWindow()
+    win.show()
+    app.exec_()

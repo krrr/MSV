@@ -16,7 +16,6 @@ from msv.util import get_config, get_file_log_handler, ConnLoggerHandler, random
 def macro_process_main(conn: Connection):
     from msv import mapscripts
     # noinspection PyUnresolvedReferences
-    import msv.resources_rc  # for reading qt resource in child process
 
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
@@ -121,7 +120,6 @@ class MacroController:
         self.unstick_attempts = 0  # If not on platform, how many times did we attempt unstick()?
         self.unstick_attempts_threshold = 5  # abort if unstick after this amount fails to get us on a known platform
 
-        self.pickup_money_interval = 90
         self.other_player_detected_start = None
         self.player_pos_not_found_start = None
         self.elite_boss_detected = False
@@ -188,9 +186,9 @@ class MacroController:
                 next_platform = self.terrain_analyzer.platforms[solution.to_hash]
 
                 if solution.method == MoveMethod.TELEPORTR:
-                    x = max(self.player_manager.x, next_platform.start_x + random.randint(4, 5) - PlayerController.TELEPORT_HORIZONTAL_RANGE)
+                    x = max(self.player_manager.x, min(curr_platform.end_x-random.randint(3, 5), next_platform.start_x + random.randint(4, 5) - PlayerController.TELEPORT_HORIZONTAL_RANGE))
                 elif solution.method == MoveMethod.TELEPORTL:
-                    x = min(self.player_manager.x, next_platform.end_x - random.randint(4, 5) + PlayerController.TELEPORT_HORIZONTAL_RANGE)
+                    x = min(self.player_manager.x, max(curr_platform.start_x+random.randint(3, 5), next_platform.end_x - random.randint(4, 5) + PlayerController.TELEPORT_HORIZONTAL_RANGE))
                 elif solution.method == MoveMethod.JUMPR or solution.method == MoveMethod.MOVER:
                     x = curr_platform.end_x - random.randint(2, 3)
                 elif solution.method == MoveMethod.JUMPL or solution.method == MoveMethod.MOVEL:
@@ -203,7 +201,7 @@ class MacroController:
                                                 abs(self.player_manager.x - solution.upper_bound[0]))
                         x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
 
-                self.player_manager.shikigami_haunting_sweep_move(x)
+                self.player_manager.dbl_jump_move(x)
                 self.player_manager.horizontal_move_goal(x)
 
                 self._player_move(solution)
@@ -426,7 +424,7 @@ class MacroController:
         no_sweep_dist_x = next_platform_solution.lower_bound[0] + 3 if closer_to_next_lower else next_platform_solution.upper_bound[0] - 3
         if (next_platform_solution.lower_bound[0] <= no_sweep_dist_x <= next_platform_solution.upper_bound[0] and
             (next_platform_solution.upper_bound[0] - next_platform_solution.lower_bound[0]) <= 44):
-            self.player_manager.shikigami_haunting_sweep_move(no_sweep_dist_x)
+            self.player_manager.dbl_jump_move(no_sweep_dist_x)
             self.player_manager.horizontal_move_goal(no_sweep_dist_x)
             sweep = False
             time.sleep(0.05)
@@ -435,7 +433,7 @@ class MacroController:
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.shikigami_haunting()
+        self.player_manager.showdown()
         ### End skill usage
 
         # Find coordinates to move to next platform
@@ -447,15 +445,15 @@ class MacroController:
             else:
                 in_solution_movement_goal = lookahead_lb
 
-            self.player_manager.shikigami_haunting_sweep_move(in_solution_movement_goal, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
+            self.player_manager.dbl_jump_move(in_solution_movement_goal, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
         elif sweep:
             # We need to move within the solution bounds. First, find closest solution bound which can cover majority of current platform.
             if self.player_manager.x < next_platform_solution.lower_bound[0]:
                 # We are left of solution bounds.
-                self.player_manager.shikigami_haunting_sweep_move(lookahead_ub, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
+                self.player_manager.dbl_jump_move(lookahead_ub, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
             else:
                 # We are right of solution bounds
-                self.player_manager.shikigami_haunting_sweep_move(lookahead_lb, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
+                self.player_manager.dbl_jump_move(lookahead_lb, no_attack_distance=PlayerController.SHIKIGAMI_HAUNTING_RANGE)
 
         # time.sleep(0.1)
 
@@ -476,10 +474,8 @@ class MacroController:
         self.loop_count += 1
         return 0
 
-    def buff_skills(self, yuki=True):
-        skills = ['holy_symbol', 'speed_infusion', 'haku_reborn', 'mihile_link']
-        if yuki:
-            skills.append('yuki_musume')
+    def buff_skills(self):
+        skills = ['holy_symbol', 'throw_blasting', 'mihile_link', 'maple_warrior']
         random.shuffle(skills)
         used = False
         for i in skills:
@@ -514,9 +510,8 @@ class MacroController:
             self.logger.warning('failed to navigate to rune platform')
             return
 
-        self.player_manager.shikigami_haunting_sweep_move(rune_coords[0])
+        self.player_manager.dbl_jump_move(rune_coords[0])
         self.player_manager.horizontal_move_goal(rune_coords[0])
-        self.player_manager.wait_teleport_cd()
         time.sleep(0.2)
         self.keyhandler.single_press(self.player_manager.keymap["interact"])
         time.sleep(1.5)
@@ -542,19 +537,15 @@ class MacroController:
             self.player_manager.jump_left()
         elif move_method == MoveMethod.JUMPR:
             self.player_manager.jump_right()
-        elif move_method in (MoveMethod.TELEPORTL, MoveMethod.TELEPORTR, MoveMethod.TELEPORTUP, MoveMethod.TELEPORTDOWN):
-            self.player_manager.wait_teleport_cd()
-
-            if move_method == MoveMethod.TELEPORTL:
-                self.player_manager.teleport_left()
-            elif move_method == MoveMethod.TELEPORTR:
-                self.player_manager.teleport_right()
-            elif move_method == MoveMethod.TELEPORTUP:
-                self.player_manager.teleport_up()
-            elif move_method == MoveMethod.TELEPORTDOWN:
-                self.player_manager.teleport_down()
-
-            time.sleep(0.1)
+        elif move_method == MoveMethod.TELEPORTUP:
+            time.sleep(0.23 + random_number(0.05))
+            self.player_manager.teleport_up()
+        elif move_method == MoveMethod.TELEPORTL:
+            self.player_manager.dbl_jump_left()
+        elif move_method == MoveMethod.TELEPORTR:
+            self.player_manager.dbl_jump_right()
+        elif move_method == MoveMethod.ROPE_UP:
+            self.player_manager.rope_up()
 
     def set_skills(self, combine=False):
         if self.elite_boss_detected and self.other_player_detected_start is not None:
@@ -565,7 +556,7 @@ class MacroController:
             return False
 
         if combine:
-            is_set = self._place_set_skill('yaksha_boss')
+            is_set = self._place_set_skill('dark_flare')
             self.poll_conn()
             self.update()
             if self.current_platform_hash is None:
@@ -573,14 +564,13 @@ class MacroController:
             if is_set:
                 self._place_set_skill('nightmare_invite')
                 self.poll_conn()
-                self._place_set_skill('kishin_shoukan')
                 self.update()
                 return True
             else:
                 return False
         else:
             is_set = False
-            for i in ('kishin_shoukan', 'yaksha_boss', 'nightmare_invite'):
+            for i in ('dark_flare', 'nightmare_invite'):
                 is_set = any((is_set, self._place_set_skill(i)))
                 self.update()
                 if self.current_platform_hash is None:
@@ -603,11 +593,8 @@ class MacroController:
         self.logger.info('placing ' + skill_name.replace('_', ' '))
         if not self.navigate_to_platform(platform):
             return False
-        self.player_manager.shikigami_haunting_sweep_move(coord[0])
+        self.player_manager.dbl_jump_move(coord[0])
         self.player_manager.horizontal_move_goal(coord[0])
-        if skill_name == 'yaksha_boss':
-            dir_ = dc.DIK_LEFT if self.terrain_analyzer.other_attrs.get('yaksha_boss_dir') == 'left' else dc.DIK_RIGHT
-            self.keyhandler.single_press(dir_)
         time.sleep(0.1)
         self.player_manager.use_set_skill(skill_name)
         self.player_manager.last_skill_use_time[skill_name] = time.time()
@@ -632,7 +619,7 @@ class MacroController:
         self.unstick_attempts += 1
         # jump right to try to get off ladder
         for method in (self.player_manager.jump_right, self.player_manager.teleport_up,
-                       self.player_manager.teleport_left, self.player_manager.teleport_right):
+                       self.player_manager.dbl_jump_left, self.player_manager.dbl_jump_right):
             method()
             time.sleep(0.8)
             self.update()
