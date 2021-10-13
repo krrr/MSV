@@ -227,7 +227,7 @@ class PlayerController:
         self.key_mgr.direct_press(self.keymap["jump"])
         time.sleep(0.1)
         self.key_mgr.direct_release(dir_key)
-        time.sleep(0.04 + random_number(0.1))
+        time.sleep(0.05 + random_number(0.05))
         self.key_mgr.direct_release(self.keymap["jump"])
         if wait:
             self._wait_drop(True)
@@ -251,7 +251,7 @@ class PlayerController:
         prev_x = self.x
         eq_count = 0
         jumped = not wait_jump
-        for _ in range(250):
+        for _ in range(100):
             time.sleep(0.02)
             self.update()
             if abs(self.x - prev_x) > 3:  # horizontal dbl jump
@@ -266,9 +266,9 @@ class PlayerController:
             else:
                 if jumped and self.y > highest_y:  # hit by monster after dropped to ground
                     break
-                else:
-                    jumped = True
-                    eq_count = 0
+
+                jumped = True
+                eq_count = 0
                 if self.y < highest_y:
                     highest_y = self.y
             prev_y, prev_x = self.y, self.x

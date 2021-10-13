@@ -621,7 +621,7 @@ class MacroController:
         """
         self.unstick_attempts += 1
         # jump right to try to get off ladder
-        for method in (self.player_manager.jump_right, self.player_manager.teleport_up,
+        for method in (self.player_manager.jump_left, self.player_manager.teleport_up,
                        self.player_manager.dbl_jump_left, self.player_manager.dbl_jump_right):
             method()
             time.sleep(0.8)
