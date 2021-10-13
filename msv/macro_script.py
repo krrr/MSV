@@ -261,9 +261,8 @@ class MacroController:
             if self.player_pos_not_found_start is None:
                 self.player_pos_not_found_start = time.time()
                 if white_room:
-                    self.conn.send(('play', 'white_room'))
                     self.logger.info('white room detected')
-                    self.save_current_screen('white_room')
+                    self._on_white_room()
 
             if white_room:
                 return -3
@@ -348,6 +347,10 @@ class MacroController:
                 if retry_err_count > self.ERROR_RETRY_LIMIT:
                     self.abort(str(e))
                 else:
+                    if isinstance(e, MiniMapError) and self.screen_processor.check_white_room():
+                        self._on_white_room()
+                        self.abort('white room detected')
+
                     if retry_err_count == 0:
                         self.logger.warning(str(e) + ', retry...')
                     time.sleep(1 if retry_err_count < 2 else 2)
@@ -626,6 +629,10 @@ class MacroController:
             if self.current_platform_hash is not None:
                 return True
         return False
+
+    def _on_white_room(self):
+        self.conn.send(('play', 'white_room'))
+        self.save_current_screen('white_room')
 
     def poll_conn(self):
         if self.conn and self.conn.poll():

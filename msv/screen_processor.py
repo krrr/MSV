@@ -302,7 +302,8 @@ class StaticImageProcessor:
         else:
             rect = self.minimap_rect
 
-        assert rect, "Invalid minimap coordinates"
+        if not rect:
+            raise MiniMapError('Invalid minimap coordinates')
 
         cropped = self.bgr_img[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
         mask = cv2.inRange(cropped, self.lower_player_marker, self.upper_player_marker)
@@ -344,7 +345,10 @@ class StaticImageProcessor:
             rect = self.get_minimap_rect()
         else:
             rect = self.minimap_rect
-        assert rect, "Invalid minimap coordinates"
+
+        if not rect:
+            raise MiniMapError('Invalid minimap coordinates')
+
         cropped = self.bgr_img[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
 
         stranger = (np.array((0, 0, 255)), np.array((0, 0, 255)))
@@ -379,7 +383,10 @@ class StaticImageProcessor:
             rect = self.get_minimap_rect()
         else:
             rect = self.minimap_rect
-        assert rect, "Invalid minimap coordinates"
+
+        if not rect:
+            raise MiniMapError('Invalid minimap coordinates')
+
         cropped = self.bgr_img[rect[1]:rect[1] + rect[3], rect[0]:rect[0] + rect[2]]
         mask = cv2.inRange(cropped, self.lower_rune_marker, self.upper_rune_marker)
         td = np.transpose(np.where(mask > 0)).tolist()

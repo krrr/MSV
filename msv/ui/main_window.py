@@ -322,8 +322,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.processStatusLabel.setStyleSheet("color: red")
             self.processToggleBtn.setText("Running")
             self.log("Macro process terminated due to an error. Please check the log file.")
-        elif ev[0] == 'play_sound':
-            self.whiteRoomSound.play()
+        elif ev[0] == 'play':
+            if ev[1] == 'white_room':
+                self.whiteRoomSound.play()
         elif ev[0] == 'alert_sound':
             self._alertSound(ev[1])
 
