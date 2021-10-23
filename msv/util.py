@@ -156,3 +156,8 @@ def random_number(gen_range=0.1, digits=2, minus=False):
     if minus and random.random() < 0.5:
         d *= -1
     return d
+
+
+def is_compiled():
+    """Detect is compiled using Nutika"""
+    return not os.path.isfile(__file__)

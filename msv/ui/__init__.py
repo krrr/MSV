@@ -1,6 +1,5 @@
 import base64
 import sys
-import os
 import logging
 from PyQt5.QtCore import QLibraryInfo, QByteArray
 from PyQt5.QtGui import QIcon
@@ -53,7 +52,7 @@ def set_app_icon_exe(app):
 
 
 def gui_loop(args):
-    is_compiled = not os.path.isfile(__file__)
+    is_compiled = util.is_compiled()
     logging.debug('Qt lib path: %s', QLibraryInfo.location(QLibraryInfo.LibrariesPath))
     app = QApplication(sys.argv)
     if is_compiled:
