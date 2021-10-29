@@ -4,7 +4,8 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from msv.ui import fix_sizes_for_high_dpi
-from msv.tools.auto_star_force import macro_process_main
+from msv.tools import tool_macro_process
+from msv.tools.auto_star_force import AutoStarForce
 
 
 class AutoStarForceWindow(QWidget):
@@ -95,9 +96,8 @@ class AutoStarForceWindow(QWidget):
 
             parent_conn, child_conn = mp.Pipe()
             self.macro_proc_conn = parent_conn
-            args = (child_conn, target_star,
-                    self.starCatchCheckbox.isChecked(), self.safeGuardCheckbox.isChecked())
-            self.macro_process = mp.Process(target=macro_process_main, args=args, daemon=True)
+            tool_args = (target_star, self.starCatchCheckbox.isChecked(), self.safeGuardCheckbox.isChecked())
+            self.macro_process = mp.Process(target=tool_macro_process, args=(child_conn, AutoStarForce, tool_args), daemon=True)
             self.macro_process.start()
             threading.Thread(target=self._macroOutQToSignal, args=(parent_conn,), daemon=True).start()
             self._set_macro_status(True)
