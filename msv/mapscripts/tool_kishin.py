@@ -17,7 +17,7 @@ class ToolKishin(MacroController):
     def loop(self):
         if self.loop_count == 0:  # first loop
             self.x = self.player_manager.x
-        elif abs(self.player_manager.x - self.x) > 8:
+        elif abs(self.player_manager.x - self.x) > 3:
             self.player_manager.horizontal_move_goal(self.x)
 
         if (time.time() - self.player_manager.last_skill_use_time['kishin_shoukan'] >
@@ -36,17 +36,18 @@ class ToolKishin(MacroController):
             self.player_manager.wait_teleport_cd()
             self.player_manager.teleport_left()
         else:
-            move_duration = 0.2 + random_number(0.15)
-            self.keyhandler.press_key(dc.DIK_LEFT)
+            move_duration = 0.1 + random_number(0.15)
+            to_left = random.random() < 0.5
+            self.keyhandler.press_key(dc.DIK_LEFT if to_left else dc.DIK_RIGHT)
             time.sleep(move_duration)
-            self.keyhandler.release_key(dc.DIK_LEFT)
+            self.keyhandler.release_key(dc.DIK_LEFT if to_left else dc.DIK_RIGHT)
             time.sleep(0.04 + random_number(0.03))
-            self.player_manager.shikigami_haunting(False)
-            time.sleep(0.2 + random_number(0.1))
+            self.player_manager.shikigami_haunting()
+            time.sleep(0.1 + random_number(0.05))
 
-            self.keyhandler.press_key(dc.DIK_RIGHT)
+            self.keyhandler.press_key(dc.DIK_RIGHT if to_left else dc.DIK_LEFT)
             time.sleep(move_duration)
-            self.keyhandler.release_key(dc.DIK_RIGHT)
+            self.keyhandler.release_key(dc.DIK_RIGHT if to_left else dc.DIK_LEFT)
             time.sleep(0.04 + random_number(0.03))
             self.player_manager.shikigami_haunting(False)
 
