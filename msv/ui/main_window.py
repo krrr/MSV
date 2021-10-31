@@ -13,8 +13,8 @@ from msv.macro_script import macro_process_main
 from msv.ui.key_bind_window import KeyBindWindow
 from msv.input_manager import DEFAULT_KEY_MAP
 from msv.ui.auto_star_force_window import AutoStarForceWindow
-# from msv.terrain_editor import TerrainEditorWindow
-from msv.screen_processor import ScreenProcessor
+from msv.ui.terrain_editor import TerrainEditorWindow
+from msv.screen_processor import ScreenProcessor, MapleWindowNotFoundError
 
 
 ABOUT_TXT = '''\
@@ -270,20 +270,24 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_actionEditCurrent_triggered(self):
         if not self.platform_file_path:
-            QMessageBox.critical(self, self.app_title, 'No terrain file opened')
+            QMessageBox.critical(self, 'Error', 'No terrain file opened')
         else:
-            # TerrainEditorWindow(self.master, self.platform_file_path)
-            pass
+            try:
+                TerrainEditorWindow(self, self.platform_file_path).show()
+            except MapleWindowNotFoundError:
+                QMessageBox.critical(self, 'Error', 'The MapleStory window was not found')
+
 
     @pyqtSlot()
     def on_actionCreate_triggered(self):
-        # TerrainEditorWindow(self.master)
-        pass
+        try:
+            TerrainEditorWindow(self).show()
+        except MapleWindowNotFoundError:
+            QMessageBox.critical(self, 'Error', 'The MapleStory window was not found')
 
     @pyqtSlot()
     def on_actionAutoStarForce_triggered(self):
-        win = AutoStarForceWindow(self)
-        win.show()
+        AutoStarForceWindow(self).show()
 
     @pyqtSlot()
     def on_processToggleBtn_clicked(self):

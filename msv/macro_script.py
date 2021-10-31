@@ -96,6 +96,9 @@ class MacroController:
         self.terrain_analyzer = PathAnalyzer()
         self.keyhandler = km.InputManager(use_driver=kernel_driver)
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
+        if config.get('corsair_legion'):  # adjust summon skill cooldown
+            for i in ('kishin_shoukan', 'yaksha_boss'):
+                self.player_manager.skill_cooldown[i] *= 1.1
 
         self.last_platform_hash = None
         self.current_platform_hash = None

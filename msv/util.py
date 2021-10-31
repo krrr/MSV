@@ -19,15 +19,24 @@ resource_path = os.path.dirname(__file__) + '\\resources\\'
 
 
 def read_qt_resource(path, numpy=False):
-    file = QFile(path)
-    if file.open(QFile.ReadOnly):
-        ret = file.readAll()
-        file.close()
-        if numpy:
-            ret = np.frombuffer(ret, np.uint8)
-        return ret
+    if is_compiled():
+        file = QFile(path)
+        if file.open(QFile.ReadOnly):
+            ret = file.readAll()
+            file.close()
+            if numpy:
+                ret = np.frombuffer(ret, np.uint8)
+            return ret
+        else:
+            raise Exception(file.errorString() + ': ' + path)
     else:
-        raise Exception(file.errorString() + ': ' + path)
+        if not path.startswith(':/'):
+            raise Exception('path not starts with ":/"')
+        with open(resource_path + path[2:].replace('/', '\\'), 'rb') as f:
+            ret = f.read()
+            if numpy:
+                ret = np.frombuffer(ret, np.uint8)
+            return ret
 
 
 def _winmm_command(*command):
@@ -156,3 +165,8 @@ def random_number(gen_range=0.1, digits=2, minus=False):
     if minus and random.random() < 0.5:
         d *= -1
     return d
+
+
+def is_compiled():
+    """Detect is compiled using Nutika"""
+    return not os.path.isfile(__file__)

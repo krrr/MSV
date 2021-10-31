@@ -3,31 +3,13 @@ import time
 import logging
 import random
 from PIL import ImageOps
-from multiprocessing.connection import Connection
 import msv.directinput_constants as dc
-from msv.util import get_config, setup_tesseract_ocr, color_distance, ConnLoggerHandler
-from msv.macro_script import Aborted
+from msv.tools import ToolBase
+from msv.util import setup_tesseract_ocr, color_distance
 from msv.screen_processor import ScreenProcessor, GameCaptureError
-from msv.input_manager import InputManager
 
 
-def macro_process_main(conn: Connection, target_star: int, star_catch: bool, safe_guard: bool):
-    try:
-        auto_star_force = AutoStarForce(ScreenProcessor(), logging.DEBUG if get_config().get('debug') else logging.INFO, conn=conn)
-        auto_star_force.run(target_star, star_catch, safe_guard)
-        conn.send(('stopped', None))
-    except GameCaptureError:
-        conn.send(('log', 'failed to capture game window'))
-        conn.send(('stopped', None))
-    except Aborted:
-        conn.send(('stopped', None))
-    except Exception as e:
-        conn.send(('exception', e))
-
-    conn.close()
-
-
-class AutoStarForce:
+class AutoStarForce(ToolBase):
     AREA_SIZE = (342, 295)
     AREA_POS = (513, 218)
     CURR_STAR_RECT = (138, 92, 138+115, 92+16)
@@ -47,10 +29,7 @@ class AutoStarForce:
     DIALOG_BLUE_COLOR = (24, 139, 198)
 
     def __init__(self, screen_processor, log_level=logging.DEBUG, conn=None):
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(log_level)
-        if conn and not self.logger.hasHandlers():
-            self.logger.addHandler(ConnLoggerHandler(logging.DEBUG, conn))
+        super().__init__(screen_processor, log_level, conn)
 
         setup_tesseract_ocr()
         import pyocr.libtesseract
@@ -61,17 +40,12 @@ class AutoStarForce:
             raise Exception('tesseract english data not available')
 
         self.current_star_regexp = re.compile('(\\d+)\\s?Star\\s?>\\s?\\d+\\s?Star')
-        self.conn = conn
-        self.screen_processor = screen_processor
-        self.screen_processor.get_game_hwnd()
-        self.input_mgr = InputManager()
-        self.scale_ratio = None
-        self.img = None
-        self.ms_rect = None
         self.rect = None
         self.center_pos = None
+        self.area_pos = self.AREA_POS
 
-    def run(self, target_star, star_catch, safe_guard):
+    def run(self, args):
+        target_star, star_catch, safe_guard = args
         self.logger.info('start enhancing to %s', target_star)
         count = 0
         next_star = None
@@ -101,12 +75,12 @@ class AutoStarForce:
             if self.poll_conn():
                 return
 
-            self.input_mgr.mouse_left_click_at(*self._map_pos(self.ENHANCE_BTN_POS), 4)
+            self.input_mgr.mouse_left_click_at(*self._map_pos(self.ENHANCE_BTN_POS), 8)
             time.sleep(random.uniform(0.06, 0.09))
-            self.input_mgr.mouse_left_click_at(*self._map_pos(self.CONFIRM_OK_BTN_POS), 4)
+            self.input_mgr.mouse_left_click_at(*self._map_pos(self.CONFIRM_OK_BTN_POS), 8)
 
             time.sleep(random.uniform(0.1, 0.2))
-            self.input_mgr.mouse_move(*self._map_pos((random.randint(-30, 40), self.AREA_SIZE[1]+random.randint(-40, 10))))
+            self.input_mgr.mouse_move(*self._map_pos((random.randint(5, 110), self.AREA_SIZE[1]+random.randint(-60, -5))))
 
             if star_catch:
                 time.sleep(0.1)
@@ -123,7 +97,7 @@ class AutoStarForce:
                 return
 
             time.sleep(random.uniform(0.06, 0.09))
-            self.input_mgr.mouse_left_click_at(*self._map_pos(self.RESULT_OK_BTN_POS), 5)
+            self.input_mgr.mouse_left_click_at(*self._map_pos(self.RESULT_OK_BTN_POS), 8)
             time.sleep(random.uniform(0.25, 0.35))
             if result == self.RESULT_SUCCESS:
                 self.logger.debug('success')
@@ -161,16 +135,6 @@ class AutoStarForce:
 
             self.logger.debug('-------------------------------')
             count += 1
-
-    def poll_conn(self):
-        try:
-            return self.conn and self.conn.poll()
-        except EOFError:
-            return True
-
-    def _map_pos(self, pos):
-        return (self.ms_rect[0] + (self.AREA_POS[0]+pos[0]) * self.scale_ratio,
-                self.ms_rect[1] + (self.AREA_POS[1]+pos[1]) * self.scale_ratio)
 
     def get_current_star(self):
         curr_star_img = ImageOps.invert(self.img.crop(self.CURR_STAR_RECT).convert('L'))
@@ -262,4 +226,4 @@ class AutoStarForce:
 
 if __name__ == "__main__":
     auto_star_force = AutoStarForce(ScreenProcessor())
-    auto_star_force.run(17, True, True)
+    auto_star_force.run((17, True, True))

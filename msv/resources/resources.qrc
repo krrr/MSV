@@ -51,6 +51,8 @@
     <file>template/eboss_minute_tpl.png</file>
     <file>template/eboss_second_tpl.png</file>
     <file>template/gm_cap_tpl.png</file>
+    <file>template/craft_btn.png</file>
+    <file>template/craft_ok_btn.png</file>
   </qresource>
   <qresource>
     <file>template/monster/ascendion_tpl.png</file>
