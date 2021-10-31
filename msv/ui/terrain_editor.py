@@ -1,10 +1,28 @@
+import threading
+import os
+import time
+import cv2
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-import cv2, threading, os
-import time
-from msv.screen_processor import StaticImageProcessor, ScreenProcessor
+from msv.ui import fix_sizes_for_high_dpi
+from msv.screen_processor import StaticImageProcessor, ScreenProcessor, GameCaptureError
 from msv.terrain_analyzer import PathAnalyzer
+
+
+class PlatformList(QListWidget):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.del_act = QAction("Delete selected item", self)
+        self.toggle_n_act = QAction("Toggle selected no monster", self)
+
+    def contextMenuEvent(self, event):
+        if len(self.selectedIndexes()):
+            menu = QMenu()
+            menu.addAction(self.toggle_n_act)
+            # menu.addSeparator()
+            menu.addAction(self.del_act)
+            menu.exec_(event.globalPos())
 
 
 class TerrainEditorWindow(QWidget):
@@ -13,84 +31,118 @@ class TerrainEditorWindow(QWidget):
 
     def __init__(self, parent=None, open_file_path=None):
         super().__init__(parent, Qt.Window | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-        self.setFixedSize(300, 130)
+        self.setMinimumSize(250, 400)
+        self.setWindowTitle("Terrain Editor")
 
-        self.setMinimumSize(100, 30)
-        self.setWindowTitle("Terrain File Editor")
-
-        mainLayout = QVBoxLayout(self)
-        mainLayout.setContentsMargins(0, 0, 0, 4)
-        mainLayout.setSpacing(4)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        self.setLayout(main_layout)
 
         self.last_coord_x = None
         self.last_coord_y = None
         self.current_coords = []
         self.other_attrs = {}
 
+        # image label
         self.screen_capturer = ScreenProcessor()
-        if not self.screen_capturer.get_game_hwnd():
-            QMessageBox.critical(self, 'Error', 'The MapleStory window was not found.')
-            self.close()
-            return
-
         self.image_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = PathAnalyzer()
         self.image_label = QLabel(self)
+        self.image_label.setAlignment(Qt.AlignCenter)
+        self.image_label.setMinimumHeight(40)
+        self.image_label.setStyleSheet('color: red')
+        main_layout.addWidget(self.image_label)
 
+        # master tool frame
         self.master_tool_frame = QFrame(self)
         self.master_tool_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Plain)
         self.master_tool_frame.setLineWidth(2)
+        master_tool_frame_layout = QVBoxLayout(self.master_tool_frame)
+        master_tool_frame_layout.setContentsMargins(4, 4, 4, 4)
+        master_tool_frame_layout.setSpacing(4)
+        self.master_tool_frame.setLayout(master_tool_frame_layout)
+        main_layout.addWidget(self.master_tool_frame)
 
-        self.tool_frame_1 = tk.Frame(self.master_tool_frame)
-        self.tool_frame_1.pack(fill=X)
-        tk.Button(self.tool_frame_1, text="Find minimap again", command=self.find_minimap_coords).pack(side=LEFT)
-        self.coord_label = tk.Label(self.tool_frame_1, text="x,y")
-        self.coord_label.pack(side=RIGHT, fill=Y, expand=YES)
+        tool_frame_1 = QWidget(self.master_tool_frame)
+        master_tool_frame_layout.addWidget(tool_frame_1)
+        tool_frame_1_layout = QHBoxLayout(tool_frame_1)
+        tool_frame_1_layout.setContentsMargins(0, 0, 0, 0)
+        tool_frame_1_layout.setSpacing(4)
+        self.coord_label = QLabel(tool_frame_1)
+        tool_frame_1_layout.addWidget(self.coord_label)
+        btn = QPushButton(tool_frame_1)
+        btn.setText('Relocate minimap')
+        btn.clicked.connect(self.find_minimap_coords)
+        tool_frame_1_layout.addWidget(btn)
 
-        self.tool_frame_2 = tk.Frame(self.master_tool_frame)
-        self.tool_frame_2.pack(fill=X)
-        self.start_platform_record_button = tk.Button(self.tool_frame_2, text="Start record platform", command=self.start_record_platform)
-        self.start_platform_record_button.pack(side=LEFT, expand=YES, fill=X)
-        self.stop_platform_record_button = tk.Button(self.tool_frame_2, text="Stop record platform", command=self.stop_record_platform, state=DISABLED)
-        self.stop_platform_record_button.pack(side=RIGHT, expand=YES, fill=X)
+        # set skill buttons
+        tool_frame_2 = QFrame(self.master_tool_frame)
+        tool_frame_2_layout = QHBoxLayout(tool_frame_2)
+        tool_frame_2_layout.setContentsMargins(0, 0, 0, 0)
+        tool_frame_2_layout.setAlignment(Qt.AlignCenter)
+        tool_frame_2_layout.setSpacing(4)
+        tool_frame_2.setLayout(tool_frame_2_layout)
+        master_tool_frame_layout.addWidget(tool_frame_2)
+        ico_w = 24 * self.logicalDpiX() // 96
+        ico_sz = QSize(ico_w, ico_w)
+        set_yaksha_coord_l_btn = QPushButton(tool_frame_2)
+        set_yaksha_coord_l_btn.setToolTip('Toggle yaksha boss position (face left)')
+        set_yaksha_coord_l_btn.clicked.connect(lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'left'))
+        set_yaksha_coord_l_btn.setIcon(QIcon(QPixmap(':/skill_icon/yaksha_boss.png')))
+        set_yaksha_coord_r_btn = QPushButton(tool_frame_2)
+        set_yaksha_coord_r_btn.setToolTip('Toggle yaksha boss position (face right)')
+        set_yaksha_coord_r_btn.clicked.connect(lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'right'))
+        set_yaksha_coord_r_btn.setIcon(QIcon(QPixmap.fromImage(QImage(':/skill_icon/yaksha_boss.png').mirrored(True, False))))
+        set_kishin_coord_btn = QPushButton(tool_frame_2)
+        set_kishin_coord_btn.setToolTip('Toggle kishin shoukan position')
+        set_kishin_coord_btn.clicked.connect(lambda: self._set_place_skill_coord('kishin_shoukan'))
+        set_kishin_coord_btn.setIcon(QIcon(QPixmap(':/skill_icon/kishin_shoukan.png')))
+        set_nightmare_invite_btn = QPushButton(tool_frame_2)
+        set_nightmare_invite_btn.setToolTip('Toggle nightmare invite position')
+        set_nightmare_invite_btn.clicked.connect(lambda: self._set_place_skill_coord('nightmare_invite'))
+        set_nightmare_invite_btn.setIcon(QIcon(QPixmap(':/skill_icon/nightmare_invite.png')))
+        for i in (set_yaksha_coord_l_btn, set_yaksha_coord_r_btn, set_kishin_coord_btn, set_nightmare_invite_btn):
+            i.setIconSize(ico_sz)
+            i.setFixedSize(24, 24)
+            tool_frame_2_layout.addWidget(i)
 
-        self.set_yaksha_coord_button0 = tk.Button(self.master_tool_frame, text="Toggle yaksha boss pos (face left)",
-                                                  command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'left'))
-        self.set_yaksha_coord_button0.pack(fill=X)
-        self.set_yaksha_coord_button1 = tk.Button(self.master_tool_frame, text="Toggle yaksha boss pos (face right)",
-                                                  command=lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'right'))
-        self.set_yaksha_coord_button1.pack(fill=X)
-        self.set_kishin_coord_button = tk.Button(self.master_tool_frame, text="Toggle kishin shoukan pos",
-                                                 command=lambda: self._set_place_skill_coord('kishin_shoukan'))
-        self.set_kishin_coord_button.pack(fill=X)
-        self.set_nightmare_invite_button = tk.Button(self.master_tool_frame, text="Toggle nightmare invite pos",
-                                                     command=lambda: self._set_place_skill_coord('nightmare_invite'))
-        self.set_nightmare_invite_button.pack(fill=X)
+        # toggle record button
+        self.toggle_record_btn = QPushButton(self.master_tool_frame)
+        self.toggle_record_btn.setText('Start record platform')
+        self.toggle_record_btn.clicked.connect(self.toggle_record)
+        master_tool_frame_layout.addWidget(self.toggle_record_btn)
 
-        self.tool_frame_5 = tk.Frame(self.master_tool_frame)
-        self.tool_frame_5.pack(fill=X, side=BOTTOM)
-        tk.Button(self.tool_frame_5, text="reset", command=self.on_reset_platforms).pack(side=LEFT, expand=YES, fill=X)
-        tk.Button(self.tool_frame_5, text="save", command=self.on_save).pack(side=RIGHT, expand=YES, fill=X)
+        # save and reset button
+        tool_frame_5 = QFrame(self.master_tool_frame)
+        tool_frame_5_layout = QHBoxLayout(tool_frame_5)
+        tool_frame_5_layout.setContentsMargins(0, 0, 0, 0)
+        tool_frame_5_layout.setSpacing(4)
+        tool_frame_5.setLayout(tool_frame_5_layout)
+        master_tool_frame_layout.addWidget(tool_frame_5)
+        self.save_btn = QPushButton(tool_frame_5)
+        self.save_btn.setText('Save')
+        self.save_btn.clicked.connect(self.on_save)
+        tool_frame_5_layout.addWidget(self.save_btn)
+        self.reset_btn = QPushButton(tool_frame_5)
+        self.reset_btn.setText('Reset')
+        self.reset_btn.clicked.connect(self.on_reset_platforms)
+        tool_frame_5_layout.addWidget(self.reset_btn)
 
-        self.platform_listbox = tk.Listbox(self, selectmode=MULTIPLE)
-        self.platform_listbox.pack(expand=YES, fill=BOTH)
-        self.platform_listbox_platform_index = {}
-        self.platform_listbox.bind("<Button-3>", self.on_platform_list_rclick)
+        self.platform_list = PlatformList(self)
+        self.platform_list.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.platform_list.toggle_n_act.triggered.connect(self._on_toggle_no_monster)
+        self.platform_list.del_act.triggered.connect(self.on_listbox_delete)
+        main_layout.addWidget(self.platform_list)
 
-        self.platform_listbox_menu = tk.Menu(self, tearoff=0)
-        self.platform_listbox_menu.add_command(label="Delete selected item", command=self.on_listbox_delete)
-        self.platform_listbox_menu.add_command(label="Toggle selected no monster", command=self._on_toggle_no_monster)
+        fix_sizes_for_high_dpi(self)
 
-        self.image_processor.update_image(set_focus=False)
-        self.minimap_rect = self.image_processor.get_minimap_rect()
-        if not self.minimap_rect:
-            self.image_label.setText('<span style="color: red">Minimap not found</span>')
-
-        self.stopEvent = threading.Event()
-        self.thread = threading.Thread(target=self.update_image, args=())
-        self.thread.start()
-
+        self.minimap_rect = None
         self.record_mode = 0  # 0 if not recording, 1 if normal platform
+
+        self.stop_event = threading.Event()
+        self.thread = threading.Thread(target=self.update_image)
+        self.thread.start()
 
         if open_file_path:
             self.load_platform_file(open_file_path)
@@ -115,89 +167,77 @@ class TerrainEditorWindow(QWidget):
         self.update_listbox()
 
     def closeEvent(self, ev):
-        self.stopEvent.set()
+        if hasattr(self, 'stop_event'):
+            self.stop_event.set()
         super().closeEvent(ev)
 
-    def on_platform_list_rclick(self, event):
-        try:
-            self.platform_listbox_menu.tk_popup(event.x_root, event.y_root, 0)
-        finally:
-            self.platform_listbox_menu.grab_release()
-
     def on_listbox_delete(self):
-        selected = self.platform_listbox.curselection()
+        selected = self.platform_list.selectedItems()
         if not selected:
             return
 
-        if askyesno("Terrain file generator", "Are you sure you want to delete %d entries??"%(len(selected))):
+        if QMessageBox.question(self, "Terrain Editor", "Are you sure to delete %d platforms?" % (len(selected))) == QMessageBox.Yes:
             if self.record_mode != 0:
-                showwarning("Terrain File Generator", "Please close the ongoing record first")
+                QMessageBox.warning(self, "Terrain Editor", "Please close the ongoing record first")
             else:
-                for idx in selected:
-                    for key, hash in self.platform_listbox_platform_index.items():
-                        if idx == key:
-                            del self.terrain_analyzer.platforms[hash]
+                for i in selected:
+                    del self.terrain_analyzer.platforms[i.data(Qt.UserRole)]
                 self.update_listbox()
 
     def _on_toggle_no_monster(self):
-        selected = self.platform_listbox.curselection()
-        for idx in selected:
-            hash = self.platform_listbox_platform_index[idx]
-            platform = self.terrain_analyzer.platforms[hash]
+        for i in self.platform_list.selectedItems():
+            platform = self.terrain_analyzer.platforms[i.data(Qt.UserRole)]
             platform.no_monster = not platform.no_monster
 
         self.update_listbox()
 
     def update_listbox(self):
-        self.platform_listbox_platform_index = {}
-        self.platform_listbox.delete(0, END)
-        cindex = 0
-        for key, platform in self.terrain_analyzer.platforms.items():
-            label = "(%d,%d), (%d,%d) platform" % (platform.start_x, platform.start_y, platform.end_x, platform.end_y)
+        self.platform_list.clear()
+        for key, p in self.terrain_analyzer.platforms.items():
+            label = "%s:  (%d,%d), (%d,%d)" % (key, p.start_x, p.start_y, p.end_x, p.end_y)
             other_attrs = []
-            if platform.no_monster:
+            tooltip = 'platform'
+            if p.no_monster:
                 other_attrs.append('N')
+                tooltip += ' (no monster)'
             if other_attrs:
                 label += ' (' + ', '.join(other_attrs) + ')'
-            self.platform_listbox.insert(END, label)
-            self.platform_listbox_platform_index[cindex] = key
-            self.platform_listbox.itemconfigure(cindex, fg="green")
-            cindex += 1
+            item = QListWidgetItem(label, self.platform_list)
+            item.setToolTip(tooltip)
+            item.setData(Qt.UserRole, key)
 
-    def start_record_platform(self):
-        self.record_mode = 1
-        self.start_platform_record_button.configure(state=DISABLED)
-        self.stop_platform_record_button.configure(state=NORMAL)
-
-    def stop_record_platform(self):
-        self.record_mode = 0
-        self.start_platform_record_button.configure(state=NORMAL)
-        self.stop_platform_record_button.configure(state=DISABLED)
-        self.coord_label.configure(fg="black")
-        self.terrain_analyzer.flush_input_coords_to_platform(coord_list=self.current_coords)
-        self.current_coords = []
-        self.update_listbox()
+    def toggle_record(self):
+        if self.record_mode == 0:
+            self.record_mode = 1
+            self.coord_label.setStyleSheet("color: green")
+            self.toggle_record_btn.setText('Stop record platform')
+        else:
+            self.record_mode = 0
+            self.coord_label.setStyleSheet("color: black")
+            self.terrain_analyzer.flush_input_coords_to_platform(coord_list=self.current_coords)
+            self.current_coords = []
+            self.update_listbox()
+            self.toggle_record_btn.setText('Start record platform')
 
     def on_save(self):
         assert self.minimap_rect
 
         minimap_rect = self.minimap_rect  # dialog may cover minimap
-        path = asksaveasfilename(initialdir=os.getcwd(), title="Save path setting", filetypes=(("Terrain file (*.platform)","*.platform"),))
+        path = QFileDialog.getSaveFileName(self, "Save platform file", os.getcwd(), "Terrain File (*.platform)")[0]
         if path:
             if not path.endswith(".platform"):
                 path += ".platform"
             self.other_attrs['minimap'] = minimap_rect
             self.terrain_analyzer.save(path, self.other_attrs)
-            showinfo("Terrain file generator", "File path {0}\n has been saved.".format(path))
+            QMessageBox.information(self, "Terrain Editor", "File path {0}\n has been saved.".format(path))
             self.close()
 
     def on_reset_platforms(self):
-        if askyesno("Terrain file generator", "Really delete all terrain?"):
-            self.record_mode = 0
-            self.coord_label.configure(fg="black")
+        if QMessageBox.question(self, "Terrain Editor", "Really delete all terrain?") == QMessageBox.Yes:
+            if self.record_mode != 0:
+                self.toggle_record()
+            self.coord_label.setStyleSheet("color: black")
             self.terrain_analyzer.reset()
-            self.start_platform_record_button.configure(state=NORMAL)
-            self.stop_platform_record_button.configure(state=DISABLED)
             self.update_listbox()
 
     def find_minimap_coords(self):
@@ -205,28 +245,34 @@ class TerrainEditorWindow(QWidget):
         self.minimap_rect = self.image_processor.get_minimap_rect()
 
     def update_image(self):
-        while not self.stopEvent.is_set():
-            self.image_processor.update_image(set_focus=False)
-            if not self.minimap_rect:
-                self.image_label.configure(text="Minimap not found", fg="red")
-                self.find_minimap_coords()
+        while not self.stop_event.is_set():
+            try:
+                self.image_processor.update_image(set_focus=False)
+            except GameCaptureError:
+                self.image_label.setText('Failed to capture game')
+                time.sleep(0.1)
                 continue
 
-            playerpos = self.image_processor.find_player_minimap_marker(self.minimap_rect)
-
-            if not playerpos:
-                self.image_label.configure(text="Player location not found", fg="red")
+            if not self.minimap_rect:
                 self.find_minimap_coords()
+                if not self.minimap_rect:
+                    self.image_label.setText('Minimap not found')
+                    time.sleep(0.1)
+                    continue
+
+            playerpos = self.image_processor.find_player_minimap_marker(self.minimap_rect)
+            if not playerpos:
+                self.image_label.setText('Player location not found')
+                self.find_minimap_coords()
+                time.sleep(0.1)
                 continue
 
             self.last_coord_x, self.last_coord_y = playerpos
-            if self.record_mode == 1 or self.record_mode == 2:
+            if self.record_mode == 1:
                 if (self.last_coord_x, self.last_coord_y) not in self.current_coords:
                     self.current_coords.append((self.last_coord_x, self.last_coord_y))
-                if self.record_mode == 1:
-                    self.coord_label.configure(fg="green")
 
-            self.coord_label.configure(text="%d,%d"%(playerpos[0], playerpos[1]))
+            self.coord_label.setText("player: %d,%d" % (playerpos[0], playerpos[1]))
             if self.minimap_rect == 0:
                 continue
 
@@ -238,17 +284,15 @@ class TerrainEditorWindow(QWidget):
                 cv2.line(cropped_img, (playerpos[0], 0), (playerpos[0], cropped_img.shape[0]), (0,0,0), 1)
                 cv2.line(cropped_img, (0, playerpos[1]), (cropped_img.shape[1], playerpos[1]), (0, 0, 0), 1)
 
-            selected = self.platform_listbox.curselection()
+            selected = self.platform_list.selectedIndexes()
             if selected:
-                for idx in selected:
-                    for key, hash in self.platform_listbox_platform_index.items():
-                        if idx == key:
-                            platform_obj = self.terrain_analyzer.platforms[hash]
-                            cv2.line(cropped_img, (platform_obj.start_x, platform_obj.start_y),(platform_obj.end_x, platform_obj.end_y), (0, 255, 0), 2)
-                            break
+                for i in selected:
+                    p = self.terrain_analyzer.platforms[i.data(Qt.UserRole)]
+                    cv2.line(cropped_img, (p.start_x, p.start_y), (p.end_x, p.end_y), (0, 255, 0), 2)
+                    break
             else:
-                for key, platform in self.terrain_analyzer.platforms.items():
-                    cv2.line(cropped_img, (platform.start_x, platform.start_y), (platform.end_x, platform.end_y), (0,255,0), 2)
+                for key, p in self.terrain_analyzer.platforms.items():
+                    cv2.line(cropped_img, (p.start_x, p.start_y), (p.end_x, p.end_y), (0, 255, 0), 2)
 
             for k in self.set_skill_color.keys():
                 coord = self.other_attrs.get(k + '_coord')
@@ -258,8 +302,9 @@ class TerrainEditorWindow(QWidget):
                     cv2.circle(cropped_img, (coord[0], coord[1]), 3, color, -1)
 
             h, w = cropped_img.shape[:2]
-            img = QImage(cropped_img.data, h, w, 3*h, QImage.Format_BGR888)
-            self.image_label.setPixmap(img)
+            img = QImage(cropped_img.data, w, h, w*3, QImage.Format_RGB888)
+            img = img.scaledToWidth(min(self.image_label.width(), int(w * self.logicalDpiX() // 96)))
+            self.image_label.setPixmap(QPixmap.fromImage(img))
 
             self.update()
             time.sleep(0.04)
