@@ -1,9 +1,8 @@
 # Copyright (C) 2021 krrr <guogaishiwo@gmail.com>
-import msv.resources_rc  # for reading qt resource in child process
 
 
 APP_TITLE = 'MSV'
-__version__ = '211015'
+__version__ = '211017'
 
 
 def main_entry():
