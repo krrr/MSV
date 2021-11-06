@@ -88,7 +88,7 @@ class AstarNode:
 
 class PathAnalyzer:
     """Converts minimap player coordinates to terrain information like ladders and platforms."""
-    TELEPORT_VERTICAL_RANGE = 19
+    TELEPORT_VERTICAL_RANGE = 16
     ROPE_VERTICAL_RANGE = 35
 
     def __init__(self):

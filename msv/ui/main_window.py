@@ -45,7 +45,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug_mode', x))
         self.macroProcSignal.connect(self._onMacroProcMessage)
 
-        self.app_title = (app_title or APP_TITLE) + ' Night Lord'
+        self.app_title = (app_title or APP_TITLE) + ' Dual Blade'
         self.setWindowTitle(self.app_title)
 
         self.keymap = None
@@ -55,7 +55,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.macro_proc_conn = None
 
         self.logTextArea.document().setDefaultStyleSheet('.time-part { color: #808080 }')
-        self.log(self.app_title + " night lord version: v" + __version__)
+        self.log(self.app_title + " dual blade version: v" + __version__)
         self.log('\n')
 
         self.preset_names = tuple(mapscripts.map_scripts.keys())
@@ -334,4 +334,4 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot()
     def on_actionAbout_triggered(self):
-        QMessageBox.information(self, 'About', 'Version: %s\n%s night lord jioben' % (__version__, self.app_title))
+        QMessageBox.information(self, 'About', 'Version: %s\n%s dual blade jioben' % (__version__, self.app_title))

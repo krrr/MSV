@@ -16,6 +16,7 @@ from msv.util import get_config, get_file_log_handler, ConnLoggerHandler, random
 def macro_process_main(conn: Connection):
     from msv import mapscripts
     # noinspection PyUnresolvedReferences
+    import msv.resources_rc  # for reading qt resource in child process
 
     logger = logging.getLogger("macro_loop")
     logger.setLevel(logging.DEBUG)
@@ -96,9 +97,6 @@ class MacroController:
         self.terrain_analyzer = PathAnalyzer()
         self.keyhandler = km.InputManager(use_driver=kernel_driver)
         self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
-        if config.get('corsair_legion'):  # adjust summon skill cooldown
-            for i in ('kishin_shoukan', 'yaksha_boss'):
-                self.player_manager.skill_cooldown[i] *= 1.1
 
         self.last_platform_hash = None
         self.current_platform_hash = None
@@ -172,7 +170,7 @@ class MacroController:
         """
         Move to platform by various methods
         """
-        for i in range(3):  # retry up to 3 times
+        for i in range(5):  # retry up to 5 times
             if self.current_platform_hash == platform_hash:
                 return True
             elif self.current_platform_hash is None:
@@ -439,7 +437,7 @@ class MacroController:
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.showdown()
+        self.player_manager.blade_fury()
         ### End skill usage
 
         # Find coordinates to move to next platform
@@ -481,7 +479,7 @@ class MacroController:
         return 0
 
     def buff_skills(self):
-        skills = ['holy_symbol', 'throw_blasting', 'mihile_link', 'maple_warrior']
+        skills = ['holy_symbol', 'final_cut']
         random.shuffle(skills)
         used = False
         for i in skills:

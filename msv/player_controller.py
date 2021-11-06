@@ -8,8 +8,8 @@ from msv.util import random_number
 # simple jump vertical distance: about 6 pixels
 class PlayerController:
     ROPE_CD = 3
-    TELEPORT_HORIZONTAL_RANGE = 35
-    SHIKIGAMI_HAUNTING_RANGE = 18
+    TELEPORT_HORIZONTAL_RANGE = 27
+    SHIKIGAMI_HAUNTING_RANGE = 1
     SET_SKILL_COMMON_DELAY = 0.35
     BUFF_COMMON_DELAY = 0.7
 
@@ -49,21 +49,19 @@ class PlayerController:
 
         self.x_movement_enforce_rate = 15  # refer to optimized_horizontal_move
 
-        self.horizontal_movement_threshold = 35  # teleport instead of walk if distance greater than threshold
+        self.horizontal_movement_threshold = 27  # teleport instead of walk if distance greater than threshold
 
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'dark_flare': 60, 'nightmare_invite': 60, 'dark_lord_omen': 60, 'true_arachnid_reflection': 250,
-            'shurrikane': 25
+             'blade_tornado': 9, 'blades_of_destiny': 8, 'final_cut': 83,
         }
 
         self.v_buff_cd = 180  # common cool down for v buff
 
         self.last_skill_use_time = {
-            'dark_flare': 0, 'nightmare_invite': 0, 'dark_lord_omen': 0, 'shurrikane': 0, 'throw_blasting': 0,
-            'holy_symbol': 0, 'mihile_link': 0, 'true_arachnid_reflection': 0, 'maple_warrior': 0
+            'final_cut': 0, 'blades_of_destiny': 0, 'holy_symbol': 0, 'blade_tornado': 0,
         }
 
     def update(self, player_coords_x=None, player_coords_y=None):
@@ -85,7 +83,7 @@ class PlayerController:
     def distance(self, coord1, coord2):
         return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
 
-    def dbl_jump_move(self, goal_x):
+    def dbl_jump_move(self, goal_x, attack=False):
         """
         This function will, while moving towards goal_x, constantly use shikigami haunting and not overlapping
         X coordinate max error on flat surface: +- 5 pixels
@@ -112,9 +110,9 @@ class PlayerController:
             else:
                 # can teleport immediately after 3rd hit of shikigami haunting
                 if loc_delta > 0:
-                    self.dbl_jump_left()
+                    self.dbl_jump_left(attack=attack)
                 else:
-                    self.dbl_jump_right()
+                    self.dbl_jump_right(attack=attack)
 
             self.update()
             if time.time() - start_time > time_limit:
@@ -173,39 +171,47 @@ class PlayerController:
     def teleport_up(self):
         self.key_mgr.single_press(self.keymap["jump"])
         time.sleep(0.15 + random_number(0.02))
-        self.key_mgr.single_press(self.keymap["shadow_web"])
+        self.key_mgr.single_press(self.keymap["blade_ascension"])
         self._wait_drop(True)
 
-    def dbl_jump_left(self, third=False, shadow_web=False):
-        return self._do_dbl_jump(DIK_LEFT, third, shadow_web)
+    def dbl_jump_left(self, third=False, jump=False, attack=False, wait=True):
+        return self._do_dbl_jump(DIK_LEFT, third, jump, attack, wait)
 
-    def dbl_jump_right(self, third=False, shadow_web=False):
-        return self._do_dbl_jump(DIK_RIGHT, third, shadow_web)
+    def dbl_jump_right(self, third=False, jump=False, attack=False, wait=True):
+        return self._do_dbl_jump(DIK_RIGHT, third, jump, attack, wait)
 
-    def _do_dbl_jump(self, dir_key, third, shadow_web):
+    def _do_dbl_jump(self, dir_key, third, jump, attack, wait):
         """Warining: is a blocking call"""
         self.key_mgr.single_press(dir_key)
         time.sleep(0.03)
         self.key_mgr.single_press(self.keymap["jump"])
-        time.sleep(0.15 + random_number(0.02))
+        time.sleep(0.15 + random_number(0.01))
         self.key_mgr.single_press(self.keymap["jump"])
         if third:
-            time.sleep(0.24 + random_number(0.02))
+            time.sleep(0.16)
             self.key_mgr.single_press(self.keymap["jump"])
-        if shadow_web:
-            time.sleep(0.2 + random_number(0.02))
-            self.key_mgr.single_press(self.keymap["shadow_web"])
+        if jump:
+            time.sleep(0.16)
+            self.key_mgr.single_press(self.keymap["blade_ascension"])
+        elif attack:
+            time.sleep(0.04)
+            self.key_mgr.single_press(self.keymap["blade_fury"])
 
-        self._wait_drop(True)
+        if wait:
+            if attack:
+                time.sleep(0.49 + random_number(0.02))
+            else:
+                self._wait_drop(True)
         return True
 
-    def rope_up(self):
+    def rope_up(self, wait=True):
         elapsed = time.time() - self.last_rope_time
         if elapsed < self.ROPE_CD:
             self.stay(self.ROPE_CD - elapsed)
         self.key_mgr.single_press(self.keymap["rope"])
         self.last_rope_time = time.time()
-        self._wait_drop(True)
+        if wait:
+            self._wait_drop(True)
 
     def shikigami_charm(self):
         self.key_mgr.single_press(self.keymap["shikigami_charm"])
@@ -235,11 +241,11 @@ class PlayerController:
     def drop(self, wait=True):
         """Blocking call"""
         self.key_mgr.direct_press(DIK_DOWN)
-        time.sleep(0.05 + random_number())
+        time.sleep(0.05 + random_number(0.08))
         self.key_mgr.direct_press(self.keymap["jump"])
-        time.sleep(0.05 + random_number())
+        time.sleep(0.05 + random_number(0.08))
         self.key_mgr.direct_release(self.keymap["jump"])
-        time.sleep(0.1 + random_number())
+        time.sleep(0.07 + random_number(0.08))
         self.key_mgr.direct_release(DIK_DOWN)
         if wait:
             self._wait_drop(False)
@@ -273,17 +279,20 @@ class PlayerController:
                     highest_y = self.y
             prev_y, prev_x = self.y, self.x
 
-    def showdown(self):
-        self.key_mgr.single_press(self.keymap["showdown"])
+    def blade_tornado(self):
+        self.key_mgr.single_press(self.keymap["blade_tornado"])
+        self.skill_cast_counter += 1
+        time.sleep(0.5 + random_number(0.05))
+
+    def blade_fury(self):
+        self.key_mgr.single_press(self.keymap["blade_fury"])
         self.skill_cast_counter += 1
         time.sleep(0.7 + random_number(0.05))
 
-    def shurrikane(self):
-        if not self.is_skill_usable('shurrikane'):
-            return
-        self.key_mgr.single_press(self.keymap["shurrikane"])
+    def blades_of_destiny(self):
+        self.key_mgr.single_press(self.keymap["blades_of_destiny"])
         self.skill_cast_counter += 1
-        time.sleep(0.7 + random_number(0.05))
+        time.sleep(0.5 + random_number(0.05))
 
     def use_set_skill(self, skill_name):
         times = 1 if skill_name == 'dark_lord_omen' else 2
@@ -308,8 +317,7 @@ class PlayerController:
             if wait_before:
                 time.sleep(wait_before)
             for i in range(2):
-                self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
-                                          additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
+                self.key_mgr.single_press(self.keymap[skill_name], additional_duration=0 if i == 1 else 0.15 + random_number(0.04))
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
@@ -320,14 +328,8 @@ class PlayerController:
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
 
-    def throw_blasting(self, wait_before=0):
-        return self._use_buff_skill('throw_blasting', self.v_buff_cd, wait_before)
-
-    def mihile_link(self, wait_before=0):
-        return self._use_buff_skill('mihile_link', self.v_buff_cd, wait_before)
-
-    def maple_warrior(self, wait_before=0):
-        return self._use_buff_skill('maple_warrior', 900, wait_before)
+    def final_cut(self, wait_before=0):
+        return self._use_buff_skill('final_cut', self.skill_cooldown['final_cut'], wait_before)
 
     def is_on_platform(self, platform, offset=0):
         return ((platform.start_y-offset) <= self.y <= platform.start_y  # may being kicked by monster

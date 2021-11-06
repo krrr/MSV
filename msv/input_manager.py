@@ -236,19 +236,14 @@ class InputManager:
 DEFAULT_KEY_MAP = {
     "jump": dic.DIK_LMENU,
     "rope": dic.DIK_D,
-    "showdown": dic.DIK_S,
-    "dark_flare": dic.DIK_X,
-    "shadow_web": dic.DIK_R,
-    "shurrikane": dic.DIK_C,
+    "blade_fury": dic.DIK_S,
+    "blade_tornado": dic.DIK_E,
+    "blade_ascension": dic.DIK_R,
+    "blades_of_destiny": dic.DIK_W,
     "interact": dic.DIK_SPACE,
-    "dark_lord_omen": dic.DIK_G,
     "sudden_raid": dic.DIK_V,
     "holy_symbol": dic.DIK_8,
-    "mihile_link": dic.DIK_H,
-    "nightmare_invite": dic.DIK_E,
-    "true_arachnid_reflection": None,
-    "throw_blasting": dic.DIK_4,
-    "maple_warrior": dic.DIK_F9,
+    "final_cut": dic.DIK_1,
 }
 
 KEY2DISPLAY_NAME = {
