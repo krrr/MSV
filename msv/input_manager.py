@@ -56,14 +56,14 @@ def ease_in_out_quad(t, start, delta, duration):
 
 
 def load_keymap():
-    saved = util.get_config().get('keymap')
-    if saved:
-        for k, v in saved.items():  # convert config from old version
-            if isinstance(v, list):
-                saved[k] = v[0]
-        return saved.copy()
-    else:
-        return DEFAULT_KEY_MAP.copy()
+    # saved = util.get_config().get('keymap')
+    # if saved:
+    #     for k, v in saved.items():  # convert config from old version
+    #         if isinstance(v, list):
+    #             saved[k] = v[0]
+    #     return saved.copy()
+    # else:
+    return DEFAULT_KEY_MAP.copy()
 
 
 class InputManager:
@@ -234,43 +234,21 @@ class InputManager:
 
 
 DEFAULT_KEY_MAP = {
-    "jump": dic.DIK_RSHIFT,
-    "teleport": dic.DIK_SPACE,
-    "shikigami_haunting": dic.DIK_RCONTROL,
-    "kishin_shoukan": dic.DIK_Q,
-    "yaksha_boss": dic.DIK_O,
-    "exorcist_charm": dic.DIK_K,
-    "yuki_musume": dic.DIK_1,
-    "shikigami_charm": dic.DIK_SEMICOLON,
-    "vanquisher_charm": dic.DIK_Y,
-    "spirit_domain": dic.DIK_2,
-    "interact": dic.DIK_PERIOD,
-    "speed_infusion": dic.DIK_HOME,
-    "haku_reborn": dic.DIK_END,
-    "holy_symbol": dic.DIK_PRIOR,
-    "wild_totem": None,
-    "mihile_link": None,
+    "jump": dic.DIK_LMENU,
+    "raging_blow": dic.DIK_A,
+    "rising_rage": dic.DIK_X,
+    "worldreaver": dic.DIK_R,
+    "bean_blade": dic.DIK_F,
+    "upward_charge": dic.DIK_D,
+    "interact": dic.DIK_SPACE,
+    "weapon_aura": dic.DIK_F3,
+    "holy_symbol": None,
+    "rope": dic.DIK_C,
+    "wild_totem": dic.DIK_B,
     "nightmare_invite": None,
-    "true_arachnid_reflection": dic.DIK_G,
+    "true_arachnid_reflection": dic.DIK_END,
+    "burning_soul_blade": dic.DIK_1
 }
 
 KEY2DISPLAY_NAME = {
-    "jump": "Jump",
-    "teleport": "Teleport",
-    "shikigami_haunting": "Shikigami Haunting",
-    "kishin_shoukan": "Kishin Shoukan",
-    "yaksha_boss": "Yaksha Boss",
-    "exorcist_charm": "Exorcist's Charm",
-    "interact": "Interact / Harvest",
-    "haku_reborn": "Haku Reborn",
-    "yuki_musume": "Yuki-musume Shoukan",
-    "shikigami_charm": "Shikigami Charm",
-    "vanquisher_charm": "Vanquisher's Charm",
-    "spirit_domain": "Spirit Domain",
-    "speed_infusion": "Speed Infusion",
-    "holy_symbol": "Holy Symbol",
-    "wild_totem": "Wild Totem",
-    "mihile_link": "Mihile Link",
-    "nightmare_invite": "Nightmare Invite",
-    "true_arachnid_reflection": "True Arachnid Reflection",
 }

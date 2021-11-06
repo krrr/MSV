@@ -7,9 +7,9 @@ from msv.util import random_number
 
 # simple jump vertical distance: about 6 pixels
 class PlayerController:
-    TELEPORT_CD = 0.65
-    TELEPORT_HORIZONTAL_RANGE = 18
-    SHIKIGAMI_HAUNTING_RANGE = 18
+    ROPE_CD = 3
+    TELEPORT_HORIZONTAL_RANGE = 27
+    SHIKIGAMI_HAUNTING_RANGE = 1
     SET_SKILL_COMMON_DELAY = 0.35
     BUFF_COMMON_DELAY = 0.7
 
@@ -35,9 +35,9 @@ class PlayerController:
         AttackinPlatform
         """
         self.x = self.y = None
-        self.last_teleport_time = 0
+        self.last_rope_time = 0
 
-        self.keymap = keymap.copy()
+        self.keymap = DEFAULT_KEY_MAP.copy()
         self.key_mgr = key_mgr
         self.screen_processor = screen_processor
         self.goal_x = self.goal_y = None
@@ -50,14 +50,14 @@ class PlayerController:
 
         self.shikigami_haunting_delay = 0.37  # delay after using shikigami haunting where character is not movable
 
-        self.horizontal_movement_threshold = 18  # teleport instead of walk if distance greater than threshold
+        self.horizontal_movement_threshold = 27  # dbl jump instead of walk if distance greater than threshold
 
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'yaksha_boss': 30, 'kishin_shoukan': 60, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
-            'spirit_domain': 196
+            'burning_soul_blade': 110, 'weapon_aura': 180, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
+            'rising_rage': 10, 'worldreaver': 15
         }
 
         self.v_buff_cd = 180  # common cool down for v buff
@@ -84,7 +84,7 @@ class PlayerController:
     def distance(self, coord1, coord2):
         return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
 
-    def shikigami_haunting_sweep_move(self, goal_x, no_attack_distance=0):
+    def dbl_jump_move(self, goal_x, attack=False):
         """
         This function will, while moving towards goal_x, constantly use shikigami haunting and not overlapping
         X coordinate max error on flat surface: +- 5 pixels
@@ -92,99 +92,31 @@ class PlayerController:
         :param no_attack_distance: Distance in x pixels where any attack skill would not be used and just move
         """
         self.update()
-        start_x = self.x
         loc_delta = self.x - goal_x
         if abs(loc_delta) < self.horizontal_goal_offset:
             return True
 
-        if not no_attack_distance:
-            self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to correct direction
+        self.key_mgr.single_press(DIK_LEFT if loc_delta > 0 else DIK_RIGHT)  # turn to correct direction
 
         start_time = time.time()
         time_limit = math.ceil(abs(loc_delta) / self.x_movement_enforce_rate) + 3
 
-        last_teleport_x = None
         while True:
             dis = abs(self.x - goal_x)
             if dis <= self.horizontal_goal_offset:
                 return True
 
-            # skip shikigami if last teleport failed
-            if abs(self.x - start_x) >= no_attack_distance and \
-                    (last_teleport_x is None or abs(last_teleport_x-self.x) > self.horizontal_goal_offset):
-                self.shikigami_haunting(False)
-
             if dis <= self.horizontal_movement_threshold:
                 self.horizontal_move_goal(goal_x)
             else:
-                last_teleport_x = self.x
-                # can teleport immediately after 3rd hit of shikigami haunting
                 if loc_delta > 0:
-                    self.teleport_left()
+                    self.dbl_jump_left(attack=attack)
                 else:
-                    self.teleport_right()
-                time.sleep(0.12)  # not affected by latency anymore, can be very tight
+                    self.dbl_jump_right(attack=attack)
 
             self.update()
             if time.time() - start_time > time_limit:
                 return False
-
-    def optimized_horizontal_move(self, goal_x):
-        """
-        Move from self.x to goal_x in as little time as possible. Uses multiple movement solutions for efficient paths.
-        Blocking call. This function will stop moving after a time threshold is met and still haven't
-        met the goal. Default threshold is 15 minimap pixels per second.
-        :param goal_x: x coordinate to move to. This function only takes into account x coordinate movements.
-        # :param ledge: If true, goal_x is an end of a platform, and additional movement solutions can be used. If not, precise movement is required.
-        :return: None
-        """
-        loc_delta = self.x - goal_x
-        abs_loc_delta = abs(loc_delta)
-        start_time = time.time()
-        time_limit = math.ceil(abs_loc_delta/self.x_movement_enforce_rate) + 3
-        if loc_delta < 0:  # we need to move right
-            if abs_loc_delta <= self.horizontal_movement_threshold:
-                # Just walk if distance is less than threshold
-                self.key_mgr.direct_press(DIK_RIGHT)
-
-                # Below: use a loop to continuously press right until goal is reached or time is up
-                while True:
-                    if time.time()-start_time > time_limit:
-                        break
-
-                    self.update()
-                    # Problem with synchonizing player_pos with self.x and self.y. Needs to get resolved.
-                    # Current solution: Just call self.update() (not good for redundancy)
-                    if self.x >= goal_x - self.horizontal_goal_offset:
-                        # Reached or exceeded destination x coordinates
-                        break
-
-                self.key_mgr.direct_release(DIK_RIGHT)
-            else:
-                # Distance is quite big, so we teleport
-                self.teleport_right()
-                self.horizontal_move_goal(goal_x)
-        elif loc_delta > 0:  # we are moving to the left
-            if abs_loc_delta <= self.horizontal_movement_threshold:
-                self.key_mgr.direct_press(DIK_LEFT)
-
-                # Below: use a loop to continously press left until goal is reached or time is up
-                while True:
-                    if time.time()-start_time > time_limit:
-                        break
-
-                    self.update()
-                    # Problem with synchonizing player_pos with self.x and self.y. Needs to get resolved.
-                    # Current solution: Just call self.update() (not good for redundancy)
-                    if self.x <= goal_x + self.horizontal_goal_offset:
-                        # Reached or exceeded destination x coordinates
-                        break
-
-                self.key_mgr.direct_release(DIK_LEFT)
-            else:
-                # Distance is quite big, so we teleport
-                self.teleport_left()
-                self.horizontal_move_goal(goal_x)
 
     def horizontal_move_goal(self, goal_x, timeout=None, precise=False):
         """
@@ -236,37 +168,47 @@ class PlayerController:
 
             time.sleep(0.02)
 
-    def teleport_up(self):
-        return self._do_teleport(DIK_UP)
+    def wait_rope_cd(self):
+        elapsed = time.time() - self.last_rope_time
+        if elapsed < self.ROPE_CD:
+            self.stay(self.ROPE_CD - elapsed)
 
-    def teleport_down(self):
-        return self._do_teleport(DIK_DOWN)
+    def teleport_up(self, wait=True):
+        self.key_mgr.single_press(self.keymap["upward_charge"])
+        if wait:
+            self._wait_drop(True)
 
-    def teleport_left(self):
-        return self._do_teleport(DIK_LEFT)
+    def dbl_jump_left(self, attack=False, wait=True):
+        return self._do_dbl_jump(DIK_LEFT, attack, wait)
 
-    def teleport_right(self):
-        return self._do_teleport(DIK_RIGHT)
+    def dbl_jump_right(self, attack=False, wait=True):
+        return self._do_dbl_jump(DIK_RIGHT, attack, wait)
 
-    def _do_teleport(self, dir_key):
+    def _do_dbl_jump(self, dir_key, attack, wait):
         """Warining: is a blocking call"""
-        self.key_mgr.direct_press(dir_key)
+        self.key_mgr.single_press(dir_key)
         time.sleep(0.03)
-        self.key_mgr.direct_press(self.keymap["teleport"])
-        self.last_teleport_time = time.time()
-        time.sleep(0.06 + random_number(0.02))
-        self.key_mgr.direct_release(dir_key)
-        time.sleep(0.03)
-        self.key_mgr.direct_release(self.keymap["teleport"])
+        self.key_mgr.single_press(self.keymap["jump"])
+        time.sleep(0.11 + random_number(0.01))
+        self.key_mgr.single_press(self.keymap["jump"])
+        if attack:
+            time.sleep(0.04)
+            self.key_mgr.single_press(self.keymap["raging_blow"])
+
+        if wait:
+            if attack:
+                time.sleep(0.45 + random_number(0.02))
+            else:
+                self._wait_drop(True)
         return True
 
-    def wait_teleport_cd(self):
-        elapsed = time.time() - self.last_teleport_time
-        if elapsed < self.TELEPORT_CD:
-            self.stay(self.TELEPORT_CD - elapsed)
-
-    def shikigami_charm(self):
-        self.key_mgr.single_press(self.keymap["shikigami_charm"])
+    def rope_up(self, wait=True):
+        elapsed = time.time() - self.last_rope_time
+        if elapsed < self.ROPE_CD:
+            self.stay(self.ROPE_CD - elapsed)
+        self.key_mgr.single_press(self.keymap["rope"])
+        self.last_rope_time = time.time()
+        self._wait_drop(wait)
 
     def jump(self):
         self.key_mgr.single_press(self.keymap["jump"])
@@ -304,86 +246,32 @@ class PlayerController:
 
     def _wait_drop(self, wait_jump):
         """Wait until dropped to ground"""
-        y = self.y
+        self.update()
+        prev_y = highest_y = self.y
+        prev_x = self.x
         eq_count = 0
-        dropping = not wait_jump
         jumped = not wait_jump
         for _ in range(250):
             time.sleep(0.02)
             self.update()
-            if self.y == y:
-                if not jumped or not dropping:
-                    continue
-                eq_count += 1
-                if eq_count == 5:
-                    break
-            elif self.y > y:
-                dropping = True
+            if abs(self.x - prev_x) > 3:  # horizontal dbl jump
+                eq_count = 0
+            if self.y == prev_y:
+                if jumped:
+                    eq_count += 1
+                    if eq_count >= (9 if wait_jump else 5):
+                        break
+            elif self.y > prev_y:
                 eq_count = 0
             else:
-                if dropping:  # hit by monster after dropped to ground
+                if jumped and self.y > highest_y:  # hit by monster after dropped to ground
                     break
-                jumped = True
-                eq_count = 0
-            y = self.y
-
-    def shikigami_haunting(self, wait_delay=True):
-        for _ in range(3):
-            self.key_mgr.single_press(self.keymap["shikigami_haunting"])
-            time.sleep(0.06 + random_number(0.005))
-        self.skill_cast_counter += 1
-        if wait_delay:
-            time.sleep(self.shikigami_haunting_delay)
-
-    def shiki_exo_shiki(self, x, wait=True):
-        dis = abs(self.x - x)
-        if dis > self.SHIKIGAMI_HAUNTING_RANGE:
-            self.shikigami_haunting_sweep_move(x)
-        elif dis > 2:
-            self.horizontal_move_goal(x)
-
-        self._call_poll()
-
-        if abs(self.x - x) < self.horizontal_goal_offset:
-            dir_ = random.choice((DIK_LEFT, DIK_RIGHT))
-        else:
-            dir_ = DIK_RIGHT if self.x < x else DIK_LEFT
-        self.key_mgr.single_press(dir_)
-        self.shikigami_haunting()
-        time.sleep(0.05)
-        self.exorcist_charm(False)
-        self.stay(1.22 + random_number(0.05), x)
-        self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
-        self.shikigami_haunting()
-
-        self._call_poll()
-
-        if wait:
-            self.stay(1.22 + random_number(0.05), x)
-        else:
-            self.key_mgr.single_press(dir_)
-            self.shikigami_haunting()
-            self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
-            self.shikigami_haunting()
-            self.stay(0.2 + random_number(0.05), x)
-
-    def exorcist_charm(self, wait_delay=True):
-        self.key_mgr.single_press(self.keymap["exorcist_charm"])
-        self.skill_cast_counter += 1
-        if wait_delay:
-            time.sleep(1.1 + random_number(0.01))
-
-    def vanquisher_move(self, dir_key, timeout):
-        if not self.is_skill_key_set('vanquisher_charm'):
-            return
-        self.key_mgr.direct_press(self.keymap['vanquisher_charm'])
-        time.sleep(0.02)
-        self.key_mgr.direct_press(dir_key)
-        time.sleep(timeout)
-        self.key_mgr.direct_release(dir_key)
-        time.sleep(0.02)
-        self.key_mgr.direct_release(self.keymap['vanquisher_charm'])
-        time.sleep(0.15 + random_number(0.05))
+                else:
+                    jumped = True
+                    eq_count = 0
+                if self.y < highest_y:
+                    highest_y = self.y
+            prev_y, prev_x = self.y, self.x
 
     def use_set_skill(self, skill_name):
         for i in range(2):
@@ -409,6 +297,8 @@ class PlayerController:
             for i in range(2):
                 self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
                                           additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
+                if skill_name == 'burning_soul_blade':
+                    break
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
@@ -416,23 +306,42 @@ class PlayerController:
 
         return False
 
+    def raging_blow(self):
+        self.key_mgr.single_press(self.keymap["raging_blow"])
+        self.skill_cast_counter += 1
+        time.sleep(0.7 + random_number(0.05))
+
+    def rising_rage(self):
+        self.key_mgr.single_press(self.keymap["rising_rage"])
+        self.last_skill_use_time['rising_rage'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.7 + random_number(0.05))
+
+    def worldreaver(self):
+        self.key_mgr.single_press(self.keymap["worldreaver"])
+        self.last_skill_use_time['worldreaver'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.8 + random_number(0.05))
+
+    def bean_blade(self):
+        self.key_mgr.single_press(self.keymap["bean_blade"])
+        self.skill_cast_counter += 1
+        time.sleep(0.5 + random_number(0.05))
+
+    def burning_soul_blade(self, set=False, wait_before=0):
+        ret = self._use_buff_skill('burning_soul_blade', self.skill_cooldown['burning_soul_blade'], wait_before)
+        if ret and set:
+            time.sleep(0.6 + random_number(0.05))
+            self.key_mgr.single_press(self.keymap['burning_soul_blade'], duration=0.2 + random_number(0.04))
+
+    def weapon_aura(self, wait_before=0):
+        return self._use_buff_skill('weapon_aura', self.v_buff_cd, wait_before)
+
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
 
     def wild_totem(self, wait_before=0):
         return self._use_buff_skill('wild_totem', 100, wait_before)
-
-    def speed_infusion(self, wait_before=0):
-        return self._use_buff_skill('speed_infusion', self.v_buff_cd, wait_before)
-
-    def mihile_link(self, wait_before=0):
-        return self._use_buff_skill('mihile_link', self.v_buff_cd, wait_before)
-
-    def haku_reborn(self, wait_before=0):
-        return self._use_buff_skill('haku_reborn', 500, wait_before)
-
-    def yuki_musume(self, wait_before=0):
-        return self._use_buff_skill('yuki_musume', 75, wait_before)
 
     def is_on_platform(self, platform, offset=0):
         return ((platform.start_y-offset) <= self.y <= platform.start_y  # may being kicked by monster
