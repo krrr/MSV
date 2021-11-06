@@ -1,4 +1,4 @@
-# MSV-Kanna-Ver: OpenCV based MapleStory automation on Python3
+# MSV: OpenCV based MapleStory macro
 Kanna class version of original MS-Visionify (https://github.com/Dashadower/MS-Visionify) 
 ![kanna](MapleStory-Kanna.png)
 

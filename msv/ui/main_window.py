@@ -19,7 +19,7 @@ from msv.screen_processor import ScreenProcessor, MapleWindowNotFoundError
 ABOUT_TXT = '''\
 Version: %s
 Author: Dashadower, krrr
-Source code: https://github.com/krrr/MSV-Kanna-Ver
+Source code: https://github.com/krrr/MSV
 
 Please be known that using this macro may get your account banned. By using this software,
 you acknowledge that the developers are not liable for any damages caused to you or your account.\

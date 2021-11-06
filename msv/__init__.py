@@ -12,7 +12,7 @@ def main_entry():
 
     winapi.SetProcessDPIAware()
 
-    parser = argparse.ArgumentParser(description="MSV-Kanna-Ver, a macro to farm MapleStory")
+    parser = argparse.ArgumentParser(description="MSV")
     parser.add_argument("-t", dest="title", help="change application title")
     parser.add_argument("-c", dest="config", help="specify config file path")
     parser.add_argument("-l", dest="limit", help="limited", action='store_true')

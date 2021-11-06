@@ -66,7 +66,7 @@ class BuildQt(Command):
 
 
 # PySide installed by linux package manager will not recognized by setuptools, so requires not added.
-setup(name='MSV-Kanna-Ver',
+setup(name='MSV',
       author='krrr',
       author_email='guogaishiwo@gmail.com',
       version=msv.__version__,
