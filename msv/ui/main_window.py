@@ -8,7 +8,7 @@ from PyQt5.QtMultimedia import *
 from msv import driver, mapscripts, winapi, APP_TITLE, __version__
 from msv.ui import fix_sizes_for_high_dpi
 from msv.ui.main_window_ui import Ui_MainWindow
-from msv.util import get_config, save_config, GlobalHotKeyListener
+from msv.util import get_config, save_config, is_compiled, GlobalHotKeyListener
 from msv.macro_script import macro_process_main
 from msv.ui.key_bind_window import KeyBindWindow
 from msv.ui.auto_star_force_window import AutoStarForceWindow
@@ -272,12 +272,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_actionEditCurrent_triggered(self):
         if not self.platform_file_path:
             QMessageBox.critical(self, 'Error', 'No terrain file opened')
-        else:
-            try:
-                TerrainEditorWindow(self, self.platform_file_path).show()
-            except MapleWindowNotFoundError:
-                QMessageBox.critical(self, 'Error', 'The MapleStory window was not found')
+            return
+        if self.platform_file_path.startswith(':/') and is_compiled():
+            QMessageBox.critical(self, 'Error', 'Can not edit internal terrain')
+            return
 
+        try:
+            TerrainEditorWindow(self, self.platform_file_path).show()
+        except MapleWindowNotFoundError:
+            QMessageBox.critical(self, 'Error', 'The MapleStory window was not found')
 
     @pyqtSlot()
     def on_actionCreate_triggered(self):
