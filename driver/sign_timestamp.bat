@@ -1,1 +1,0 @@
-"C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x86\signtool.exe" timestamp /t http://localhost/TSA/2014-05-18T12:11:05 MSVDriver.sys
