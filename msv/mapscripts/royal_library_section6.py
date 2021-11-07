@@ -30,7 +30,7 @@ class RoyalLibrarySection6(MacroController):
             self.keyhandler.single_press(dc.DIK_LEFT)
             self.player_manager.rope_up(False)
             if self.pattern_count > 6:  # pick money
-                time.sleep(0.65)
+                time.sleep(0.75)
                 self.player_manager.dbl_jump_left(wait=False, third=True)
                 time.sleep(0.25 + random_number(0.02))
                 self.player_manager.blades_of_destiny()
