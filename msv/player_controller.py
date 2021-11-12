@@ -1,5 +1,5 @@
 import time, math, random
-from msv.directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
+from msv.directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT
 from msv.input_manager import DEFAULT_KEY_MAP
 from msv.screen_processor import MiniMapError
 from msv.util import random_number
@@ -62,6 +62,7 @@ class PlayerController:
 
         self.last_skill_use_time = {
             'final_cut': 0, 'blades_of_destiny': 0, 'holy_symbol': 0, 'blade_tornado': 0,
+            'blade_clone': 0, 'goddess_blessing': 0, 'last_resort': 0,
         }
 
     def update(self, player_coords_x=None, player_coords_y=None):
@@ -309,15 +310,15 @@ class PlayerController:
         return (self.keymap.get(skill_name) is not None
                 and time.time() - self.last_skill_use_time[skill_name] > self.skill_cooldown[skill_name])
 
-    def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
+    def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0, times=2):
         if self.keymap.get(skill_name) is None:
             return False
 
         if time.time() - self.last_skill_use_time[skill_name] > skill_cd + random.randint(0, 6):
             if wait_before:
                 time.sleep(wait_before)
-            for i in range(2):
-                self.key_mgr.single_press(self.keymap[skill_name], additional_duration=0 if i == 1 else 0.15 + random_number(0.04))
+            for i in range(times):
+                self.key_mgr.single_press(self.keymap[skill_name], additional_duration=0 if (times == 1 or i == 1) else 0.15 + random_number(0.04))
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
@@ -330,6 +331,15 @@ class PlayerController:
 
     def final_cut(self, wait_before=0):
         return self._use_buff_skill('final_cut', self.skill_cooldown['final_cut'], wait_before)
+
+    def blade_clone(self, wait_before=0):
+        return self._use_buff_skill('blade_clone', 90, wait_before)
+
+    def goddess_blessing(self, wait_before=0):
+        return self._use_buff_skill('goddess_blessing', 180, wait_before)
+
+    def last_resort(self, wait_before=0):
+        return self._use_buff_skill('last_resort', 75, wait_before, times=1)
 
     def is_on_platform(self, platform, offset=0):
         return ((platform.start_y-offset) <= self.y <= platform.start_y  # may being kicked by monster
