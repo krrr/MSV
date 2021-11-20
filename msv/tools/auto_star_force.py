@@ -23,7 +23,7 @@ class AutoStarForce(ToolBase):
     RESULT_OK_BTN_POS = (183, 226)
     CATCHER_CHECK_POS = (49, 52)
     GREEN_COLOR = (136, 170, 17)
-    STAR_TRACK_COLOR = (204, 204, 204)
+    STAR_TRACK_COLOR = (204, 204, 204)   # BGR
     SUCCESS_FONT_COLOR = (255, 255, 34)
     RESULT_TEXT_RECT = (55, 171, 293, 200)
     DIALOG_BLUE_COLOR = (24, 139, 198)
@@ -196,8 +196,8 @@ class AutoStarForce(ToolBase):
         rect = (self.rect[0]+x, self.rect[1]+y, self.rect[0]+x+w, self.rect[1]+y+h)
         start = time.time()
         while True:
-            img = self.screen_processor.capture_pil(rect=rect)  # faster than self.update_image
-            if any(color_distance(img.getpixel((x, 0)), self.STAR_TRACK_COLOR) > 50 for x in range(w)):
+            img = self.screen_processor.capture(rect=rect)  # faster than self.update_image
+            if any(color_distance(img[0][x], self.STAR_TRACK_COLOR) > 50 for x in range(w)):
                 break
 
             if time.time() - start > 2:

@@ -1,5 +1,4 @@
 import time
-import logging
 import random
 import cv2
 import numpy as np
@@ -10,8 +9,8 @@ from msv.screen_processor import ScreenProcessor, GameCaptureError
 
 
 class Craft(ToolBase):
-    def __init__(self, screen_processor, log_level=logging.DEBUG, conn=None):
-        super().__init__(screen_processor, log_level, conn)
+    def __init__(self, screen_processor, conn=None):
+        super().__init__(screen_processor, None, conn)
 
         self.craft_btn_tpl = cv2.imdecode(read_qt_resource(':/template/craft_btn.png', True), cv2.IMREAD_COLOR)
         self.craft_ok_btn_tpl = cv2.imdecode(read_qt_resource(':/template/craft_ok_btn.png', True), cv2.IMREAD_COLOR)
@@ -47,7 +46,7 @@ class Craft(ToolBase):
             if len(loc[0]) == 0:
                 raise Exception('ok button not detected')
             btn_pos = next(zip(*loc[::-1]))
-            self.logger.info('crafted ')
+            self.logger.info('crafted')
             btn_pos = (btn_pos[0]+random.randint(3, 31), btn_pos[1]+random.randint(3, 10))
             self.input_mgr.mouse_left_click_at(*self._map_pos(btn_pos))
             time.sleep(0.1 + random_number(0.15))

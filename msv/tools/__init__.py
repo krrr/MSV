@@ -1,5 +1,6 @@
 import logging
 from multiprocessing.connection import Connection
+from msv import driver
 from msv.util import get_config
 from msv.util import ConnLoggerHandler
 from msv.input_manager import InputManager
@@ -9,7 +10,8 @@ from msv.screen_processor import ScreenProcessor, GameCaptureError
 
 def tool_macro_process(conn: Connection, tool_class, args):
     try:
-        tool = tool_class(ScreenProcessor(), logging.DEBUG if get_config().get('debug') else logging.INFO, conn)
+        config = get_config()
+        tool = tool_class(ScreenProcessor(), config, conn)
         tool.run(args)
         conn.send(('stopped', None))
     except GameCaptureError:
@@ -24,16 +26,21 @@ def tool_macro_process(conn: Connection, tool_class, args):
 
 
 class ToolBase:
-    def __init__(self, screen_processor, log_level, conn=None):
+    def __init__(self, screen_processor, config, conn=None):
+        config = config or {}
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.setLevel(log_level)
+        self.logger.setLevel(logging.DEBUG if config.get('debug') else logging.INFO)
         if conn and not self.logger.hasHandlers():
             self.logger.addHandler(ConnLoggerHandler(logging.DEBUG, conn))
 
+        kernel_driver = config.get('kernel_driver', False)
+        if kernel_driver:
+            # need to get driver handle on this new process
+            driver.get_driver_handle()
         self.conn = conn
         self.screen_processor = screen_processor
         self.screen_processor.get_game_hwnd()
-        self.input_mgr = InputManager()
+        self.input_mgr = InputManager(use_driver=kernel_driver)
         self.scale_ratio = None
         self.img = None
         self.ms_rect = None
