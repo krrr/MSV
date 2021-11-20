@@ -1,5 +1,10 @@
-import cv2, win32gui, time, math
-import numpy as np, ctypes, ctypes.wintypes
+import cv2
+import win32gui
+import time
+import math
+import numpy as np
+import ctypes
+import ctypes.wintypes
 from PIL import Image
 from msv import winapi
 from msv.util import read_qt_resource
@@ -16,7 +21,7 @@ def is_window_scaled(hwnd):
         return False
 
 
-def gdi_capture(hwnd, force_scaled=None):
+def gdi_capture(hwnd, force_scaled=None, rect=None):
     """
     Use Windows GDI API to capture singe window.
     :return: BGR numpy array
@@ -29,20 +34,24 @@ def gdi_capture(hwnd, force_scaled=None):
     if not game_hdc:
         raise GameCaptureError("can't get DC of game window")
 
-    # get window client size
-    if _rect is None:
-        _rect = ctypes.wintypes.RECT()
-    if not winapi.GetClientRect(hwnd, ctypes.byref(_rect)):
-        raise GameCaptureError("can't get rect of game window")
-    width = _rect.right - _rect.left
-    height = _rect.bottom - _rect.top
-    # fix window size if scaled
-    is_scaled = is_window_scaled(hwnd) if force_scaled is None else force_scaled
-    if is_scaled:
-        screen_dpi = winapi.GetDeviceCaps(game_hdc, winapi.LOGPIXELSX)
-        if screen_dpi != 96:
-            width = round(width * 96 / screen_dpi)
-            height = round(height * 96 / screen_dpi)
+    if rect is None:
+        # get window client size
+        if _rect is None:
+            _rect = ctypes.wintypes.RECT()
+        if not winapi.GetClientRect(hwnd, ctypes.byref(_rect)):
+            raise GameCaptureError("can't get rect of game window")
+        x = y = 0
+        width = _rect.right - _rect.left
+        height = _rect.bottom - _rect.top
+        # fix window size if scaled
+        is_scaled = is_window_scaled(hwnd) if force_scaled is None else force_scaled
+        if is_scaled:
+            screen_dpi = winapi.GetDeviceCaps(game_hdc, winapi.LOGPIXELSX)
+            if screen_dpi != 96:
+                width = round(width * 96 / screen_dpi)
+                height = round(height * 96 / screen_dpi)
+    else:
+        x, y, width, height = rect
 
     if _bmp_info_header is None:
         _bmp_info_header = winapi.BITMAPINFOHEADER()
@@ -66,7 +75,7 @@ def gdi_capture(hwnd, force_scaled=None):
         cdc = winapi.CreateCompatibleDC(game_hdc)
         if not cdc or not winapi.SelectObject(cdc, hbitmap):  # selects bitmap into cdc
             raise GameCaptureError()
-        if not winapi.BitBlt(cdc, 0, 0, width, height, game_hdc, 0, 0, winapi.SRCCOPY):  # copy game_dc to cdc
+        if not winapi.BitBlt(cdc, 0, 0, width, height, game_hdc, x, y, winapi.SRCCOPY):  # copy game_dc to cdc
             raise GameCaptureError('BitBlt error')
         bitmap_ptr = ctypes.cast(bitmap_ptr, ctypes.POINTER(ctypes.c_uint8))
         # highest byte of DWORD is not used... but can't set biBitCount to 24 instead of 32, because of stride
@@ -169,11 +178,7 @@ class ScreenProcessor:
         if not self.hwnd:
             self.hwnd = self.get_game_hwnd()
 
-        ret = gdi_capture(self.hwnd, self.is_window_scaled)
-        if rect:  # need optimization
-            ret = ret[rect[1]:rect[1]+rect[3], rect[0]:rect[0]+rect[2]]
-
-        return ret
+        return gdi_capture(self.hwnd, self.is_window_scaled, rect)
 
     def capture_pil(self, rect=None):
         img = self.capture(rect=rect)
@@ -401,7 +406,7 @@ class StaticImageProcessor:
                     if math.sqrt(abs(ref_coord[0] - coord[0]) ** 2 + abs(ref_coord[1] - coord[1]) ** 2) <= 6:
                         nearest_points += 1
 
-                if nearest_points >= 20 and nearest_points <= 25:
+                if 20 <= nearest_points <= 25:
                     avg_y += coord[0]
                     avg_x += coord[1]
                     totalpoints += 1
