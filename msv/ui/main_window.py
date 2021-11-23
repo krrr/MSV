@@ -307,7 +307,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot()
     def on_openTerrainBtn_clicked(self):
-        platform_file_path = QFileDialog.getOpenFileName(self, "Terrain file selection", '.',
+        dir_ = '.'
+        if self.platform_file_path and not self.platform_file_path.startswith(':'):
+            dir_ = os.path.dirname(self.platform_file_path)
+        platform_file_path = QFileDialog.getOpenFileName(self, "Terrain file selection", dir_,
                                                          "Terrain file (*.platform)")
         if platform_file_path and os.path.exists(platform_file_path[0]):
             self._setPlatformFile(platform_file_path[0])
