@@ -8,18 +8,11 @@ class TestScreenProcessor(TestCase):
     def setUp(self):
         self.pathextractor = PathAnalyzer()
 
-    def test_tboy_train1(self):
-        self._load("../msv/mapscripts/t_boys_research_train1.platform")
+    def test_2_4(self):
+        self._load("../msv/resources/platform/end_of_the_world2_4.platform")
 
     def test_dclp1(self):
-        self._load("../msv/mapscripts/deep_cavern_lower_path1.platform")
-
-    def test_cup(self):
-        self._load("../msv/mapscripts/cavern_upper_path.platform")
-
-        solution = self.pathextractor.pathfind('9769210f', '4768c4f7')
-        # teleport between platforms with high y position diff
-        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.TELEPORTL)
+        self._load("../msv/resources/platform/deep_cavern_lower_path1.platform")
 
     def test_mirror_touched_sea2(self):
         self._load("unittest_data/mirror_touched_sea2.platform")
