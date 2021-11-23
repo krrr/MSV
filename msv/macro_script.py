@@ -10,7 +10,7 @@ from msv import driver
 from msv.screen_processor import ScreenProcessor, StaticImageProcessor, MiniMapError, GameCaptureError
 from msv.player_controller import PlayerController
 from msv.rune_solver.rune_solver_simple import RuneSolverSimple
-from msv.util import get_config, get_file_log_handler, ConnLoggerHandler, random_number
+from msv.util import get_file_log_handler, ConnLoggerHandler, random_number
 
 
 def macro_process_main(conn: Connection):
@@ -29,12 +29,11 @@ def macro_process_main(conn: Connection):
         try:
             if command[0] == "start":
                 logger.debug("starting MacroController...")
-                keymap, platform_file, preset = command[1:]
-                config = get_config()
+                config, platform_file, preset = command[1:]
                 if preset:
-                    macro = mapscripts.map_scripts[preset](keymap, conn, config)
+                    macro = mapscripts.map_scripts[preset](conn, config)
                 else:
-                    macro = MacroController(keymap, conn, config)
+                    macro = MacroController(conn, config)
                 if platform_file:
                     macro.load_and_process_platform_map(platform_file)
                 else:
@@ -70,7 +69,7 @@ class MacroController:
     ERROR_RETRY_LIMIT = 5
     RUNE_FAIL_CD = 5
 
-    def __init__(self, keymap=km.DEFAULT_KEY_MAP, conn=None, config=None):
+    def __init__(self, conn=None, config=None):
         if config is None:
             config = {}
         self.conn = conn
@@ -96,7 +95,7 @@ class MacroController:
         self.screen_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = PathAnalyzer()
         self.keyhandler = km.InputManager(use_driver=kernel_driver)
-        self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, keymap)
+        self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, config.get('keymap', km.DEFAULT_KEY_MAP))
         if config.get('corsair_legion'):  # adjust summon skill cooldown
             for i in ('kishin_shoukan', 'yaksha_boss'):
                 self.player_manager.skill_cooldown[i] *= 1.1

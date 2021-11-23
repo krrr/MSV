@@ -6,8 +6,8 @@ import msv.directinput_constants as dc
 
 # cavern upper path script
 class CupMacroController(MacroController):
-    def __init__(self, keymap, conn, config):
-        super().__init__(keymap, conn, config)
+    def __init__(self, conn, config):
+        super().__init__(conn, config)
         self.last_pickup_money_time = time.time() + 20
         self.money_picked = False
 

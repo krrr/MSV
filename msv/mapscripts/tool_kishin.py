@@ -6,8 +6,8 @@ import msv.directinput_constants as dc
 
 
 class ToolKishin(MacroController):
-    def __init__(self, keymap, conn, config):
-        super().__init__(keymap, conn, config)
+    def __init__(self, conn, config):
+        super().__init__(conn, config)
         self.x = self.y = None
         self.screen_processor.detect_friend = False
 

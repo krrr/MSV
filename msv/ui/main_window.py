@@ -1,4 +1,7 @@
-import multiprocessing, time, os, signal
+import multiprocessing
+import time
+import os
+import signal
 import base64
 import win32con
 import threading
@@ -21,8 +24,7 @@ Version: %s
 Author: Dashadower, krrr
 Source code: https://github.com/krrr/MSV
 
-Please be known that using this macro may get your account banned. By using this software,
-you acknowledge that the developers are not liable for any damages caused to you or your account.\
+ABSOLUTELY NO WARRANTY OF ANY KIND
 '''
 
 
@@ -132,13 +134,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if not self.macro_process:
             self.toggle_macro_process()
-        keymap = get_config().get('keymap')
-        if not keymap:
-            QMessageBox.critical(self, self.app_title, "The key setting could not be read. Please reset the key.")
+        if 'keymap' not in get_config():
+            QMessageBox.critical(self, self.app_title, "Skill keys not set")
             return
 
         if not self.platform_file_path and self.presetComboBox.currentIndex() == -1:
-            QMessageBox.critical(self, self.app_title, "Please select a terrain file.")
+            QMessageBox.critical(self, self.app_title, "Please select a terrain file")
             return
 
         cap = ScreenProcessor()
@@ -156,7 +157,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.beepUpSound.play()
         cap.set_foreground()
-        self.macro_proc_conn.send(("start", keymap, self.platform_file_path, self.presetComboBox.currentText()))
+        self.macro_proc_conn.send(("start", get_config(), self.platform_file_path, self.presetComboBox.currentText()))
         self._set_macro_status(True)
 
     def stop_macro(self):

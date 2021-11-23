@@ -3,8 +3,8 @@ from msv.macro_script import MacroController
 
 
 class TBoyResearchTrain1(MacroController):
-    def __init__(self, keymap, conn, config):
-        super().__init__(keymap, conn, config)
+    def __init__(self, conn, config):
+        super().__init__(conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):

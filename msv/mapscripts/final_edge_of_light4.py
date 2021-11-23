@@ -6,8 +6,8 @@ import msv.directinput_constants as dc
 
 # the final edge of light 4 script
 class Fel4MacroController(MacroController):
-    def __init__(self, keymap, conn, config):
-        super().__init__(keymap, conn, config)
+    def __init__(self, conn, config):
+        super().__init__(conn, config)
         self.last_pickup_money_time = time.time() + 20
 
     def loop(self):
