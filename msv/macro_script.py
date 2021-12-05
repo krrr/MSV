@@ -68,6 +68,7 @@ class MacroController:
     FIND_PLATFORM_OFFSET = 2
     ERROR_RETRY_LIMIT = 5
     RUNE_FAIL_CD = 5
+    MINIMAP_DELAY = 0.08  # update delay of player mark in minimap
 
     def __init__(self, conn=None, config=None):
         if config is None:
@@ -559,7 +560,13 @@ class MacroController:
             elif move_method == MoveMethod.TELEPORTDOWN:
                 self.player_manager.teleport_down()
 
-            time.sleep(0.1)
+            time.sleep(self.MINIMAP_DELAY)
+        elif move_method == MoveMethod.JUMPTELEPORTUP:
+            self.player_manager.wait_teleport_cd()
+            self.player_manager.jump()
+            time.sleep(0.14)
+            self.player_manager.teleport_up()
+            time.sleep(self.MINIMAP_DELAY)
 
     def set_skills(self, combine=False):
         if self.elite_boss_detected and self.other_player_detected_start is not None:

@@ -13,6 +13,7 @@ from .kerning_tower_b1_store2 import KerningTowerB1Store2
 from .labyrinth_interior1 import LabyrinthInterior1
 from .eastern_cave_path2 import EasternCavePath2
 from .end_of_the_world1_4 import EndOfTheWorld1_4
+from .end_of_the_world2_4 import EndOfTheWorld2_4
 from .tool_kishin import ToolKishin
 
 
@@ -24,6 +25,7 @@ map_scripts = {
     'Final Edge of Light 4': Fel4MacroController,
     'Interior 1': LabyrinthInterior1,
     'End of World 1-4': EndOfTheWorld1_4,
+    'End of World 2-4': EndOfTheWorld2_4,
     'B1 Store 2': KerningTowerB1Store2,
     '2F Cafe 4': KerningTower2FCafe4,
     '5F Shops 4': KerningTower5FShops4,
@@ -43,6 +45,7 @@ map2platform = {
     'Final Edge of Light 4': 'final_edge_of_light4',
     'Interior 1': 'labyrinth_interior1',
     'End of World 1-4': 'end_of_the_world1_4',
+    'End of World 2-4': 'end_of_the_world2_4',
     'B1 Store 2': 'kerning_tower_b1_store2',
     '2F Cafe 4': 'kerning_tower_2f_cafe4',
     '5F Shops 4': 'kerning_tower_5f_shops4',

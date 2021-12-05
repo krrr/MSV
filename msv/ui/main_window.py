@@ -40,8 +40,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionAutoSolveRune.triggered.connect(lambda x: self._onOptChange('auto_solve_rune', x))
         self.actionKernelDriver.setChecked(get_config().get('kernel_driver', False))
         self.actionKernelDriver.triggered.connect(lambda x: self._onOptChange('kernel_driver', x))
-        self.actionDebugMode.setChecked(get_config().get('debug_mode', False))
-        self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug_mode', x))
+        self.actionDebugMode.setChecked(get_config().get('debug', False))
+        self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug', x))
         self.macroProcSignal.connect(self._onMacroProcMessage)
 
         self.app_title = app_title or APP_TITLE
@@ -73,8 +73,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             if saved_platform_file and os.path.isfile(saved_platform_file):
                 self._setPlatformFile(saved_platform_file)
 
-        self.presetComboBox.insertSeparator(6)  # insert will change index
-        self.presetComboBox.insertSeparator(16)
+        self.presetComboBox.insertSeparator(7)  # insert will change index
+        self.presetComboBox.insertSeparator(17)
 
         # setup sounds
         self.beepUpSound = QSoundEffect(self)

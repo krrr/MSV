@@ -41,6 +41,7 @@ class MoveMethod(enum.Enum):
     TELEPORTDOWN = 7
     MOVER = 8
     MOVEL = 9
+    JUMPTELEPORTUP = 10
 
     def __str__(self):
         return self._name_
@@ -59,6 +60,12 @@ class Platform:
 
     def __repr__(self):
         return 'Platform(%s, %s, %s, %s)' % (self.start_x, self.start_y, self.end_x, self.end_y)
+
+    @staticmethod
+    def overlaps(a, b):
+        if type(b) == tuple:
+            b = Platform(b[0], None, b[1], None, None)
+        return (a.start_x < b.end_x and a.end_x > b.start_x) or b.start_x < a.start_x < b.end_x
 
 
 class Solution:
@@ -89,6 +96,7 @@ class AstarNode:
 class PathAnalyzer:
     """Converts minimap player coordinates to terrain information like ladders and platforms."""
     TELEPORT_VERTICAL_RANGE = 24
+    JUMP_RANGE = 8  # horizontal jump distance is about 9~10
 
     def __init__(self):
         self.platforms = {}  # Format: hash, Platform()
@@ -108,7 +116,6 @@ class PathAnalyzer:
         # below constants are used for generating solution graphs
         self.teleport_horizontal_range = 18
         self.teleport_horizontal_y_range = 8
-        self.jump_range = 8  # horizontal jump distance is about 9~10
 
         # below constants are used for path related algorithms.
         self.subplatform_length = 2  # length of subdivided platform
@@ -219,8 +226,7 @@ class PathAnalyzer:
         if calculated_paths:
             return sorted(calculated_paths, key=lambda x: len(x))[0]
         else:
-            return 0
-
+            return None
 
     def generate_solution_dict(self):
         """Generates a solution dictionary, which is a dictionary with platform as keys and a dictionary of a list[strategy, 0]
@@ -347,30 +353,33 @@ class PathAnalyzer:
             jmpr : right jump
             jmpl : left jump
         """
-
         platform = self.platforms[hash]
         platform.solutions = []
         for key, other_platform in self.platforms.items():
-            if platform.hash == key:
+            if hash == key:
                 continue
 
             # Has vertical overlaps
-            if platform.start_x < other_platform.end_x and platform.end_x > other_platform.start_x or \
-                    other_platform.start_x < platform.start_x < other_platform.end_x:
+            if Platform.overlaps(platform, other_platform):
                 lower_bound_x = max(platform.start_x, other_platform.start_x)
                 upper_bound_x = min(platform.end_x, other_platform.end_x)
-                height_diff = abs(platform.start_y - other_platform.start_y)
-                if platform.start_y < other_platform.end_y:  # current is higher, just drop
+                diff_y = abs(platform.start_y - other_platform.start_y)
+                if platform.start_y < other_platform.end_y:  # higher than other
                     # check lower bound in case there is another platform in the middle of current and destination
-                    if (other_platform.end_y == max_y or 13 <= height_diff) and height_diff <= self.TELEPORT_VERTICAL_RANGE:
-                        method = MoveMethod.TELEPORTDOWN
-                    else:
+                    if diff_y > self.TELEPORT_VERTICAL_RANGE:
                         method = MoveMethod.DROP
+                    else:
+                        in_range = [i for i in self.platforms.values() if Platform.overlaps(i, (lower_bound_x, upper_bound_x))
+                                    and other_platform.start_y < i.start_y <= platform.start_y+self.TELEPORT_VERTICAL_RANGE]
+                        method = MoveMethod.DROP if len(in_range) else MoveMethod.TELEPORTDOWN
                     solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method)
                     platform.solutions.append(solution)
-                else:  # We need to use teleport to get there, but first check if within teleport range
-                    if abs(platform.start_y - other_platform.start_y) <= self.TELEPORT_VERTICAL_RANGE:
+                else:  # lower than other
+                    if diff_y <= self.TELEPORT_VERTICAL_RANGE:
                         solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.TELEPORTUP)
+                        platform.solutions.append(solution)
+                    elif diff_y <= self.TELEPORT_VERTICAL_RANGE + self.JUMP_RANGE:
+                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.JUMPTELEPORTUP)
                         platform.solutions.append(solution)
             # No vertical overlaps.
             elif platform.start_x >= other_platform.end_x:  # other platform is on the left side
@@ -381,7 +390,7 @@ class PathAnalyzer:
                 if front_point_x_dis <= self.teleport_horizontal_range and front_point_y_dis <= self.teleport_horizontal_y_range:
                     solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), MoveMethod.TELEPORTL)
                     platform.solutions.append(solution)
-                elif front_point_distance <= self.jump_range or (platform.start_y <= other_platform.end_y and front_point_x_dis < self.jump_range):
+                elif front_point_distance <= self.JUMP_RANGE or (platform.start_y <= other_platform.end_y and front_point_x_dis < self.JUMP_RANGE):
                     # We can jump from the left end of the platform to goal
                     solution = Solution(platform.hash, key, (platform.start_x, platform.start_y), (platform.start_x, platform.start_y), MoveMethod.JUMPL)
                     platform.solutions.append(solution)
@@ -392,7 +401,7 @@ class PathAnalyzer:
                 if back_point_distance <= self.teleport_horizontal_range and back_point_y_dis <= self.teleport_horizontal_y_range:
                     solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), MoveMethod.TELEPORTR)
                     platform.solutions.append(solution)
-                elif back_point_distance <= self.jump_range or (platform.end_y <= other_platform.start_y and back_point_x_dis < self.jump_range):
+                elif back_point_distance <= self.JUMP_RANGE or (platform.end_y <= other_platform.start_y and back_point_x_dis < self.JUMP_RANGE):
                     # We can jump form the right end of the platform to goal platform
                     solution = Solution(platform.hash, key, (platform.end_x, platform.end_y), (platform.end_x, platform.end_y), MoveMethod.JUMPR)
                     platform.solutions.append(solution)
