@@ -126,7 +126,8 @@ class ScreenProcessor:
 
     def get_game_hwnd(self):
         self.hwnd = win32gui.FindWindowEx(0, 0, "MapleStoryClass", None)
-        self.hwnd = win32gui.GetWindow(self.hwnd, win32con.GW_OWNER) or self.hwnd  # if hwnd is external chat window
+        if self.hwnd:
+            self.hwnd = win32gui.GetWindow(self.hwnd, win32con.GW_OWNER) or self.hwnd  # if hwnd is external chat window
         self.is_window_scaled = is_window_scaled(self.hwnd) if self.hwnd else None
         return self.hwnd
 

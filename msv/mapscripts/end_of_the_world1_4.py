@@ -30,7 +30,9 @@ class EndOfTheWorld1_4(MacroController):
         # pickup money
         if (not self.elite_boss_detected and self.current_platform_hash == '6865257d' and
                 time.time() - self.last_pickup_money_time > self.pickup_money_interval):
-            if self.player_manager.is_skill_usable('true_arachnid_reflection'):
+            if self.player_manager.is_skill_usable('nightmare_invite'):
+                self.player_manager.use_set_skill('nightmare_invite')
+            elif self.player_manager.is_skill_usable('true_arachnid_reflection'):
                 self.player_manager.use_set_skill('true_arachnid_reflection')
             self.pickup_money()
             self.last_pickup_money_time = time.time()
