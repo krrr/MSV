@@ -1,8 +1,8 @@
-# Copyright (C) 2021 krrr <guogaishiwo@gmail.com>
+# Copyright (C) 2022 krrr <guogaishiwo@gmail.com>
 
 
 APP_TITLE = 'MSV'
-__version__ = '211207'
+__version__ = '220302'
 
 
 def main_entry():

@@ -101,7 +101,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 driver.load_driver()
                 self.log('Kernel driver loaded')
             except Exception as e:
-                QMessageBox.critical(self, self.app_title, 'Driver failed to load: ' + str(e))
+                QMessageBox.critical(self, self.app_title, 'Driver failed to load:\n' + str(e))
 
         self.limit = limit
         if limit:

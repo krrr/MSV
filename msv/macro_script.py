@@ -96,7 +96,8 @@ class MacroController:
         self.screen_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = PathAnalyzer()
         self.keyhandler = km.InputManager(use_driver=kernel_driver)
-        self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor, config.get('keymap', km.DEFAULT_KEY_MAP))
+        self.player_manager = pc.PlayerController(self.keyhandler, self.screen_processor,
+                                                  config.get('keymap', km.DEFAULT_KEY_MAP), self.poll_conn)
         if config.get('corsair_legion'):  # adjust summon skill cooldown
             for i in ('kishin_shoukan', 'yaksha_boss'):
                 self.player_manager.skill_cooldown[i] *= 1.1
@@ -207,6 +208,7 @@ class MacroController:
                         x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
 
                 self.player_manager.shikigami_haunting_sweep_move(x)
+                self.poll_conn()
                 self.player_manager.horizontal_move_goal(x)
 
                 self._player_move(solution)

@@ -16,7 +16,7 @@ class PlayerController:
     """
     This class keeps track of character location and manages advanced movement and attacks.
     """
-    def __init__(self, key_mgr, screen_processor, keymap=DEFAULT_KEY_MAP):
+    def __init__(self, key_mgr, screen_processor, keymap=DEFAULT_KEY_MAP, poll_func=None):
         """
         Class Variables:
 
@@ -26,7 +26,6 @@ class PlayerController:
         self.screen_processor: handle to StaticImageProcessor
         self.goal_x: If moving, destination x coord
         self.goal_y: If moving, destination y coord
-        self.busy: True if current class is calling blocking calls or in a loop
         :param key_mgr: Handle to KeyboardInputManager
         :param screen_processor: Handle to StaticImageProcessor. Only used to call find_player_minimap_marker
 
@@ -43,7 +42,7 @@ class PlayerController:
         self.screen_processor = screen_processor
         self.goal_x = self.goal_y = None
 
-        self.busy = False
+        self._poll_func = poll_func
 
         self.horizontal_goal_offset = 2
 
@@ -76,6 +75,7 @@ class PlayerController:
         :param player_coords_y: Coordinates to update self.y
         :return: None
         """
+        self._call_poll()
         if player_coords_x:
             self.x, self.y = player_coords_x, player_coords_y
         else:
@@ -346,6 +346,8 @@ class PlayerController:
         elif dis > 2:
             self.horizontal_move_goal(x)
 
+        self._call_poll()
+
         if abs(self.x - x) < self.horizontal_goal_offset:
             dir_ = random.choice((DIK_LEFT, DIK_RIGHT))
         else:
@@ -357,6 +359,8 @@ class PlayerController:
         self.stay(1.22 + random_number(0.05), x)
         self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
         self.shikigami_haunting()
+
+        self._call_poll()
 
         if wait:
             self.stay(1.22 + random_number(0.05), x)
@@ -437,3 +441,7 @@ class PlayerController:
 
     def is_skill_key_set(self, skill_name):
         return self.keymap.get(skill_name) is not None
+
+    def _call_poll(self):
+        if self._poll_func is not None:
+            self._poll_func()
