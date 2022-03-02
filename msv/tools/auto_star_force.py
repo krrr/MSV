@@ -1,11 +1,10 @@
 import re
 import time
-import logging
 import random
 from PIL import ImageOps
 import msv.directinput_constants as dc
 from msv.tools import ToolBase
-from msv.util import setup_tesseract_ocr, color_distance
+from msv.util import color_distance
 from msv.screen_processor import ScreenProcessor, GameCaptureError
 
 
@@ -28,17 +27,10 @@ class AutoStarForce(ToolBase):
     RESULT_TEXT_RECT = (55, 171, 293, 200)
     DIALOG_BLUE_COLOR = (24, 139, 198)
 
-    def __init__(self, screen_processor, log_level=logging.DEBUG, conn=None):
-        super().__init__(screen_processor, log_level, conn)
+    def __init__(self, screen_processor, config=None, conn=None):
+        super().__init__(screen_processor, config, conn)
 
-        setup_tesseract_ocr()
-        import pyocr.libtesseract
-        if not pyocr.libtesseract.is_available():
-            raise Exception('no OCR tool available')
-        self.tool = pyocr.libtesseract
-        if 'eng' not in self.tool.get_available_languages():
-            raise Exception('tesseract english data not available')
-
+        self._setup_ocr()
         self.current_star_regexp = re.compile('(\\d+)\\s?Star\\s?>\\s?\\d+\\s?Star')
         self.rect = None
         self.center_pos = None

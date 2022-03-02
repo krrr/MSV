@@ -1,8 +1,7 @@
 import logging
 from multiprocessing.connection import Connection
 from msv import driver
-from msv.util import get_config
-from msv.util import ConnLoggerHandler
+from msv.util import get_config, setup_tesseract_ocr, ConnLoggerHandler
 from msv.input_manager import InputManager
 from msv.macro_script import Aborted
 from msv.screen_processor import ScreenProcessor, GameCaptureError
@@ -45,6 +44,15 @@ class ToolBase:
         self.img = None
         self.ms_rect = None
         self.area_pos = (0, 0)
+
+    def _setup_ocr(self):
+        setup_tesseract_ocr()
+        import pyocr.libtesseract
+        if not pyocr.libtesseract.is_available():
+            raise Exception('no OCR tool available')
+        self.tool = pyocr.libtesseract
+        if 'eng' not in self.tool.get_available_languages():
+            raise Exception('tesseract english data not available')
 
     def run(self, args):
         raise NotImplementedError
