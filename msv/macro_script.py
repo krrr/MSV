@@ -211,7 +211,7 @@ class MacroController:
                 self.poll_conn()
                 self.player_manager.horizontal_move_goal(x)
 
-                self._player_move(solution)
+                self._player_move(solution.method)
 
                 self.poll_conn()
                 self.update()
@@ -219,6 +219,8 @@ class MacroController:
                     if self.current_platform_hash is None:  # in case stuck in ladder
                         self.logger.warning("stuck. attempting unstick()...")
                         self.unstick()
+                    elif self.screen_processor.check_dialog():  # stuck in bounty hunter portal
+                        self.keyhandler.single_press(dc.DIK_ESCAPE)
                     break
 
             if i != 0:
@@ -473,7 +475,7 @@ class MacroController:
         ### End other buffs
 
         # All movement and attacks finished. Now perform movement
-        self._player_move(next_platform_solution)
+        self._player_move(next_platform_solution.method)
         # End inter-platform movement
 
         ### Start set skills
@@ -514,6 +516,7 @@ class MacroController:
         if not rune_platform_hash:
             self.logger.error('failed to find rune platform')
             return
+        self.poll_conn()
         msg = "solve rune at platform " + rune_platform_hash
         if self.rune_fail_count > 0:
             msg += ' (%s fails)' % self.rune_fail_count
@@ -526,6 +529,7 @@ class MacroController:
         self.player_manager.horizontal_move_goal(rune_coords[0])
         self.player_manager.wait_teleport_cd()
         time.sleep(0.2)
+        self.poll_conn()
         self.keyhandler.single_press(self.player_manager.keymap["interact"])
         time.sleep(1.5)
         if self.debug:  # save image to disk for future use
@@ -542,8 +546,7 @@ class MacroController:
         self.current_platform_hash = rune_platform_hash
         time.sleep(0.05 + random_number(0.05))
 
-    def _player_move(self, solution):
-        move_method = solution.method
+    def _player_move(self, move_method):
         if move_method == MoveMethod.DROP:
             self.player_manager.drop()
         elif move_method == MoveMethod.JUMPL:
