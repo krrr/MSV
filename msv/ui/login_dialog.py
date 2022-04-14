@@ -26,9 +26,9 @@ class LoginDialog(QDialog, Ui_LoginDialog):
         self.passwordEdit.setText(util.get_config().get('password', ''))
 
         self.netMgr = QNetworkAccessManager(self)
+        self.netMgr.setTransferTimeout(10000)
 
         if util.get_config().get('auto_login', False):
-            self.showProgress()
             self.on_loginBtn_clicked()
 
     def accept(self):
@@ -62,6 +62,7 @@ class LoginDialog(QDialog, Ui_LoginDialog):
         if not self.usernameEdit.text() or not self.passwordEdit.text():
             QMessageBox.critical(self, 'Error', 'empty field')
             return
+        self.showProgress()
         self.usernameEdit.setEnabled(False)
         self.passwordEdit.setEnabled(False)
         self.loginBtn.setEnabled(False)
@@ -87,9 +88,10 @@ class LoginDialog(QDialog, Ui_LoginDialog):
             else:
                 util.get_config()['auto_login'] = False
                 QMessageBox.information(self, 'Login Failed', resp['msg'] or 'Unknown error')
+        elif reply.error() == QNetworkReply.OperationCanceledError:
+            QMessageBox.critical(self, 'Login Failed', 'Server timeout, please try again later')
         else:
-            err = reply.errorString()
-            QMessageBox.critical(self, 'Login Failed', 'Server error: ' + err)
+            QMessageBox.critical(self, 'Login Failed', 'Server error: ' + reply.errorString())
 
         reply.deleteLater()
 

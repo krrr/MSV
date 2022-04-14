@@ -62,6 +62,20 @@ def gui_loop(args):
     app.setFont(QApplication.font('QMenu'))
     app.setStyle(QStyleFactory.create("Fusion"))
 
+    if is_compiled:
+        from msv.ui.login_dialog import LoginDialog
+        dialog = LoginDialog()
+        if args['title']:
+            dialog.setWindowTitle(args['title'] + ' Login')
+        dialog.accepted.connect(lambda: show_main_win(args))
+        dialog.show()
+    else:
+        show_main_win(args)
+
+    return app.exec_()
+
+
+def show_main_win(args):
     from msv.ui.main_window import MainWindow
     main_win = MainWindow(args['title'], args['limit'])
 
@@ -72,14 +86,4 @@ def gui_loop(args):
         except Exception as e:
             logging.warning('restoreGeometry failed: %s', str(e))
 
-    if is_compiled:
-        from msv.ui.login_dialog import LoginDialog
-        dialog = LoginDialog()
-        if args['title']:
-            dialog.setWindowTitle(args['title'] + ' Login')
-        dialog.accepted.connect(main_win.show)
-        dialog.show()
-    else:
-        main_win.show()
-
-    return app.exec_()
+    main_win.show()
