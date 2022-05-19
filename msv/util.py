@@ -16,6 +16,7 @@ from msv import winapi
 _config = None
 config_file = 'config.json'
 resource_path = os.path.dirname(__file__) + '\\resources\\'
+runtime_info = {}  # used in main thread
 
 
 def read_qt_resource(path, numpy=False):

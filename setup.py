@@ -16,7 +16,7 @@ class BuildLib(Command):
     initialize_options = finalize_options = lambda self: None
 
     def run(self):
-        spawn([sys.executable, '-m', 'nuitka', '--output-dir=build', '--show-modules', '--lto', '--module', 'msv', '--include-package=msv', '--no-pyi-file'])
+        spawn([sys.executable, '-m', 'nuitka', '--output-dir=build', '--show-modules', '--lto=yes', '--module', 'msv', '--include-package=msv', '--no-pyi-file'])
 
 
 class BuildQt(Command):

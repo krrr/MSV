@@ -1,6 +1,7 @@
 import os
 import hashlib
 import json
+from datetime import datetime
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtNetwork import *
@@ -74,7 +75,6 @@ class LoginDialog(QDialog, Ui_LoginDialog):
         r = WmiInfoReader()
         data = {'username': self.usernameEdit.text(), 'password': self.passwordEdit.text(),
                 'device_id': r.generate_device_id(), 'computer_name': r.get_computer_name()}
-        print(data)
         reply = self.netMgr.post(request, QByteArray(json.dumps(data).encode('utf-8')))
         reply.finished.connect(self.onLoginReqFinished)
 
@@ -84,6 +84,9 @@ class LoginDialog(QDialog, Ui_LoginDialog):
         if reply.error() == QNetworkReply.NoError:
             resp = json.loads(bytes(reply.readAll()))
             if resp['status'] == 0:
+                util.runtime_info['username'] = self.usernameEdit.text()
+                due = resp['data'].get('due')
+                util.runtime_info['due'] = datetime.fromisoformat(due) if due else None
                 self.accept()
             else:
                 util.get_config()['auto_login'] = False

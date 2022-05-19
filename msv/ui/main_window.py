@@ -8,7 +8,7 @@ import threading
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtMultimedia import *
-from msv import driver, mapscripts, winapi, APP_TITLE, __version__
+from msv import driver, mapscripts, winapi, APP_TITLE, util, __version__
 from msv.ui import fix_sizes_for_high_dpi
 from msv.ui.main_window_ui import Ui_MainWindow
 from msv.util import get_config, save_config, is_compiled, GlobalHotKeyListener
@@ -55,6 +55,13 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.logTextArea.document().setDefaultStyleSheet('.time-part { color: #808080 }')
         self.log(self.app_title + " version: v" + __version__)
+        current_user = util.runtime_info.get('username')
+        if current_user:
+            msg = 'Account: ' + current_user
+            due = util.runtime_info.get('due')
+            if due:
+                msg += ', Expire: ' + due.strftime("%Y-%m-%d %H:%M")
+            self.log(msg)
         self.log('\n')
 
         self.preset_names = tuple(mapscripts.map_scripts.keys())

@@ -1,9 +1,12 @@
 import base64
 import sys
 import logging
+import threading
+import time
+from datetime import datetime
 from PyQt5.QtCore import QLibraryInfo, QByteArray
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget, QLayout, QGridLayout, QFormLayout
+from PyQt5.QtWidgets import QApplication, QStyleFactory, QWidget, QLayout, QGridLayout, QFormLayout, qApp
 from msv import util, winapi
 # noinspection PyUnresolvedReferences
 import msv.resources_rc
@@ -52,17 +55,16 @@ def set_app_icon_exe(app):
 
 
 def gui_loop(args):
-    is_compiled = util.is_compiled()
     logging.debug('Qt lib path: %s', QLibraryInfo.location(QLibraryInfo.LibrariesPath))
     app = QApplication(sys.argv)
-    if is_compiled:
+    if util.is_compiled():
         set_app_icon_exe(app)
     else:
         app.setWindowIcon(QIcon(":/appicon.ico"))
     app.setFont(QApplication.font('QMenu'))
     app.setStyle(QStyleFactory.create("Fusion"))
 
-    if is_compiled:
+    if util.is_compiled():
         from msv.ui.login_dialog import LoginDialog
         dialog = LoginDialog()
         if args['title']:
@@ -77,6 +79,10 @@ def gui_loop(args):
 
 def show_main_win(args):
     from msv.ui.main_window import MainWindow
+
+    if util.is_compiled():
+        threading.Thread(target=login_check_thread, args=(util.runtime_info,), daemon=True).start()
+
     main_win = MainWindow(args['title'], args['limit'])
 
     geo = util.get_config().get('geometry')
@@ -87,3 +93,13 @@ def show_main_win(args):
             logging.warning('restoreGeometry failed: %s', str(e))
 
     main_win.show()
+
+
+def login_check_thread(runtime_info):
+    due = runtime_info['due']
+    while True:
+        time.sleep(1)
+        if 'username' not in runtime_info:
+            logging.error('login_check_thread not detect username')
+        if due and datetime.now() > due:
+            qApp.exit(0)
