@@ -250,6 +250,7 @@
     </property>
     <addaction name="actionSetKeys"/>
     <addaction name="actionAutoSolveRune"/>
+    <addaction name="actionVacuumPetPicking"/>
     <addaction name="actionKernelDriver"/>
     <addaction name="actionDebugMode"/>
    </widget>
@@ -335,6 +336,14 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionVacuumPetPicking">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Vacuum Pet Picking</string>
    </property>
   </action>
  </widget>

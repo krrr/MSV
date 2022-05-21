@@ -92,6 +92,7 @@ class MacroController:
                 kernel_driver = False
 
         self.auto_resolve_rune = config.get('auto_solve_rune', True)
+        self.vacuum_pet_picking = config.get('vacuum_pet_picking', False)
         self.screen_capturer = ScreenProcessor()
         self.screen_processor = StaticImageProcessor(self.screen_capturer)
         self.terrain_analyzer = PathAnalyzer()

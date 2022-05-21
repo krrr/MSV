@@ -1,6 +1,6 @@
 import random
 import time
-from msv.util import random_number, is_compiled
+from msv.util import random_number
 from msv.macro_script import MacroController
 import msv.directinput_constants as dc
 
@@ -15,7 +15,7 @@ class EndOfTheWorld1_4(MacroController):
     def __init__(self, conn, config):
         super().__init__(conn, config)
         self.last_pickup_money_time = time.time() + 20
-        self.alt_pattern = not is_compiled()
+        self.alt_pattern = random.random() < 0.5
 
     def loop(self):
         ### Rune Detector
@@ -107,25 +107,26 @@ class EndOfTheWorld1_4(MacroController):
 
     def pickup_money(self):
         self.logger.info('pick up money')
-        self.navigate_to_platform('c214856a')  # above the platform
-        ### above the platform
-        p = self.terrain_analyzer.platforms['c214856a']
-        center = (p.start_x + p.end_x) // 2
-        if self.player_manager.x > center:
-            if p.end_x - self.player_manager.x <= 4 or self.player_manager.x < p.end_x - 8:
-                self.player_manager.horizontal_move_goal(p.end_x - 5)
-        else:
-            self.player_manager.horizontal_move_goal(p.start_x + 5)
-            self.keyhandler.single_press(dc.DIK_RIGHT)
-            self.player_manager.shikigami_haunting()
-        self.player_manager.stay(1 + random_number(0.1))
-        self.player_manager.horizontal_move_goal(p.end_x - 6 if self.player_manager.x < center else p.start_x + 6)
-        self.player_manager.stay(1 + random_number(0.1))
-        self.update()
-        # Quick other player sound notify
-        if self.screen_processor.find_other_player_marker():
-            self.alert_sound(2)
-        self.poll_conn()
+        if not self.vacuum_pet_picking:
+            self.navigate_to_platform('c214856a')  # above the platform
+            ### above the platform
+            p = self.terrain_analyzer.platforms['c214856a']
+            center = (p.start_x + p.end_x) // 2
+            if self.player_manager.x > center:
+                if p.end_x - self.player_manager.x <= 4 or self.player_manager.x < p.end_x - 8:
+                    self.player_manager.horizontal_move_goal(p.end_x - 5)
+            else:
+                self.player_manager.horizontal_move_goal(p.start_x + 5)
+                self.keyhandler.single_press(dc.DIK_RIGHT)
+                self.player_manager.shikigami_haunting()
+            self.player_manager.stay(1 + random_number(0.1))
+            self.player_manager.horizontal_move_goal(p.end_x - 6 if self.player_manager.x < center else p.start_x + 6)
+            self.player_manager.stay(1 + random_number(0.1))
+            self.update()
+            # Quick other player sound notify
+            if self.screen_processor.find_other_player_marker():
+                self.alert_sound(2)
+            self.poll_conn()
         self.navigate_to_platform('5b53ae83')
 
         self.poll_conn()
@@ -145,6 +146,8 @@ class EndOfTheWorld1_4(MacroController):
         else:
             self.player_manager.stay(0.5 + random_number(0.1))
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6a51d25a'].start_x + 4)
+        if self.vacuum_pet_picking:
+            return
         self.update()
         # Quick other player sound notify
         if self.screen_processor.find_other_player_marker():

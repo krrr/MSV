@@ -38,6 +38,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         fix_sizes_for_high_dpi(self)
         self.actionAutoSolveRune.setChecked(get_config().get('auto_solve_rune', True))
         self.actionAutoSolveRune.triggered.connect(lambda x: self._onOptChange('auto_solve_rune', x))
+        self.actionVacuumPetPicking.setChecked(get_config().get('vacuum_pet_picking', False))
+        self.actionVacuumPetPicking.triggered.connect(lambda x: self._onOptChange('vacuum_pet_picking', x))
         self.actionKernelDriver.setChecked(get_config().get('kernel_driver', False))
         self.actionKernelDriver.triggered.connect(lambda x: self._onOptChange('kernel_driver', x))
         self.actionDebugMode.setChecked(get_config().get('debug', False))
