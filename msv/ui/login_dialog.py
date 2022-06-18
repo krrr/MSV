@@ -14,9 +14,11 @@ from msv import util
 
 class LoginDialog(QDialog, Ui_LoginDialog):
     URL = 'https://msv.hazama.cc/api'
+    URL_BACKUP = 'https://lisa.hazama.cc/api'
 
     def __init__(self):
         super().__init__(None)
+        self.retryCount = 0
         self.setupUi(self)
         fix_sizes_for_high_dpi(self)
         self.progressBg = self.progress = None
@@ -27,7 +29,7 @@ class LoginDialog(QDialog, Ui_LoginDialog):
         self.passwordEdit.setText(util.get_config().get('password', ''))
 
         self.netMgr = QNetworkAccessManager(self)
-        self.netMgr.setTransferTimeout(10000)
+        self.netMgr.setTransferTimeout(7000)
 
         if util.get_config().get('auto_login', False):
             self.on_loginBtn_clicked()
@@ -69,7 +71,7 @@ class LoginDialog(QDialog, Ui_LoginDialog):
         self.loginBtn.setEnabled(False)
         self.setCursor(Qt.WaitCursor)
 
-        request = QNetworkRequest(QUrl(self.URL + '/login'))
+        request = QNetworkRequest(QUrl((self.URL_BACKUP if self.retryCount > 0 else self.URL) + '/login'))
         request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
 
         r = WmiInfoReader()
@@ -92,7 +94,12 @@ class LoginDialog(QDialog, Ui_LoginDialog):
                 util.get_config()['auto_login'] = False
                 QMessageBox.information(self, 'Login Failed', resp['msg'] or 'Unknown error')
         elif reply.error() == QNetworkReply.OperationCanceledError:
-            QMessageBox.critical(self, 'Login Failed', 'Server timeout, please try again later')
+            self.retryCount += 1
+            if self.retryCount >= 2:
+                QMessageBox.critical(self, 'Login Failed', 'Server timeout, please try again later')
+            else:
+                self.on_loginBtn_clicked()
+                return
         else:
             QMessageBox.critical(self, 'Login Failed', 'Server error: ' + reply.errorString())
 
