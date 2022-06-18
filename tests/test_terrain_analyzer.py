@@ -11,6 +11,24 @@ class TestScreenProcessor(TestCase):
     def test_2_4(self):
         self._load("../msv/resources/platform/end_of_the_world2_4.platform")
 
+        solution = self.pathextractor.pathfind('444ae3dc', 'e8c6644f')  # really high
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.JUMPTELEPORTUP)
+
+        solution = self.pathextractor.pathfind('444ae3dc', 'bcd4711b')  # vertical close platform
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.TELEPORTDOWN)
+
+    def test_1_4(self):
+        self._load("../msv/resources/platform/end_of_the_world1_4.platform")
+
+        solution = self.pathextractor.pathfind('c214856a', '6865257d')  # center top to middle
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.DROP)
+
+        solution = self.pathextractor.pathfind('c214856a', '5b53ae83')  # center top to bottom
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.TELEPORTDOWN)
+
+        solution = self.pathextractor.pathfind('6865257d', '5b53ae83')  # center middle to bottom
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.TELEPORTDOWN)
+
     def test_dclp1(self):
         self._load("../msv/resources/platform/deep_cavern_lower_path1.platform")
 
@@ -18,7 +36,7 @@ class TestScreenProcessor(TestCase):
         self._load("unittest_data/mirror_touched_sea2.platform")
 
         solution = self.pathextractor.pathfind('6029314b', '0f9c84c4')
-        self.assertTrue(solution and len(solution) == 2 and solution[0].method == MoveMethod.TELEPORTUP and solution[1].method == MoveMethod.TELEPORTUP)
+        self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.JUMPTELEPORTUP)
 
         solution = self.pathextractor.pathfind('a12ed5e3', '0f9c84c4')
         self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.JUMPL)
@@ -29,7 +47,6 @@ class TestScreenProcessor(TestCase):
     def _load(self, path):
         self.pathextractor.load(path)
         print('#### Platforms', self.pathextractor.platforms)
-        self.pathextractor.generate_solution_dict()
 
         for key, val in self.pathextractor.platforms.items():
             print(val)

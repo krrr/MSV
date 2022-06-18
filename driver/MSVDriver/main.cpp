@@ -139,8 +139,8 @@ static void DriverUnload(PDRIVER_OBJECT aDriverObject) {
 
 extern"C"
 NTSTATUS DriverEntry(PDRIVER_OBJECT  aDriverObject, PUNICODE_STRING aRegistryPath) {
+    KdPrint(("MSVDriver: init"));
     NTSTATUS vStatus = STATUS_SUCCESS;
-
     for (;;) {
         WPP_INIT_TRACING(aDriverObject, aRegistryPath);
 
@@ -151,7 +151,7 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT  aDriverObject, PUNICODE_STRING aRegistryPat
 
         vStatus = Protect::Initialize();  // init process protect
         if (!NT_SUCCESS(vStatus)) {
-            DbgPrint("process protect init failed: %d\n", vStatus);
+            DbgPrint("MSVDriver: process protect init failed: %d\n", vStatus);
             break;
         }
 

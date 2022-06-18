@@ -1,6 +1,8 @@
 #pragma once
 
+#include <ntifs.h>
 #include <ntddk.h>
+
 #include <wdm.h>
 #include <kbdmou.h>
 
