@@ -62,11 +62,7 @@ class PlayerController:
 
         self.v_buff_cd = 180  # common cool down for v buff
 
-        self.last_skill_use_time = {
-            'yaksha_boss': 0, 'kishin_shoukan': 0, 'nightmare_invite': 0,
-            'haku_reborn': 0, 'speed_infusion': 0, 'holy_symbol': 0, 'yuki_musume': 0,
-            'mihile_link': 0, 'true_arachnid_reflection': 0, 'spirit_domain': 0
-        }
+        self.last_skill_use_time = {}
 
     def update(self, player_coords_x=None, player_coords_y=None):
         """
@@ -400,14 +396,14 @@ class PlayerController:
         return True
 
     def is_skill_usable(self, skill_name):
-        return (self.keymap.get(skill_name ) is not None
-                and time.time() - self.last_skill_use_time[skill_name] > self.skill_cooldown[skill_name])
+        return (self.keymap.get(skill_name) is not None
+                and time.time() - self.last_skill_use_time.get(skill_name, 0) > self.skill_cooldown[skill_name])
 
     def _use_buff_skill(self, skill_name, skill_cd, wait_before=0.0):
         if self.keymap.get(skill_name) is None:
             return False
 
-        if time.time() - self.last_skill_use_time[skill_name] > skill_cd + random.randint(0, 6):
+        if time.time() - self.last_skill_use_time.get(skill_name, 0) > skill_cd + random.randint(0, 6):
             if wait_before:
                 time.sleep(wait_before)
             for i in range(2):
@@ -422,6 +418,9 @@ class PlayerController:
 
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
+
+    def wild_totem(self, wait_before=0):
+        return self._use_buff_skill('wild_totem', 100, wait_before)
 
     def speed_infusion(self, wait_before=0):
         return self._use_buff_skill('speed_infusion', self.v_buff_cd, wait_before)

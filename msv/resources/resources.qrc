@@ -38,6 +38,7 @@
     <file>skill_icon/yuki_musume.png</file>
     <file>skill_icon/vanquisher_charm.png</file>
     <file>skill_icon/spirit_domain.png</file>
+    <file>skill_icon/wild_totem.png</file>
   </qresource>
   <qresource>
     <file>sound/beep.wav</file>

@@ -488,7 +488,7 @@ class MacroController:
         return 0
 
     def buff_skills(self, yuki=True):
-        skills = ['holy_symbol', 'speed_infusion', 'haku_reborn', 'mihile_link']
+        skills = ['wild_totem', 'holy_symbol', 'speed_infusion', 'haku_reborn', 'mihile_link']
         if yuki:
             skills.append('yuki_musume')
         random.shuffle(skills)

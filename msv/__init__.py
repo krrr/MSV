@@ -2,7 +2,7 @@
 
 
 APP_TITLE = 'MSV'
-__version__ = '220519'
+__version__ = '220627'
 
 
 def main_entry():
