@@ -479,7 +479,7 @@ class MacroController:
         return 0
 
     def buff_skills(self):
-        skills = ['holy_symbol', 'final_cut', 'blade_clone', 'goddess_blessing', 'last_resort']
+        skills = ['holy_symbol', 'final_cut', 'blade_clone', 'goddess_blessing', 'last_resort', 'wild_totem']
         random.shuffle(skills)
         used = False
         for i in skills:

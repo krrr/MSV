@@ -338,6 +338,9 @@ class PlayerController:
     def goddess_blessing(self, wait_before=0):
         return self._use_buff_skill('goddess_blessing', 180, wait_before)
 
+    def wild_totem(self, wait_before=0):
+        return self._use_buff_skill('wild_totem', 100, wait_before)
+
     def last_resort(self, wait_before=0):
         return self._use_buff_skill('last_resort', 75, wait_before, times=1)
 

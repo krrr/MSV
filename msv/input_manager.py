@@ -241,6 +241,7 @@ DEFAULT_KEY_MAP = {
     "blade_ascension": dic.DIK_R,
     "blades_of_destiny": dic.DIK_W,
     "blade_clone": dic.DIK_3,
+    "wild_totem": dic.DIK_B,
     "goddess_blessing": dic.DIK_4,
     "last_resort": dic.DIK_INSERT,
     "interact": dic.DIK_SPACE,
