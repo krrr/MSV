@@ -62,7 +62,7 @@ class PlayerController:
 
         self.last_skill_use_time = {
             'final_cut': 0, 'blades_of_destiny': 0, 'holy_symbol': 0, 'blade_tornado': 0,
-            'blade_clone': 0, 'goddess_blessing': 0, 'last_resort': 0,
+            'blade_clone': 0, 'goddess_blessing': 0, 'last_resort': 0, 'wild_totem': 0
         }
 
     def update(self, player_coords_x=None, player_coords_y=None):
