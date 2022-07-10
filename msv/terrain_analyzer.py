@@ -38,10 +38,9 @@ class MoveMethod(enum.Enum):
     TELEPORTR = 4
     TELEPORTL = 5
     TELEPORTUP = 6
-    TELEPORTDOWN = 7
+    ROPE_UP = 7
     MOVER = 8
     MOVEL = 9
-    JUMPTELEPORTUP = 10
 
     def __str__(self):
         return self._name_
@@ -96,6 +95,7 @@ class AstarNode:
 class PathAnalyzer:
     """Converts minimap player coordinates to terrain information like ladders and platforms."""
     TELEPORT_VERTICAL_RANGE = 24
+    ROPE_VERTICAL_RANGE = 35
     JUMP_RANGE = 8  # horizontal jump distance is about 9~10
 
     def __init__(self):
@@ -115,7 +115,7 @@ class PathAnalyzer:
 
         # below constants are used for generating solution graphs
         self.teleport_horizontal_range = 18
-        self.teleport_horizontal_y_range = 8
+        self.teleport_horizontal_y_range = 4
 
         # below constants are used for path related algorithms.
         self.subplatform_length = 2  # length of subdivided platform
@@ -365,21 +365,14 @@ class PathAnalyzer:
                 upper_bound_x = min(platform.end_x, other_platform.end_x)
                 diff_y = abs(platform.start_y - other_platform.start_y)
                 if platform.start_y < other_platform.end_y:  # higher than other
-                    # check lower bound in case there is another platform in the middle of current and destination
-                    if diff_y > self.TELEPORT_VERTICAL_RANGE:
-                        method = MoveMethod.DROP
-                    else:
-                        in_range = [i for i in self.platforms.values() if Platform.overlaps(i, (lower_bound_x, upper_bound_x))
-                                    and other_platform.start_y < i.start_y <= platform.start_y+self.TELEPORT_VERTICAL_RANGE]
-                        method = MoveMethod.DROP if len(in_range) else MoveMethod.TELEPORTDOWN
-                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), method)
+                    solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.DROP)
                     platform.solutions.append(solution)
                 else:  # lower than other
                     if diff_y <= self.TELEPORT_VERTICAL_RANGE:
                         solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.TELEPORTUP)
                         platform.solutions.append(solution)
-                    elif diff_y <= self.TELEPORT_VERTICAL_RANGE + self.JUMP_RANGE:
-                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.JUMPTELEPORTUP)
+                    elif abs(platform.start_y - other_platform.start_y) <= self.ROPE_VERTICAL_RANGE:
+                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.ROPE_UP)
                         platform.solutions.append(solution)
             # No vertical overlaps.
             elif platform.start_x >= other_platform.end_x:  # other platform is on the left side

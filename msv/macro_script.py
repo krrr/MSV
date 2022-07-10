@@ -173,7 +173,7 @@ class MacroController:
         """
         Move to platform by various methods
         """
-        for i in range(3):  # retry up to 3 times
+        for i in range(5):  # retry up to 5 times
             if self.current_platform_hash == platform_hash:
                 return True
             elif self.current_platform_hash is None:
@@ -434,7 +434,7 @@ class MacroController:
         no_sweep_dist_x = next_platform_solution.lower_bound[0] + 3 if closer_to_next_lower else next_platform_solution.upper_bound[0] - 3
         if (next_platform_solution.lower_bound[0] <= no_sweep_dist_x <= next_platform_solution.upper_bound[0] and
             (next_platform_solution.upper_bound[0] - next_platform_solution.lower_bound[0]) <= 44):
-            self.player_manager.shikigami_haunting_sweep_move(no_sweep_dist_x)
+            self.player_manager.dbl_jump_move(no_sweep_dist_x)
             self.player_manager.horizontal_move_goal(no_sweep_dist_x)
             sweep = False
             time.sleep(0.05)
@@ -443,7 +443,7 @@ class MacroController:
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.shikigami_haunting()
+        self.player_manager.raging_blow()
         ### End skill usage
 
         # Find coordinates to move to next platform
@@ -523,7 +523,6 @@ class MacroController:
 
         self.player_manager.dbl_jump_move(rune_coords[0])
         self.player_manager.horizontal_move_goal(rune_coords[0])
-        self.player_manager.wait_rope_cd()
         time.sleep(0.2)
         self.poll_conn()
         self.keyhandler.single_press(self.player_manager.keymap["interact"])
@@ -549,25 +548,16 @@ class MacroController:
             self.player_manager.jump_left()
         elif move_method == MoveMethod.JUMPR:
             self.player_manager.jump_right()
-        elif move_method in (MoveMethod.TELEPORTL, MoveMethod.TELEPORTR, MoveMethod.TELEPORTUP, MoveMethod.TELEPORTDOWN):
-            self.player_manager.wait_rope_cd()
-
-            if move_method == MoveMethod.TELEPORTL:
-                self.player_manager.dbl_jump_left()
-            elif move_method == MoveMethod.TELEPORTR:
-                self.player_manager.dbl_jump_right()
-            elif move_method == MoveMethod.TELEPORTUP:
-                self.player_manager.teleport_up()
-            elif move_method == MoveMethod.TELEPORTDOWN:
-                self.player_manager.drop()
-
-            time.sleep(self.MINIMAP_DELAY)
-        elif move_method == MoveMethod.JUMPTELEPORTUP:
-            self.player_manager.wait_rope_cd()
-            self.player_manager.jump()
-            time.sleep(0.14)
+        elif move_method == MoveMethod.TELEPORTUP:
+            time.sleep(0.1 + random_number(0.05))
             self.player_manager.teleport_up()
-            time.sleep(self.MINIMAP_DELAY)
+        elif move_method == MoveMethod.TELEPORTL:
+            self.player_manager.dbl_jump_left()
+        elif move_method == MoveMethod.TELEPORTR:
+            self.player_manager.dbl_jump_right()
+        elif move_method == MoveMethod.ROPE_UP:
+            self.player_manager.wait_rope_cd()
+            self.player_manager.rope_up()
 
     def set_skills(self, combine=False):
         if self.elite_boss_detected and self.other_player_detected_start is not None:
@@ -618,9 +608,6 @@ class MacroController:
             return False
         self.player_manager.dbl_jump_move(coord[0])
         self.player_manager.horizontal_move_goal(coord[0])
-        if skill_name == 'yaksha_boss':
-            dir_ = dc.DIK_LEFT if self.terrain_analyzer.other_attrs.get('yaksha_boss_dir') == 'left' else dc.DIK_RIGHT
-            self.keyhandler.single_press(dir_)
         time.sleep(0.1)
         self.player_manager.use_set_skill(skill_name)
         self.player_manager.last_skill_use_time[skill_name] = time.time()
@@ -644,7 +631,7 @@ class MacroController:
         """
         self.unstick_attempts += 1
         # jump right to try to get off ladder
-        for method in (self.player_manager.jump_right, self.player_manager.teleport_up,
+        for method in (self.player_manager.jump_left, self.player_manager.teleport_up,
                        self.player_manager.dbl_jump_left, self.player_manager.dbl_jump_right):
             method()
             time.sleep(0.8)
