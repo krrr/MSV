@@ -12,6 +12,7 @@ class RoyalLibrarySection2(MacroController):
         super().__init__(conn, config)
         self.screen_processor.detect_friend = False
         self.pattern_count = 0
+        self.vacuum_pet_picking = config.get('vacuum_pet_picking', False)
 
     def loop(self):
         ### Rune Detector
@@ -38,7 +39,7 @@ class RoyalLibrarySection2(MacroController):
             time.sleep(0.1 + random_number(0.02))
             self.player_manager.teleport_up(False)
             time.sleep(0.9 + random_number(0.03))
-            if self.pattern_count > 10:  # pick money
+            if not self.vacuum_pet_picking and self.pattern_count > 10:  # pick money
                 self.pickup_money()
             else:
                 if not rising_rage_usable and self.player_manager.is_skill_usable('worldreaver'):
