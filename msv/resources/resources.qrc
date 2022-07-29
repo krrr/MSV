@@ -3,27 +3,28 @@
     <file>appicon.ico</file>
   </qresource>
   <qresource>
+    <file>platform/plunging_depths3.platform</file>
     <file>platform/royal_library_section2.platform</file>
   </qresource>
   <qresource>
-    <file>skill_icon/exorcist_charm.png</file>
-    <file>skill_icon/haku_reborn.png</file>
+    <file>skill_icon/blitz_shield.png</file>
+    <file>skill_icon/burning_soul_blade.png</file>
     <file>skill_icon/holy_symbol.png</file>
     <file>skill_icon/interact.png</file>
     <file>skill_icon/jump.png</file>
-    <file>skill_icon/kishin_shoukan.png</file>
+    <file>skill_icon/raging_blow.png</file>
     <file>skill_icon/mihile_link.png</file>
     <file>skill_icon/nightmare_invite.png</file>
-    <file>skill_icon/shikigami_charm.png</file>
-    <file>skill_icon/shikigami_haunting.png</file>
+    <file>skill_icon/rising_rage.png</file>
+    <file>skill_icon/upward_charge.png</file>
     <file>skill_icon/speed_infusion.png</file>
     <file>skill_icon/teleport.png</file>
     <file>skill_icon/true_arachnid_reflection.png</file>
-    <file>skill_icon/yaksha_boss.png</file>
-    <file>skill_icon/yuki_musume.png</file>
-    <file>skill_icon/vanquisher_charm.png</file>
-    <file>skill_icon/spirit_domain.png</file>
+    <file>skill_icon/weapon_aura.png</file>
+    <file>skill_icon/worldreaver.png</file>
     <file>skill_icon/wild_totem.png</file>
+    <file>skill_icon/beam_blade.png</file>
+    <file>skill_icon/rope.png</file>
   </qresource>
   <qresource>
     <file>sound/beep.wav</file>

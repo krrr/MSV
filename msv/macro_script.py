@@ -274,7 +274,12 @@ class MacroController:
             if white_room:
                 return -3
             else:
-                raise MiniMapError('player pos not found')
+                blind_pos = self.player_manager.in_bild_pos()
+                if blind_pos:
+                    self.keyhandler.single_press(dc.DIK_LEFT if blind_pos[0] < self.player_manager.x else dc.DIK_RIGHT, duration=1+random_number(0.05))
+                    return
+                else:
+                    raise MiniMapError('player pos not found')
         else:
             self.player_pos_not_found_start = None
         self.player_manager.update(player_pos[0], player_pos[1])
@@ -336,7 +341,14 @@ class MacroController:
         return 0
 
     def update(self):
-        self.player_manager.update()  # will update image
+        try:
+            self.player_manager.update()  # will update image
+        except MiniMapError:
+            blind_pos = self.player_manager.in_bild_pos()
+            if blind_pos:
+                self.keyhandler.single_press(dc.DIK_LEFT if blind_pos[0] > self.player_manager.x else dc.DIK_RIGHT, duration=1+random_number(0.05))
+            else:
+                raise
         self.current_platform_hash = self.find_current_platform()
 
     def loop_entry(self):

@@ -143,9 +143,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         if not self.macro_process:
             self.toggle_macro_process()
-        # if 'keymap' not in get_config():
-        #     QMessageBox.critical(self, self.app_title, "Skill keys not set")
-        #     return
+        if 'keymap' not in get_config():
+            QMessageBox.critical(self, self.app_title, "Skill keys not set")
+            return
 
         if not self.platform_file_path and self.presetComboBox.currentIndex() == -1:
             QMessageBox.critical(self, self.app_title, "Please select a terrain file")

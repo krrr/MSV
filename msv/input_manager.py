@@ -56,14 +56,14 @@ def ease_in_out_quad(t, start, delta, duration):
 
 
 def load_keymap():
-    # saved = util.get_config().get('keymap')
-    # if saved:
-    #     for k, v in saved.items():  # convert config from old version
-    #         if isinstance(v, list):
-    #             saved[k] = v[0]
-    #     return saved.copy()
-    # else:
-    return DEFAULT_KEY_MAP.copy()
+    saved = util.get_config().get('keymap')
+    if saved:
+        for k, v in saved.items():  # convert config from old version
+            if isinstance(v, list):
+                saved[k] = v[0]
+        return saved.copy()
+    else:
+        return DEFAULT_KEY_MAP.copy()
 
 
 class InputManager:
@@ -238,7 +238,7 @@ DEFAULT_KEY_MAP = {
     "raging_blow": dic.DIK_A,
     "rising_rage": dic.DIK_X,
     "worldreaver": dic.DIK_R,
-    "bean_blade": dic.DIK_F,
+    "beam_blade": dic.DIK_F,
     "upward_charge": dic.DIK_D,
     "interact": dic.DIK_SPACE,
     "weapon_aura": dic.DIK_F3,
@@ -247,8 +247,24 @@ DEFAULT_KEY_MAP = {
     "wild_totem": dic.DIK_B,
     "nightmare_invite": None,
     "true_arachnid_reflection": dic.DIK_END,
-    "burning_soul_blade": dic.DIK_1
+    "burning_soul_blade": dic.DIK_1,
+    "blitz_shield": None
 }
 
 KEY2DISPLAY_NAME = {
+    "jump": "Jump",
+    "raging_blow": "Raging Blow",
+    "rising_rage": "Rising Rage",
+    "worldreaver": "Worldreaver",
+    "beam_blade": "Bean Blade",
+    "upward_charge": "Upward Charge",
+    "interact": "Interact",
+    "weapon_aura": "Weapon Aura",
+    "holy_symbol": "Holy Symbol",
+    "rope": "Rope",
+    "wild_totem": "Wild Totem",
+    "nightmare_invite": "nightmare_invite",
+    "true_arachnid_reflection": "True Arachnid Reflection",
+    "burning_soul_blade": "Burning Soul Blade",
+    "blitz_shield": "Blitz Shield"
 }

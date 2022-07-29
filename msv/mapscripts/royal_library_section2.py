@@ -10,7 +10,6 @@ class RoyalLibrarySection2(MacroController):
 
     def __init__(self, conn=None, config=None):
         super().__init__(conn, config)
-        self.screen_processor.detect_friend = False
         self.pattern_count = 0
         self.vacuum_pet_picking = config.get('vacuum_pet_picking', False)
 
@@ -50,7 +49,7 @@ class RoyalLibrarySection2(MacroController):
                 self.player_manager.horizontal_move_goal(89)
                 self.player_manager.dbl_jump_left(wait=False)
                 time.sleep(0.04)
-                self.player_manager.bean_blade()
+                self.player_manager.beam_blade()
                 time.sleep(0.45 + random_number(0.03))  # wait drop
                 self.keyhandler.single_press(dc.DIK_RIGHT, duration=0.15)
                 self.pattern_count += 1

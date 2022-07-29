@@ -262,8 +262,7 @@ class TerrainEditorWindow(QWidget):
 
             playerpos = self.image_processor.find_player_minimap_marker(self.minimap_rect)
             if not playerpos:
-                self.image_label.setText('Player location not found')
-                self.find_minimap_coords()
+                self.coord_label.setText('N/A')
                 time.sleep(0.1)
                 continue
 

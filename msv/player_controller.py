@@ -37,7 +37,7 @@ class PlayerController:
         self.x = self.y = None
         self.last_rope_time = 0
 
-        self.keymap = DEFAULT_KEY_MAP.copy()
+        self.keymap = keymap.copy()
         self.key_mgr = key_mgr
         self.screen_processor = screen_processor
         self.goal_x = self.goal_y = None
@@ -63,6 +63,7 @@ class PlayerController:
         self.v_buff_cd = 180  # common cool down for v buff
 
         self.last_skill_use_time = {}
+        self.blind_poses = None
 
     def update(self, player_coords_x=None, player_coords_y=None):
         """
@@ -83,6 +84,11 @@ class PlayerController:
 
     def distance(self, coord1, coord2):
         return math.sqrt((coord1[0]-coord2[0])**2 + (coord1[1]-coord2[1])**2)
+
+    def in_bild_pos(self):
+        if self.x is None or self.blind_poses is None:
+            return None
+        return next((i for i in self.blind_poses if abs(self.x - i[0]) <= 20 and abs(self.y - i[1]) <= 10), None)
 
     def dbl_jump_move(self, goal_x, attack=False):
         """
@@ -114,7 +120,14 @@ class PlayerController:
                 else:
                     self.dbl_jump_right(attack=attack)
 
-            self.update()
+            try:
+                self.update()
+            except MiniMapError:
+                if self.in_bild_pos():
+                    pass
+                else:
+                    raise
+
             if time.time() - start_time > time_limit:
                 return False
 
@@ -142,7 +155,13 @@ class PlayerController:
         self.key_mgr.direct_press(DIK_RIGHT if right else DIK_LEFT)
         while True:
             time.sleep(0.02)
-            self.update()
+            try:
+                self.update()
+            except MiniMapError:
+                if self.in_bild_pos():
+                    pass
+                else:
+                    raise
 
             if (right and self.x >= goal_x - offset) or (not right and self.x <= goal_x + offset):
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
@@ -156,7 +175,13 @@ class PlayerController:
         start_time = time.time()
 
         while True:
-            self.update()
+            try:
+                self.update()
+            except MiniMapError:
+                if self.in_bild_pos():
+                    break
+                else:
+                    raise
             if goal_x is None:
                 goal_x = self.x
                 continue
@@ -197,7 +222,13 @@ class PlayerController:
 
         if wait:
             if attack:
-                time.sleep(0.45 + random_number(0.02))
+                if self.blind_poses is None:
+                    time.sleep(0.45 + random_number(0.02))
+                else:
+                    for _ in range(5):
+                        time.sleep(0.09)
+                        self.update()
+                    time.sleep(random_number(0.02))
             else:
                 self._wait_drop(True)
         return True
@@ -253,7 +284,13 @@ class PlayerController:
         jumped = not wait_jump
         for _ in range(250):
             time.sleep(0.02)
-            self.update()
+            try:
+                self.update()
+            except MiniMapError:
+                if self.in_bild_pos():
+                    break
+                else:
+                    raise
             if abs(self.x - prev_x) > 3:  # horizontal dbl jump
                 eq_count = 0
             if self.y == prev_y:
@@ -323,8 +360,8 @@ class PlayerController:
         self.skill_cast_counter += 1
         time.sleep(0.8 + random_number(0.05))
 
-    def bean_blade(self):
-        self.key_mgr.single_press(self.keymap["bean_blade"])
+    def beam_blade(self):
+        self.key_mgr.single_press(self.keymap["beam_blade"])
         self.skill_cast_counter += 1
         time.sleep(0.5 + random_number(0.05))
 
@@ -339,6 +376,9 @@ class PlayerController:
 
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
+
+    def blitz_shield(self, wait_before=0):
+        return self._use_buff_skill('blitz_shield', 15, wait_before)
 
     def wild_totem(self, wait_before=0):
         return self._use_buff_skill('wild_totem', 100, wait_before)
