@@ -7,23 +7,30 @@
     <file>platform/royal_library_section2.platform</file>
   </qresource>
   <qresource>
-    <file>skill_icon/blitz_shield.png</file>
-    <file>skill_icon/burning_soul_blade.png</file>
+    <file>skill_icon/as_you_will_fan.png</file>
+    <file>skill_icon/stone_tremor.png</file>
     <file>skill_icon/holy_symbol.png</file>
     <file>skill_icon/interact.png</file>
     <file>skill_icon/jump.png</file>
-    <file>skill_icon/raging_blow.png</file>
+    <file>skill_icon/as_you_will_fan.png</file>
     <file>skill_icon/mihile_link.png</file>
     <file>skill_icon/nightmare_invite.png</file>
-    <file>skill_icon/rising_rage.png</file>
+    <file>skill_icon/stone_tremor.png</file>
     <file>skill_icon/speed_infusion.png</file>
-    <file>skill_icon/teleport.png</file>
     <file>skill_icon/true_arachnid_reflection.png</file>
-    <file>skill_icon/weapon_aura.png</file>
-    <file>skill_icon/worldreaver.png</file>
+    <file>skill_icon/wrath_of_gods.png</file>
     <file>skill_icon/wild_totem.png</file>
-    <file>skill_icon/beam_blade.png</file>
+    <file>skill_icon/gold_banded_cudgel.png</file>
     <file>skill_icon/rope.png</file>
+    <file>skill_icon/talisman_clone.png</file>
+    <file>skill_icon/seeking_ghost_flame.png</file>
+    <file>skill_icon/consuming_flames.png</file>
+    <file>skill_icon/gold_banded_cudgel.png</file>
+    <file>skill_icon/iron_fan_gale.png</file>
+    <file>skill_icon/miracle_tonic.png</file>
+    <file>skill_icon/star_vortex.png</file>
+    <file>skill_icon/tiger_of_songyu.png</file>
+    <file>skill_icon/ground_shattering_wave.png</file>
   </qresource>
   <qresource>
     <file>sound/beep.wav</file>
