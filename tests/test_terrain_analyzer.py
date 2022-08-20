@@ -18,7 +18,7 @@ class TestScreenProcessor(TestCase):
         self.assertTrue(solution and len(solution) == 1 and solution[0].method == MoveMethod.JUMPL)
 
         solution = self.pathextractor.pathfind('304c485d', '0f9c84c4')
-        self.assertTrue(solution and len(solution) == 2 and solution[0].method == MoveMethod.TELEPORTR and solution[1].method == MoveMethod.TELEPORTUP)
+        self.assertTrue(solution and len(solution) == 2 and solution[0].method == MoveMethod.TELEPORTR and solution[1].method == MoveMethod.ROPE_UP)
 
     def _load(self, path):
         self.pathextractor.load(path)

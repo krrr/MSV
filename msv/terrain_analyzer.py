@@ -37,7 +37,6 @@ class MoveMethod(enum.Enum):
     JUMPL = 3
     TELEPORTR = 4
     TELEPORTL = 5
-    TELEPORTUP = 6
     ROPE_UP = 7
     MOVER = 8
     MOVEL = 9
@@ -368,10 +367,7 @@ class PathAnalyzer:
                     solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.DROP)
                     platform.solutions.append(solution)
                 else:  # lower than other
-                    if diff_y <= self.TELEPORT_VERTICAL_RANGE:
-                        solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.TELEPORTUP)
-                        platform.solutions.append(solution)
-                    elif abs(platform.start_y - other_platform.start_y) <= self.ROPE_VERTICAL_RANGE:
+                    if diff_y <= self.ROPE_VERTICAL_RANGE:
                         solution = Solution(platform.hash, key, (lower_bound_x, platform.start_y), (upper_bound_x, platform.start_y), MoveMethod.ROPE_UP)
                         platform.solutions.append(solution)
             # No vertical overlaps.
@@ -564,7 +560,7 @@ class PathAnalyzer:
             if y - jmpheight == 0:
                 break
             if self.astar_map_grid[y - jmpheight][x] == 1:
-                return_list.append(((x, y - jmpheight), MoveMethod.TELEPORTUP))
+                return_list.append(((x, y - jmpheight), MoveMethod.ROPE_UP))
 
         drop_distance = 1
         while True:

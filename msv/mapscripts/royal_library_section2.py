@@ -36,7 +36,7 @@ class RoyalLibrarySection2(MacroController):
 
             self.keyhandler.single_press(dc.DIK_LEFT)
             time.sleep(0.1 + random_number(0.02))
-            self.player_manager.teleport_up(False)
+            self.player_manager.rope_up(True)
             time.sleep(0.9 + random_number(0.03))
             if not self.vacuum_pet_picking and self.pattern_count > 10:  # pick money
                 self.pickup_money()

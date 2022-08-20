@@ -56,8 +56,8 @@ class PlayerController:
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'burning_soul_blade': 110, 'weapon_aura': 180, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
-            'rising_rage': 10, 'worldreaver': 15
+            'burning_soul_blade': 100, 'weapon_aura': 200, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
+            'rising_rage': 10, 'worldreaver': 15, 'tiger_songyu': 200, 'clone_rampage': 200, 'seeking_ghost_flame': 40
         }
 
         self.v_buff_cd = 180  # common cool down for v buff
@@ -197,11 +197,6 @@ class PlayerController:
         elapsed = time.time() - self.last_rope_time
         if elapsed < self.ROPE_CD:
             self.stay(self.ROPE_CD - elapsed)
-
-    def teleport_up(self, wait=True):
-        self.key_mgr.single_press(self.keymap["upward_charge"])
-        if wait:
-            self._wait_drop(True)
 
     def dbl_jump_left(self, attack=False, wait=True):
         return self._do_dbl_jump(DIK_LEFT, attack, wait)
@@ -374,11 +369,20 @@ class PlayerController:
     def weapon_aura(self, wait_before=0):
         return self._use_buff_skill('weapon_aura', self.v_buff_cd, wait_before)
 
+    def clone_rampage(self, wait_before=0):
+        return self._use_buff_skill('clone_rampage', 200, wait_before)
+
+    def tiger_songyu(self, wait_before=0):
+        return self._use_buff_skill('tiger_songyu', 200, wait_before)
+
+    def seeking_ghost_flame(self, wait_before=0):
+        return self._use_buff_skill('seeking_ghost_flame', 40, wait_before)
+
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
 
-    def blitz_shield(self, wait_before=0):
-        return self._use_buff_skill('blitz_shield', 15, wait_before)
+    def talisman_clone(self, wait_before=0):
+        return self._use_buff_skill('talisman_clone', 100, wait_before)
 
     def wild_totem(self, wait_before=0):
         return self._use_buff_skill('wild_totem', 100, wait_before)

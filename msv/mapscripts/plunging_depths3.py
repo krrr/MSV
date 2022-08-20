@@ -17,6 +17,9 @@ class PlungingDepths3(MacroController):
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
             return
 
+        if self.player_manager.is_skill_usable('true_arachnid_reflection'):
+            self.player_manager.use_set_skill('true_arachnid_reflection')
+
         if self.current_platform_hash == '8a395a67':  # bottom
             self.buff_skills()
             if self.player_manager.is_skill_usable('burning_soul_blade'):  # buff
@@ -50,24 +53,12 @@ class PlungingDepths3(MacroController):
             self.update()
             self.navigate_to_platform('93a07f38')
         elif self.current_platform_hash == '93a07f38':  # left upper
-            if self.player_manager.is_skill_usable('true_arachnid_reflection'):
-                # self.player_manager.
-                pass
-
-            worldreaver_usable = self.player_manager.is_skill_usable('worldreaver')
-            if not worldreaver_usable:
-                self.player_manager.blitz_shield()
             self.player_manager.horizontal_move_goal(81)
             self.player_manager.dbl_jump_right(wait=False)
 
-            if worldreaver_usable:
-                time.sleep(0.7 + random_number(0.08))
-                self.player_manager.worldreaver()
-                time.sleep(0.4 + random_number(0.1))
-            else:
-                time.sleep(0.4 + random_number(0.08))
-                self.keyhandler.single_press(self.player_manager.keymap['blitz_shield'])
-                time.sleep(0.7 + random_number(0.1))
+            time.sleep(0.5 + random_number(0.08))
+            self.player_manager.worldreaver()
+            time.sleep(0.6 + random_number(0.1))
 
             self.update()
             self.player_manager.horizontal_move_goal(135)

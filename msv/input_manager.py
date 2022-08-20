@@ -239,7 +239,6 @@ DEFAULT_KEY_MAP = {
     "rising_rage": dic.DIK_X,
     "worldreaver": dic.DIK_R,
     "beam_blade": dic.DIK_F,
-    "upward_charge": dic.DIK_D,
     "interact": dic.DIK_SPACE,
     "weapon_aura": dic.DIK_F3,
     "holy_symbol": None,
@@ -248,7 +247,10 @@ DEFAULT_KEY_MAP = {
     "nightmare_invite": None,
     "true_arachnid_reflection": dic.DIK_END,
     "burning_soul_blade": dic.DIK_1,
-    "blitz_shield": None
+    "talisman_clone": None,
+    "tiger_songyu": None,
+    "clone_rampage": None,
+    "seeking_ghost_flame": None,
 }
 
 KEY2DISPLAY_NAME = {
@@ -257,7 +259,6 @@ KEY2DISPLAY_NAME = {
     "rising_rage": "Rising Rage",
     "worldreaver": "Worldreaver",
     "beam_blade": "Bean Blade",
-    "upward_charge": "Upward Charge",
     "interact": "Interact",
     "weapon_aura": "Weapon Aura",
     "holy_symbol": "Holy Symbol",
@@ -266,5 +267,8 @@ KEY2DISPLAY_NAME = {
     "nightmare_invite": "nightmare_invite",
     "true_arachnid_reflection": "True Arachnid Reflection",
     "burning_soul_blade": "Burning Soul Blade",
-    "blitz_shield": "Blitz Shield"
+    "talisman_clone": "Talisman: Clone",
+    "tiger_songyu": "Scroll: Tiger of Songyu",
+    "clone_rampage": "Sage: Clone Rampage",
+    "seeking_ghost_flame": "Talisman: Seeking Ghost Flame",
 }

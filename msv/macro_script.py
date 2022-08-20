@@ -497,7 +497,7 @@ class MacroController:
         return 0
 
     def buff_skills(self):
-        skills = ['wild_totem', 'holy_symbol', 'weapon_aura']
+        skills = ['wild_totem', 'holy_symbol', 'weapon_aura', 'tiger_songyu', 'clone_rampage', 'seeking_ghost_flame']
         random.shuffle(skills)
         used = False
         for i in skills:
@@ -560,9 +560,6 @@ class MacroController:
             self.player_manager.jump_left()
         elif move_method == MoveMethod.JUMPR:
             self.player_manager.jump_right()
-        elif move_method == MoveMethod.TELEPORTUP:
-            time.sleep(0.1 + random_number(0.05))
-            self.player_manager.teleport_up()
         elif move_method == MoveMethod.TELEPORTL:
             self.player_manager.dbl_jump_left()
         elif move_method == MoveMethod.TELEPORTR:
@@ -643,8 +640,7 @@ class MacroController:
         """
         self.unstick_attempts += 1
         # jump right to try to get off ladder
-        for method in (self.player_manager.jump_left, self.player_manager.teleport_up,
-                       self.player_manager.dbl_jump_left, self.player_manager.dbl_jump_right):
+        for method in (self.player_manager.jump_left, self.player_manager.dbl_jump_left, self.player_manager.dbl_jump_right):
             method()
             time.sleep(0.8)
             self.update()

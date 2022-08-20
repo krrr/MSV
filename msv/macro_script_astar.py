@@ -81,10 +81,10 @@ class MacroControllerAStar(macro_script.MacroController):
             print(mid_coord, method)
             if method == MoveMethod.MOVER or method == MoveMethod.MOVEL:
                 self.player_manager.optimized_horizontal_move(mid_coord[0])
-            elif method == MoveMethod.TELEPORTUP:
+            elif method == MoveMethod.ROPE_UP:
                 # interdelay = self.terrain_analyzer.calculate_vertical_doublejump_delay(self.player_manager.y, mid_coord[1])
                 # print(interdelay)
-                self.player_manager.teleport_up()
+                self.player_manager.rope_up()
             elif method == MoveMethod.DROP:
                 self.player_manager.drop()
         # End inter-platform movement
