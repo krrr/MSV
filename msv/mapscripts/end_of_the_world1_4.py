@@ -140,7 +140,7 @@ class EndOfTheWorld1_4(MacroController):
         self.navigate_to_platform('b70e34c7')  # center right
 
         ### center right
-        if time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] >= 10:
+        if time.time() - self.player_manager.last_skill_use_time.get('yaksha_boss', 0) >= 10:
             self.player_manager.last_skill_use_time['yaksha_boss'] = 0  # force setting yaksha boss
             self._place_set_skill('yaksha_boss')
         else:

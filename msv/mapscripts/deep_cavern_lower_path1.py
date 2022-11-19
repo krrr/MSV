@@ -99,7 +99,7 @@ class Dclp1MacroController(MacroController):
 
         self.navigate_to_platform('600f8ed9')  # ensure at center bottom
 
-        if time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] <= 10:
+        if time.time() - self.player_manager.last_skill_use_time.get('yaksha_boss', 0) <= 10:
             self.player_manager.last_skill_use_time['yaksha_boss'] = 0  # force setting yaksha boss
         self._place_set_skill('yaksha_boss')
 

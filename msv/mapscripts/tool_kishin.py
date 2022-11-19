@@ -20,7 +20,7 @@ class ToolKishin(MacroController):
         elif abs(self.player_manager.x - self.x) > 3:
             self.player_manager.horizontal_move_goal(self.x)
 
-        if (time.time() - self.player_manager.last_skill_use_time['kishin_shoukan'] >
+        if (time.time() - self.player_manager.last_skill_use_time.get('kishin_shoukan', 0) >
                 self.player_manager.skill_cooldown['kishin_shoukan'] + random_number(3.5)):
             self.player_manager.use_set_skill('kishin_shoukan')
 

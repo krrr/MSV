@@ -98,7 +98,7 @@ class LabyrinthInterior1(MacroController):
         self.player_manager.horizontal_move_goal(self.terrain_analyzer.platforms['6c45ab2d'].end_x - 4)
         self.player_manager.stay(0.5 + random_number(0.05))
         self.player_manager.shikigami_haunting_sweep_move(self.terrain_analyzer.platforms['6c45ab2d'].start_x + 5)
-        if time.time() - self.player_manager.last_skill_use_time['yaksha_boss'] >= 10:
+        if time.time() - self.player_manager.last_skill_use_time.get('yaksha_boss', 0) >= 10:
             self.player_manager.last_skill_use_time['yaksha_boss'] = 0  # force setting yaksha boss
             self._place_set_skill('yaksha_boss')
         else:
