@@ -234,7 +234,7 @@ class InputManager:
 
 
 DEFAULT_KEY_MAP = {
-    "jump": dic.DIK_LMENU,
+    "jump": dic.DIK_SPACE,
     "as_you_will_fan": dic.DIK_A,
     "ground_shattering_wave": dic.DIK_S,
     "stone_tremor": dic.DIK_X,
@@ -242,12 +242,12 @@ DEFAULT_KEY_MAP = {
     "consuming_flames": dic.DIK_E,
     "gold_banded_cudgel": dic.DIK_F,
     "star_vortex": dic.DIK_Q,
-    "interact": dic.DIK_SPACE,
+    "interact": dic.DIK_C,
     "holy_symbol": None,
-    "rope": dic.DIK_C,
+    "rope": dic.DIK_EQUALS,
     "wild_totem": dic.DIK_B,
     "nightmare_invite": dic.DIK_DELETE,
-    "true_arachnid_reflection": dic.DIK_END,
+    "true_arachnid_reflection": dic.DIK_H,
     "seeking_ghost_flame": dic.DIK_1,
     "talisman_clone": dic.DIK_2,
     "wrath_of_gods": dic.DIK_5,

@@ -21,23 +21,19 @@ class PlungingDepths3(MacroController):
             self.player_manager.use_set_skill('true_arachnid_reflection')
 
         if self.current_platform_hash == '8a395a67':  # bottom
-            self.buff_skills()
-            if self.player_manager.is_skill_usable('burning_soul_blade'):  # buff
-                self.player_manager.burning_soul_blade()
-
             self.player_manager.dbl_jump_move(self.ROPE_X, attack=True)
-            rising_rage_usable = self.player_manager.is_skill_usable('rising_rage')
-            if rising_rage_usable:
+            stone_tremor_usable = self.player_manager.is_skill_usable('stone_tremor')
+            if stone_tremor_usable:
                 time.sleep(0.04)
                 self.keyhandler.single_press(dc.DIK_RIGHT)
                 time.sleep(0.04)
-                self.player_manager.rising_rage()
+                self.player_manager.stone_tremor()
                 time.sleep(0.03)
                 self.keyhandler.single_press(dc.DIK_LEFT)
 
             self.player_manager.rope_up(wait=False)
             time.sleep(0.85 + random_number(0.05))
-            self.player_manager.beam_blade()
+            self.player_manager.gold_banded_cudgel()
             time.sleep(0.3 + random_number(0.1))
 
             # self.player_manager.horizontal_move_goal(121)
@@ -46,7 +42,7 @@ class PlungingDepths3(MacroController):
             # self.player_manager.horizontal_move_goal(89)
             # self.player_manager.dbl_jump_left(wait=False)
             # time.sleep(0.04)
-            # self.player_manager.beam_blade()
+            # self.player_manager.gold_banded_cudgel()
             # time.sleep(0.45 + random_number(0.03))  # wait drop
             # self.keyhandler.single_press(dc.DIK_RIGHT, duration=0.15)
             self.player_manager.dbl_jump_right(attack=True)
@@ -57,7 +53,7 @@ class PlungingDepths3(MacroController):
             self.player_manager.dbl_jump_right(wait=False)
 
             time.sleep(0.5 + random_number(0.08))
-            self.player_manager.worldreaver()
+            # self.player_manager.worldreaver()
             time.sleep(0.6 + random_number(0.1))
 
             self.update()

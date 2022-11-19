@@ -363,7 +363,7 @@ class StaticImageProcessor:
         guild = (np.array((255, 102, 102)), np.array((255, 153, 153)))
         friend = (np.array((238, 204, 0)), np.array((255, 221, 17)))
 
-        for i in (stranger, guild, friend) if self.detect_friend else (stranger, guild):
+        for i in (stranger, guild, friend) if self.detect_friend else (stranger,):
             mask = cv2.inRange(cropped, i[0], i[1])
             td = np.transpose(np.where(mask > 0)).tolist()
 

@@ -37,6 +37,7 @@ class MoveMethod(enum.Enum):
     JUMPL = 3
     TELEPORTR = 4
     TELEPORTL = 5
+    _INVALID = 6
     ROPE_UP = 7
     MOVER = 8
     MOVEL = 9

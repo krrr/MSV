@@ -104,7 +104,7 @@ class MacroController:
         self.current_platform_hash = None
         self.goal_platform_hash = None
 
-        self.platform_error = 3  # if x within 3 pixels of platform border, consider to be on said platform
+        self.platform_error = 2  # if x within 3 pixels of platform border, consider to be on said platform
 
         self.last_rune_solve_time = 0
         self.rune_fail_count = 0
@@ -205,7 +205,7 @@ class MacroController:
                                                 abs(self.player_manager.x - solution.upper_bound[0]))
                         x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
 
-                self.player_manager.dbl_jump_move(x)
+                self.player_manager.dbl_jump_move(x, attack=True)
                 self.poll_conn()
                 self.player_manager.horizontal_move_goal(x)
 
@@ -455,7 +455,7 @@ class MacroController:
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.raging_blow()
+        self.player_manager.as_you_will_fan()
         ### End skill usage
 
         # Find coordinates to move to next platform
@@ -497,7 +497,7 @@ class MacroController:
         return 0
 
     def buff_skills(self):
-        skills = ['wild_totem', 'holy_symbol', 'weapon_aura', 'tiger_songyu', 'clone_rampage', 'seeking_ghost_flame']
+        skills = ['wild_totem', 'holy_symbol', 'seeking_ghost_flame', 'talisman_clone', 'wrath_of_gods']
         random.shuffle(skills)
         used = False
         for i in skills:
@@ -531,6 +531,9 @@ class MacroController:
         self.logger.info(msg)
         if not self.navigate_to_platform(rune_platform_hash):
             self.logger.warning('failed to navigate to rune platform')
+            return
+        self.update()
+        if not self.navigate_to_platform(rune_platform_hash):
             return
 
         self.player_manager.dbl_jump_move(rune_coords[0])
@@ -577,22 +580,20 @@ class MacroController:
             return False
 
         if combine:
-            is_set = self._place_set_skill('yaksha_boss')
+            is_set = self._place_set_skill('star_vortex')
             self.poll_conn()
             self.update()
             if self.current_platform_hash is None:
                 return is_set
             if is_set:
                 self._place_set_skill('nightmare_invite')
-                self.poll_conn()
-                self._place_set_skill('kishin_shoukan')
                 self.update()
                 return True
             else:
                 return False
         else:
             is_set = False
-            for i in ('kishin_shoukan', 'yaksha_boss', 'nightmare_invite'):
+            for i in ('star_vortex', 'nightmare_invite'):
                 is_set = any((is_set, self._place_set_skill(i)))
                 self.update()
                 if self.current_platform_hash is None:
@@ -615,7 +616,7 @@ class MacroController:
         self.logger.info('placing ' + skill_name.replace('_', ' '))
         if not self.navigate_to_platform(platform):
             return False
-        self.player_manager.dbl_jump_move(coord[0])
+        self.player_manager.dbl_jump_move(coord[0], attack=True)
         self.player_manager.horizontal_move_goal(coord[0])
         time.sleep(0.1)
         self.player_manager.use_set_skill(skill_name)

@@ -1,5 +1,5 @@
 import time, math, random
-from msv.directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
+from msv.directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT
 from msv.input_manager import DEFAULT_KEY_MAP
 from msv.screen_processor import MiniMapError
 from msv.util import random_number
@@ -56,8 +56,9 @@ class PlayerController:
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'burning_soul_blade': 100, 'weapon_aura': 200, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
-            'rising_rage': 10, 'worldreaver': 15, 'tiger_songyu': 200, 'clone_rampage': 200, 'seeking_ghost_flame': 40
+            'nightmare_invite': 60, 'true_arachnid_reflection': 250, 'star_vortex': 42, 'talisman_clone': 5,
+            'stone_tremor': 10, 'wrath_of_gods': 200, 'seeking_ghost_flame': 5, 'consuming_flames': 8,
+            'gold_banded_cudgel': 11, 'tiger_of_songyu': 205, 'miracle_tonic': 100
         }
 
         self.v_buff_cd = 180  # common cool down for v buff
@@ -171,6 +172,24 @@ class PlayerController:
                 self.key_mgr.direct_release(DIK_RIGHT if right else DIK_LEFT)
                 return False
 
+    def iron_fan_gale2222(self, x):
+        self.horizontal_move_goal(x)
+
+        self._call_poll()
+
+        if abs(self.x - x) < self.horizontal_goal_offset:
+            dir_ = random.choice((DIK_LEFT, DIK_RIGHT))
+        else:
+            dir_ = DIK_RIGHT if self.x < x else DIK_LEFT
+        self.key_mgr.single_press(dir_)
+        self.iron_fan_gale()
+        self.iron_fan_gale()
+        self._call_poll()
+        time.sleep(0.08 + random_number(0.01))
+        self.key_mgr.single_press(DIK_LEFT if dir_ == DIK_RIGHT else DIK_RIGHT)
+        self.iron_fan_gale()
+        self.iron_fan_gale()
+
     def stay(self, timeout, goal_x=None):
         start_time = time.time()
 
@@ -213,7 +232,7 @@ class PlayerController:
         self.key_mgr.single_press(self.keymap["jump"])
         if attack:
             time.sleep(0.04)
-            self.key_mgr.single_press(self.keymap["raging_blow"])
+            self.key_mgr.single_press(self.keymap["as_you_will_fan"])
 
         if wait:
             if attack:
@@ -329,8 +348,6 @@ class PlayerController:
             for i in range(2):
                 self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
                                           additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
-                if skill_name == 'burning_soul_blade':
-                    break
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
@@ -338,51 +355,77 @@ class PlayerController:
 
         return False
 
-    def raging_blow(self):
-        self.key_mgr.single_press(self.keymap["raging_blow"])
+    def as_you_will_fan(self):
+        self.key_mgr.single_press(self.keymap["as_you_will_fan"])
         self.skill_cast_counter += 1
-        time.sleep(0.7 + random_number(0.05))
+        time.sleep(0.6 + random_number(0.05))
 
-    def rising_rage(self):
-        self.key_mgr.single_press(self.keymap["rising_rage"])
-        self.last_skill_use_time['rising_rage'] = time.time()
+    def stone_tremor(self, dir_key=None):
+        self.key_mgr.single_press(self.keymap["stone_tremor"])
+        self.last_skill_use_time['stone_tremor'] = time.time()
         self.skill_cast_counter += 1
-        time.sleep(0.7 + random_number(0.05))
+        if dir_key:
+            time.sleep(0.02 + random_number(0.02))
+            self.key_mgr.direct_press(dir_key)
+            time.sleep(0.04 + random_number(0.02))
+            self.key_mgr.single_press(self.keymap["stone_tremor"])
+            time.sleep(0.03 + random_number(0.02))
+            self.key_mgr.direct_release(dir_key)
+            time.sleep(0.1 + random_number(0.05))
 
-    def worldreaver(self):
-        self.key_mgr.single_press(self.keymap["worldreaver"])
-        self.last_skill_use_time['worldreaver'] = time.time()
-        self.skill_cast_counter += 1
         time.sleep(0.8 + random_number(0.05))
 
-    def beam_blade(self):
-        self.key_mgr.single_press(self.keymap["beam_blade"])
+    def ground_shattering_wave(self, dir_key=None):
+        self.key_mgr.single_press(self.keymap["ground_shattering_wave"])
         self.skill_cast_counter += 1
-        time.sleep(0.5 + random_number(0.05))
+        if dir_key:
+            time.sleep(0.02 + random_number(0.02))
+            self.key_mgr.direct_press(dir_key)
+            time.sleep(0.04 + random_number(0.02))
+            self.key_mgr.single_press(self.keymap["ground_shattering_wave"])
+            time.sleep(0.03 + random_number(0.02))
+            self.key_mgr.direct_release(dir_key)
+            time.sleep(0.1 + random_number(0.05))
 
-    def burning_soul_blade(self, set=False, wait_before=0):
-        ret = self._use_buff_skill('burning_soul_blade', self.skill_cooldown['burning_soul_blade'], wait_before)
-        if ret and set:
-            time.sleep(0.6 + random_number(0.05))
-            self.key_mgr.single_press(self.keymap['burning_soul_blade'], duration=0.2 + random_number(0.04))
+        time.sleep(0.7 + random_number(0.05))
 
-    def weapon_aura(self, wait_before=0):
-        return self._use_buff_skill('weapon_aura', self.v_buff_cd, wait_before)
+    def gold_banded_cudgel(self):
+        self.key_mgr.single_press(self.keymap["gold_banded_cudgel"])
+        self.last_skill_use_time['gold_banded_cudgel'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.7 + random_number(0.05))
 
-    def clone_rampage(self, wait_before=0):
-        return self._use_buff_skill('clone_rampage', 200, wait_before)
+    def iron_fan_gale(self):
+        self.key_mgr.single_press(self.keymap["iron_fan_gale"])
+        self.skill_cast_counter += 1
+        time.sleep(0.92 + random_number(0.05))
 
-    def tiger_songyu(self, wait_before=0):
-        return self._use_buff_skill('tiger_songyu', 200, wait_before)
+    def wrath_of_gods(self, wait_before=0):
+        return self._use_buff_skill('wrath_of_gods', 200, wait_before)
 
     def seeking_ghost_flame(self, wait_before=0):
-        return self._use_buff_skill('seeking_ghost_flame', 40, wait_before)
+        if time.time() - self.last_skill_use_time.get('talisman_clone', 0) < 5:
+            return False
+        return self._use_buff_skill('seeking_ghost_flame', self.skill_cooldown['seeking_ghost_flame'], wait_before)
+
+    def talisman_clone(self, wait_before=0):
+        if time.time() - self.last_skill_use_time.get('seeking_ghost_flame', 0) < 5:
+            return False
+        return self._use_buff_skill('talisman_clone', self.skill_cooldown['talisman_clone'], wait_before)
 
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
 
-    def talisman_clone(self, wait_before=0):
-        return self._use_buff_skill('talisman_clone', 100, wait_before)
+    def miracle_tonic(self, wait_before=0):
+        return self._use_buff_skill('miracle_tonic', self.skill_cooldown['miracle_tonic'], wait_before)
+
+    def consuming_flames(self, jump):
+        if jump:
+            self.key_mgr.single_press(self.keymap["iron_fan_gale"])
+        time.sleep(0.6 + random_number(0.05))
+        self.key_mgr.single_press(self.keymap["consuming_flames"])
+        self.skill_cast_counter += 1
+        time.sleep(0.7 + random_number(0.05))
 
     def wild_totem(self, wait_before=0):
         return self._use_buff_skill('wild_totem', 100, wait_before)
