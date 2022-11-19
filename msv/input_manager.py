@@ -271,6 +271,6 @@ KEY2DISPLAY_NAME = {
     "holy_symbol": "Holy Symbol",
     "wild_totem": "Wild Totem",
     "mihile_link": "Mihile Link",
-    "nightmare_invite": "Nightmare Invite",
+    "nightmare_invite": "Erda Shower",
     "true_arachnid_reflection": "True Arachnid Reflection",
 }

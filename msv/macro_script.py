@@ -626,8 +626,13 @@ class MacroController:
         if skill_name == 'yaksha_boss':
             dir_ = dc.DIK_LEFT if self.terrain_analyzer.other_attrs.get('yaksha_boss_dir') == 'left' else dc.DIK_RIGHT
             self.keyhandler.single_press(dir_)
+        elif skill_name == 'nightmare_invite':
+            self.keyhandler.press_key(dc.DIK_DOWN)
         time.sleep(0.1)
         self.player_manager.use_set_skill(skill_name)
+        if skill_name == 'nightmare_invite':
+            time.sleep(0.1)
+            self.keyhandler.release_key(dc.DIK_DOWN)
         self.player_manager.last_skill_use_time[skill_name] = time.time()
 
         return True
