@@ -372,7 +372,14 @@ class PlayerController:
             self.key_mgr.single_press(self.keymap['burning_soul_blade'], duration=0.2 + random_number(0.04))
 
     def weapon_aura(self, wait_before=0):
-        return self._use_buff_skill('weapon_aura', self.v_buff_cd, wait_before)
+        ret = self._use_buff_skill('weapon_aura', self.v_buff_cd, wait_before)
+
+        if ret:
+            for i in range(2):
+                self.key_mgr.single_press(self.keymap['weapon_aura'], duration=0.2 + random_number(0.04),
+                                          additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
+            time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
+        return ret
 
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
