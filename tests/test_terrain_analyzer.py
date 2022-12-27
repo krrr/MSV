@@ -11,6 +11,9 @@ class TestScreenProcessor(TestCase):
     def test_dclp1(self):
         self._load("../msv/resources/platform/deep_cavern_lower_path1.platform")
 
+    def test_train(self):
+        self._load("../msv/resources/platform/train_no_dest1.platform")
+
     def test_mirror_touched_sea2(self):
         self._load("unittest_data/mirror_touched_sea2.platform")
 

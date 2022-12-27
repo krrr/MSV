@@ -1,5 +1,6 @@
 import time, math, random
-from msv.directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT, DIK_UP
+from msv.directinput_constants import DIK_RIGHT, DIK_DOWN, DIK_LEFT
+import msv.directinput_constants as dc
 from msv.input_manager import DEFAULT_KEY_MAP
 from msv.screen_processor import MiniMapError
 from msv.util import random_number
@@ -8,7 +9,7 @@ from msv.util import random_number
 # simple jump vertical distance: about 6 pixels
 class PlayerController:
     ROPE_CD = 3
-    TELEPORT_HORIZONTAL_RANGE = 27
+    TELEPORT_HORIZONTAL_RANGE = 33
     SHIKIGAMI_HAUNTING_RANGE = 1
     SET_SKILL_COMMON_DELAY = 0.35
     BUFF_COMMON_DELAY = 0.7
@@ -50,14 +51,15 @@ class PlayerController:
 
         self.shikigami_haunting_delay = 0.37  # delay after using shikigami haunting where character is not movable
 
-        self.horizontal_movement_threshold = 27  # dbl jump instead of walk if distance greater than threshold
+        self.horizontal_movement_threshold = 33  # dbl jump instead of walk if distance greater than threshold
 
         self.skill_cast_counter = 0
         self.skill_counter_time = 0
 
         self.skill_cooldown = {
-            'burning_soul_blade': 110, 'weapon_aura': 180, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
-            'rising_rage': 10, 'worldreaver': 15
+            'whalers_potion': 120, 'nightmare_invite': 60, 'true_arachnid_reflection': 250, 'scurvy_summons': 45,
+            'nautilus_strike': 30, 'death_trigger': 45, 'ugly_bomb': 30, 'target_lock': 30, 'paochuan': 0,
+            'paotai': 60, 'roll_dice': 160, 'bullet_barrage': 75, 'nautilus_assault': 180
         }
 
         self.v_buff_cd = 180  # common cool down for v buff
@@ -218,7 +220,7 @@ class PlayerController:
         self.key_mgr.single_press(self.keymap["jump"])
         if attack:
             time.sleep(0.04)
-            self.key_mgr.single_press(self.keymap["raging_blow"])
+            self.key_mgr.single_press(self.keymap["eight_legs_easton"])
 
         if wait:
             if attack:
@@ -334,8 +336,6 @@ class PlayerController:
             for i in range(2):
                 self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
                                           additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
-                if skill_name == 'burning_soul_blade':
-                    break
             self.skill_cast_counter += 1
             self.last_skill_use_time[skill_name] = time.time()
             time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
@@ -343,49 +343,70 @@ class PlayerController:
 
         return False
 
-    def raging_blow(self):
-        self.key_mgr.single_press(self.keymap["raging_blow"])
-        self.skill_cast_counter += 1
-        time.sleep(0.7 + random_number(0.05))
-
-    def rising_rage(self):
-        self.key_mgr.single_press(self.keymap["rising_rage"])
-        self.last_skill_use_time['rising_rage'] = time.time()
-        self.skill_cast_counter += 1
-        time.sleep(0.7 + random_number(0.05))
-
-    def worldreaver(self):
-        self.key_mgr.single_press(self.keymap["worldreaver"])
-        self.last_skill_use_time['worldreaver'] = time.time()
+    def eight_legs_easton(self):
+        self.key_mgr.single_press(self.keymap["eight_legs_easton"])
         self.skill_cast_counter += 1
         time.sleep(0.8 + random_number(0.05))
 
-    def beam_blade(self):
-        self.key_mgr.single_press(self.keymap["beam_blade"])
+    def nautilus_strike(self):
+        self.key_mgr.single_press(self.keymap["nautilus_strike"])
+        self.last_skill_use_time['nautilus_strike'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.7 + random_number(0.05))
+
+    def nautilus_assault(self):
+        self.key_mgr.single_press(self.keymap["nautilus_assault"])
+        self.last_skill_use_time['nautilus_assault'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.7 + random_number(0.05))
+
+    def bullet_barrage(self):
+        self.key_mgr.single_press(self.keymap["bullet_barrage"])
+        self.last_skill_use_time['bullet_barrage'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(6 + random_number(0.05))
+        # random move
+        k = random.choice((dc.DIK_LEFT, dc.DIK_RIGHT))
+        self.key_mgr.single_press(k, duration=0.08)
+        time.sleep(1 + random_number(0.05))
+        self.key_mgr.single_press(dc.DIK_RIGHT if k == dc.DIK_LEFT else dc.DIK_RIGHT, duration=0.08)
+        time.sleep(4.9)
+
+    def death_trigger(self):
+        self.key_mgr.single_press(self.keymap["death_trigger"])
+        self.last_skill_use_time['death_trigger'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.8 + random_number(0.05))
+
+    def ugly_bomb(self):
+        self.key_mgr.single_press(self.keymap["ugly_bomb"])
+        self.last_skill_use_time['ugly_bomb'] = time.time()
         self.skill_cast_counter += 1
         time.sleep(0.5 + random_number(0.05))
 
-    def burning_soul_blade(self, set=False, wait_before=0):
-        ret = self._use_buff_skill('burning_soul_blade', self.skill_cooldown['burning_soul_blade'], wait_before)
-        if ret and set:
-            time.sleep(0.6 + random_number(0.05))
-            self.key_mgr.single_press(self.keymap['burning_soul_blade'], duration=0.2 + random_number(0.04))
+    def target_lock(self):
+        self.key_mgr.single_press(self.keymap["target_lock"])
+        self.last_skill_use_time['target_lock'] = time.time()
+        self.skill_cast_counter += 1
+        time.sleep(0.5 + random_number(0.05))
 
-    def weapon_aura(self, wait_before=0):
-        ret = self._use_buff_skill('weapon_aura', self.v_buff_cd, wait_before)
+    def scurvy_summons(self, wait_before=0):
+        return self._use_buff_skill('scurvy_summons', self.skill_cooldown['scurvy_summons'], wait_before)
 
-        if ret:
-            for i in range(2):
-                self.key_mgr.single_press(self.keymap['weapon_aura'], duration=0.2 + random_number(0.04),
-                                          additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
-            time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
-        return ret
+    def whalers_potion(self, wait_before=0):
+        return self._use_buff_skill('whalers_potion', self.skill_cooldown['whalers_potion'], wait_before)
 
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
 
-    def blitz_shield(self, wait_before=0):
-        return self._use_buff_skill('blitz_shield', 15, wait_before)
+    def roll_dice(self, wait_before=0):
+        if self.is_skill_usable('roll_dice'):
+            # 船长有一个扔骰子的技能，摇到6可以加经验，有一个技能可以控制骰子点数，但是需要按一次，然后选择点数6，然后再扔骰子
+            self.key_mgr.single_press(dc.DIK_5)
+            time.sleep(0.2 + random_number(0.05))
+            self.key_mgr.single_press(dc.DIK_6)
+            time.sleep(0.2 + random_number(0.05))
+        return self._use_buff_skill('roll_dice', self.skill_cooldown['roll_dice'], wait_before)
 
     def wild_totem(self, wait_before=0):
         return self._use_buff_skill('wild_totem', 100, wait_before)

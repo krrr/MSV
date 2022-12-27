@@ -46,7 +46,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.actionDebugMode.triggered.connect(lambda x: self._onOptChange('debug', x))
         self.macroProcSignal.connect(self._onMacroProcMessage)
 
-        self.app_title = (app_title or APP_TITLE) + ' Hero'
+        self.app_title = (app_title or APP_TITLE) + ' corsair'
         self.setWindowTitle(self.app_title)
 
         self.keymap = None
@@ -56,7 +56,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.macro_proc_conn = None
 
         self.logTextArea.document().setDefaultStyleSheet('.time-part { color: #808080 }')
-        self.log(self.app_title + " hero version: v" + __version__)
+        self.log(self.app_title + " version: v" + __version__)
         current_user = util.runtime_info.get('username')
         if current_user:
             msg = 'Account: ' + current_user
@@ -352,6 +352,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     @pyqtSlot()
     def on_actionAbout_triggered(self):
         if self.limit:
-            QMessageBox.information(self, 'About', 'Version: %s\n%s hero jioben' % (__version__, self.app_title))
+            QMessageBox.information(self, 'About', 'Version: %s\n%s corsair jioben' % (__version__, self.app_title))
         else:
             QMessageBox.information(self, 'About', ABOUT_TXT % (__version__,))

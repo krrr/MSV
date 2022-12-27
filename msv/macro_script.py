@@ -455,7 +455,7 @@ class MacroController:
             self.keyhandler.single_press(dc.DIK_RIGHT)
         else:
             self.keyhandler.single_press(dc.DIK_LEFT)
-        self.player_manager.raging_blow()
+        self.player_manager.eight_legs_easton()
         ### End skill usage
 
         # Find coordinates to move to next platform
@@ -497,7 +497,7 @@ class MacroController:
         return 0
 
     def buff_skills(self):
-        skills = ['wild_totem', 'holy_symbol', 'weapon_aura']
+        skills = ['whalers_potion', 'roll_dice', 'scurvy_summons']
         random.shuffle(skills)
         used = False
         for i in skills:
@@ -571,7 +571,7 @@ class MacroController:
             self.player_manager.wait_rope_cd()
             self.player_manager.rope_up()
 
-    def set_skills(self, combine=False):
+    def set_skills(self):
         if self.elite_boss_detected and self.other_player_detected_start is not None:
             return False
 
@@ -579,36 +579,44 @@ class MacroController:
         if self.current_platform_hash is None:
             return False
 
-        if combine:
-            is_set = self._place_set_skill('yaksha_boss')
-            self.poll_conn()
-            self.update()
-            if self.current_platform_hash is None:
-                return is_set
-            if is_set:
-                self._place_set_skill('nightmare_invite')
-                self.poll_conn()
-                self._place_set_skill('kishin_shoukan')
-                self.update()
-                return True
-            else:
-                return False
-        else:
-            is_set = False
-            for i in ('kishin_shoukan', 'yaksha_boss', 'nightmare_invite'):
-                is_set = any((is_set, self._place_set_skill(i)))
-                self.update()
-                if self.current_platform_hash is None:
-                    return is_set
-                self.poll_conn()
+        is_set = self._place_set_skill('nightmare_invite')
+        self.poll_conn()
+        self.update()
+        if self.current_platform_hash is None:
             return is_set
+        elif not is_set:
+            return False
+
+        self.logger.debug('paochuan1')
+        is_set = self._place_set_skill('paochuan1')
+        self.poll_conn()
+        self.update()
+        if self.current_platform_hash is None:
+            return is_set
+        elif not is_set:
+            return False
+
+        self.logger.debug('paochuan2')
+        is_set = self._place_set_skill('paochuan2')
+        self.poll_conn()
+        self.update()
+        if self.current_platform_hash is None:
+            return is_set
+        elif not is_set:
+            return False
+
+        self.logger.debug('paotai')
+        return self._place_set_skill('paotai')
 
     def _place_set_skill(self, skill_name):
         """Placing set skill at specific location"""
+        origin_skill_name = skill_name
+        if skill_name.endswith('1') or skill_name.endswith('2'):
+            skill_name = skill_name[:-1]
         if not self.player_manager.is_skill_usable(skill_name):
             return False
 
-        coord = self.terrain_analyzer.set_skill_coord.get(skill_name)
+        coord = self.terrain_analyzer.set_skill_coord.get(origin_skill_name)
         if not coord:
             return False
         platform = self.find_coord_platform(coord)
@@ -620,10 +628,21 @@ class MacroController:
             return False
         self.player_manager.dbl_jump_move(coord[0])
         self.player_manager.horizontal_move_goal(coord[0])
+
+        if skill_name == 'paochuan' or skill_name == 'paotai':  # direction
+            dir_ = dc.DIK_LEFT if self.terrain_analyzer.other_attrs.get(origin_skill_name+'_dir') == 'left' else dc.DIK_RIGHT
+            self.keyhandler.single_press(dir_)
+        elif skill_name == 'nightmare_invite':
+            self.keyhandler.press_key(dc.DIK_DOWN)
+
         time.sleep(0.1)
         self.player_manager.use_set_skill(skill_name)
-        self.player_manager.last_skill_use_time[skill_name] = time.time()
 
+        if skill_name == 'nightmare_invite':
+            time.sleep(0.03 + random_number(0.02))
+            self.keyhandler.release_key(dc.DIK_DOWN)
+
+        self.player_manager.last_skill_use_time[skill_name] = time.time()
         return True
 
     def wait_monster(self, name, crop_dir=None, timeout=2):

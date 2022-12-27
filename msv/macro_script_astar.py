@@ -94,7 +94,7 @@ class MacroControllerAStar(macro_script.MacroController):
         time.sleep(0.05)
 
         # set skills
-        # self.player_manager.kishin_shoukan()
+        # self.player_manager.paotai()
 
         # Finished
         self.loop_count += 1

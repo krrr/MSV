@@ -26,7 +26,7 @@ class PlatformList(QListWidget):
 
 
 class TerrainEditorWindow(QWidget):
-    set_skill_color = {'kishin_shoukan': (107, 50, 135), 'yaksha_boss': (196, 0, 0),
+    set_skill_color = {'paotai': (107, 50, 135), 'paochuan': (196, 0, 0),
                        'nightmare_invite': (226, 142, 185)}
 
     def __init__(self, parent=None, open_file_path=None):
@@ -86,23 +86,23 @@ class TerrainEditorWindow(QWidget):
         master_tool_frame_layout.addWidget(tool_frame_2)
         ico_w = 24 * self.logicalDpiX() // 96
         ico_sz = QSize(ico_w, ico_w)
-        set_yaksha_coord_l_btn = QPushButton(tool_frame_2)
-        set_yaksha_coord_l_btn.setToolTip('Toggle yaksha boss position (face left)')
-        set_yaksha_coord_l_btn.clicked.connect(lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'left'))
-        set_yaksha_coord_l_btn.setIcon(QIcon(QPixmap(':/skill_icon/yaksha_boss.png')))
-        set_yaksha_coord_r_btn = QPushButton(tool_frame_2)
-        set_yaksha_coord_r_btn.setToolTip('Toggle yaksha boss position (face right)')
-        set_yaksha_coord_r_btn.clicked.connect(lambda: self._set_place_skill_coord('yaksha_boss', 'yaksha_boss_dir', 'right'))
-        set_yaksha_coord_r_btn.setIcon(QIcon(QPixmap.fromImage(QImage(':/skill_icon/yaksha_boss.png').mirrored(True, False))))
+        set_paochuan_coord_1_btn = QPushButton(tool_frame_2)
+        set_paochuan_coord_1_btn.setToolTip('Toggle paochuan 1')
+        set_paochuan_coord_1_btn.clicked.connect(lambda: self._set_place_skill_coord('paochuan', 'paochuan_dir', 1))
+        set_paochuan_coord_1_btn.setIcon(QIcon(QPixmap(':/skill_icon/paochuan.png')))
+        set_paochuan_coord_2_btn = QPushButton(tool_frame_2)
+        set_paochuan_coord_2_btn.setToolTip('Toggle paochuan 2')
+        set_paochuan_coord_2_btn.clicked.connect(lambda: self._set_place_skill_coord('paochuan', 'paochuan_dir', 2))
+        set_paochuan_coord_2_btn.setIcon(QIcon(QPixmap.fromImage(QImage(':/skill_icon/paochuan.png').mirrored(True, False))))
         set_kishin_coord_btn = QPushButton(tool_frame_2)
-        set_kishin_coord_btn.setToolTip('Toggle kishin shoukan position')
-        set_kishin_coord_btn.clicked.connect(lambda: self._set_place_skill_coord('kishin_shoukan'))
-        set_kishin_coord_btn.setIcon(QIcon(QPixmap(':/skill_icon/kishin_shoukan.png')))
+        set_kishin_coord_btn.setToolTip('Toggle paotai position')
+        set_kishin_coord_btn.clicked.connect(lambda: self._set_place_skill_coord('paotai'))
+        set_kishin_coord_btn.setIcon(QIcon(QPixmap(':/skill_icon/paotai.png')))
         set_nightmare_invite_btn = QPushButton(tool_frame_2)
-        set_nightmare_invite_btn.setToolTip('Toggle nightmare invite position')
+        set_nightmare_invite_btn.setToolTip('Toggle Erda Shower position')
         set_nightmare_invite_btn.clicked.connect(lambda: self._set_place_skill_coord('nightmare_invite'))
         set_nightmare_invite_btn.setIcon(QIcon(QPixmap(':/skill_icon/nightmare_invite.png')))
-        for i in (set_yaksha_coord_l_btn, set_yaksha_coord_r_btn, set_kishin_coord_btn, set_nightmare_invite_btn):
+        for i in (set_paochuan_coord_1_btn, set_paochuan_coord_2_btn, set_kishin_coord_btn, set_nightmare_invite_btn):
             i.setIconSize(ico_sz)
             i.setFixedSize(24, 24)
             tool_frame_2_layout.addWidget(i)
