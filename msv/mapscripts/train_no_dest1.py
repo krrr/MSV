@@ -24,8 +24,9 @@ class TrainNoDest1(MacroController):
         if not self.current_platform_hash:  # navigate failed, skip rest logic, go unstick fast
             return
 
-        if time.time() - self.player_manager.last_skill_use_time.get('paotai', 0) > 60:
+        if self.player_manager.is_skill_usable('nightmare_invite'):
             if self.set_skills():
+                self.player_manager.drop()
                 return
 
         if self.current_platform_hash == '7c9ea34a':
@@ -33,17 +34,18 @@ class TrainNoDest1(MacroController):
 
             self.player_manager.horizontal_move_goal(self.X)
 
-            random.shuffle(self.aoe_skills)
-            for i in self.aoe_skills:
-                if not self.player_manager.is_skill_usable(i):
-                    continue
-                if i == 'true_arachnid_reflection':
-                    self.player_manager.use_set_skill(i)
-                else:
-                    getattr(self.player_manager, i)()
-                time.sleep(0.8 + random_number(0.05))
-
             for _ in range(2):
+                random.shuffle(self.aoe_skills)
+                for i in self.aoe_skills:
+                    if not self.player_manager.is_skill_usable(i):
+                        continue
+                    if i == 'true_arachnid_reflection':
+                        self.player_manager.use_set_skill(i)
+                    else:
+                        getattr(self.player_manager, i)()
+                    time.sleep(0.8 + random_number(0.05))
+                    break
+
                 dir_ = random.choice((dc.DIK_LEFT, dc.DIK_RIGHT))
                 self.keyhandler.single_press(dir_)
                 self.player_manager.eight_legs_easton()
