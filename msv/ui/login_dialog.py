@@ -93,15 +93,14 @@ class LoginDialog(QDialog, Ui_LoginDialog):
             else:
                 util.get_config()['auto_login'] = False
                 QMessageBox.information(self, 'Login Failed', resp['msg'] or 'Unknown error')
-        elif reply.error() == QNetworkReply.OperationCanceledError:
+        else:
             self.retryCount += 1
             if self.retryCount >= 2:
-                QMessageBox.critical(self, 'Login Failed', 'Server timeout, please try again later')
+                QMessageBox.critical(self, 'Login Failed', 'Server error: ' + reply.errorString())
             else:
+                print('login failed, try again: ' + reply.errorString())
                 self.on_loginBtn_clicked()
                 return
-        else:
-            QMessageBox.critical(self, 'Login Failed', 'Server error: ' + reply.errorString())
 
         reply.deleteLater()
 
