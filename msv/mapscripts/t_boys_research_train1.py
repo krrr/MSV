@@ -14,11 +14,11 @@ class TBoyResearchTrain1(MacroController):
             return
 
         # set skills
-        if not self.elite_boss_detected and self.set_skills(combine=True):
+        if self.set_skills(combine=True):
             return
 
         # pickup money
-        if not self.elite_boss_detected and time.time() - self.last_pickup_money_time > self.pickup_money_interval:
+        if time.time() - self.last_pickup_money_time > self.pickup_money_interval:
             self.navigate_to_platform('257d1219')  # center top
             self.pickup_money()
             self.last_pickup_money_time = time.time()

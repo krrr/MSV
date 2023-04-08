@@ -19,14 +19,14 @@ class EndOfTheWorld2_4(MacroController):
             return
 
         # set skills
-        if not self.elite_boss_detected and self.set_skills(combine=True):
+        if self.set_skills(combine=True):
             if self.loop_count > 1 and self.current_platform_hash == 'e8c6644f':  # pickup money at top
                 self.player_manager.optimized_horizontal_move(self.terrain_analyzer.platforms['e8c6644f'].start_x + 5)
                 self.player_manager.stay(0.3 + random_number(0.1))
             return
 
         # pickup money
-        if (not self.elite_boss_detected and self.current_platform_hash == 'bcd4711b' and
+        if (self.current_platform_hash == 'bcd4711b' and
                 time.time() - self.last_pickup_money_time > self.pickup_money_interval):
             if self.player_manager.is_skill_usable('true_arachnid_reflection'):
                 self.player_manager.use_set_skill('true_arachnid_reflection')

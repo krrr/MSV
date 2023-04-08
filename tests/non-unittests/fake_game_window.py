@@ -36,7 +36,7 @@ class FakeGameWindow:
         win32gui.SetWindowPos(self.hwnd, 0, 5, 5, 1366+500-rect[2], 768+500-rect[3], 0)
         win32gui.UpdateWindow(self.hwnd)
         win32gui.ShowWindow(self.hwnd, win32con.SW_SHOW)
-        self.im = Image.open('..\\unittest_data\\eboss_sample1.png')
+        self.im = Image.open('..\\unittest_data\\bounty_hunter_dialog.png')
 
     def OnPaint(self, hwnd, message, wparam, lparam):
         hdc, ps = win32gui.BeginPaint(hwnd)

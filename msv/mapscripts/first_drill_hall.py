@@ -12,7 +12,7 @@ class FirstDrillHall(MacroController):
         # ignore rune
 
         # set skills
-        if not self.elite_boss_detected and self.set_skills(combine=True):
+        if self.set_skills(combine=True):
             return
 
         if self.current_platform_hash == '7e1401e3':  # bottom

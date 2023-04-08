@@ -38,14 +38,14 @@ class TestScreenProcessor(TestCase):
         print('find_other_player took %.3fs' % (time.perf_counter() - t,))
 
     def test_check_elite_boss(self):
-        self.processor.set_test_img('unittest_data/eboss_sample1.png')
-        self.assertTrue(self.processor.check_elite_boss())
-        self.processor.set_test_img('unittest_data/eboss_sample2.png')
-        self.assertTrue(self.processor.check_elite_boss())
-        self.processor.set_test_img('unittest_data/eboss_false_sample.png')
+        self.processor.set_test_img('unittest_data/dead.png')
+        self.assertTrue(self.processor.check_death())
+        self.processor.set_test_img('unittest_data/white_room.png')
+        self.assertFalse(self.processor.check_death())
+        self.processor.set_test_img('unittest_data/white_room1.png')
         t = time.perf_counter()
-        self.assertFalse(self.processor.check_elite_boss())
-        print('check_elite_boss took %.3fs' % (time.perf_counter() - t,))
+        self.assertFalse(self.processor.check_death())
+        print('check_dead took %.3fs' % (time.perf_counter() - t,))
 
     def test_check_white_room(self):
         self.processor.set_test_img('unittest_data/white_room.png')

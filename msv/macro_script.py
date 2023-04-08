@@ -129,7 +129,6 @@ class MacroController:
         self.pickup_money_interval = 90
         self.other_player_detected_start = None
         self.player_pos_not_found_start = None
-        self.elite_boss_detected = False
 
     def load_and_process_platform_map(self, path):
         ret = self.terrain_analyzer.load(path)
@@ -299,22 +298,12 @@ class MacroController:
         else:
             self.other_player_detected_start = None
 
-        ### Elite boss check
-        if self.screen_processor.check_elite_boss():
-            if not self.elite_boss_detected:
-                self.logger.info('elite boss detected')
-            self.elite_boss_detected = True
-            if other_pos:
-                if time.time() - self.other_player_detected_start >= 5:
-                    self.save_current_screen('eboss_people')
-                    self.exit_to_ch_select()
-                    self.abort('eboss present and other player staying')
-            else:
-                self.alert_sound(1)
-        else:
-            if self.elite_boss_detected:
-                self.logger.info('elite boss gone')
-            self.elite_boss_detected = False
+        ### Death check
+        if self.screen_processor.check_death():
+            self.save_current_screen('dead')
+            self.exit_to_ch_select()
+            self.alert_sound(1)
+            self.abort('character dead')
 
         ### Dialog box check
         if self.screen_processor.check_dialog():
@@ -575,9 +564,6 @@ class MacroController:
             time.sleep(self.MINIMAP_DELAY)
 
     def set_skills(self, combine=False):
-        if self.elite_boss_detected and self.other_player_detected_start is not None:
-            return False
-
         self.update()
         if self.current_platform_hash is None:
             return False

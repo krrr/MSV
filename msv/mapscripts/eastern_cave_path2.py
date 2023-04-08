@@ -15,7 +15,7 @@ class EasternCavePath2(MacroController):
 
         # set skills
         if (self.current_platform_hash in ('0ed3f4ca', '30fcb02b')   # at bottom
-                and not self.elite_boss_detected and self.set_skills(combine=True)):
+                and self.set_skills(combine=True)):
             return
 
         if self.current_platform_hash == '0ed3f4ca':  # left platform

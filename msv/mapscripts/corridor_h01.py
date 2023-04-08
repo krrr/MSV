@@ -6,7 +6,7 @@ class CorridorH01(MacroController):
         # ignore rune
 
         # set skills
-        if not self.elite_boss_detected and self.set_skills(combine=True):
+        if self.set_skills(combine=True):
             return
 
         if self.current_platform_hash == '37b99a5f':  # center

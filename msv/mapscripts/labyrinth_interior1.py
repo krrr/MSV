@@ -20,12 +20,12 @@ class LabyrinthInterior1(MacroController):
             return
 
         # set skills
-        if (not self.elite_boss_detected and self.current_platform_hash in ('4e54fb89', '6c45ab2d') and
+        if (self.current_platform_hash in ('4e54fb89', '6c45ab2d') and
                 self.set_skills(combine=True)):
             return
 
         # pickup money
-        if (not self.elite_boss_detected and self.current_platform_hash == 'd5ad102e' and
+        if (self.current_platform_hash == 'd5ad102e' and
                 time.time() - self.last_pickup_money_time > self.pickup_money_interval):
             self.pickup_money()
             self.last_pickup_money_time = time.time()
