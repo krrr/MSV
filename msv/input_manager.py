@@ -234,21 +234,24 @@ class InputManager:
 
 
 DEFAULT_KEY_MAP = {
-    "jump": dic.DIK_LMENU,
+    "jump": dic.DIK_SPACE,
     "raging_blow": dic.DIK_A,
-    "rising_rage": dic.DIK_X,
+    "rising_rage": dic.DIK_E,
     "worldreaver": dic.DIK_R,
-    "beam_blade": dic.DIK_F,
+    "beam_blade": dic.DIK_S,
     "upward_charge": dic.DIK_D,
-    "interact": dic.DIK_SPACE,
-    "weapon_aura": dic.DIK_F3,
+    "interact": dic.DIK_C,
+    "weapon_aura": dic.DIK_1,
     "holy_symbol": None,
-    "rope": dic.DIK_C,
-    "wild_totem": dic.DIK_B,
+    "rope": dic.DIK_END,
+    "wild_totem": None,
     "nightmare_invite": None,
-    "true_arachnid_reflection": dic.DIK_END,
-    "burning_soul_blade": dic.DIK_1,
-    "blitz_shield": None
+    "erda_shower": dic.DIK_T,
+    "true_arachnid_reflection": dic.DIK_H,
+    "burning_soul_blade": dic.DIK_3,
+    "blitz_shield": None,
+    "solar_crest": dic.DIK_V,
+    "instinctual_combo": dic.DIK_W
 }
 
 KEY2DISPLAY_NAME = {
@@ -264,7 +267,10 @@ KEY2DISPLAY_NAME = {
     "rope": "Rope",
     "wild_totem": "Wild Totem",
     "nightmare_invite": "nightmare_invite",
+    "erda_shower": "Erda Shower",
     "true_arachnid_reflection": "True Arachnid Reflection",
     "burning_soul_blade": "Burning Soul Blade",
-    "blitz_shield": "Blitz Shield"
+    "blitz_shield": "Blitz Shield",
+    "solar_crest" : "Solar Crest",
+    "instinctual_combo": "Instinctual Combo"
 }

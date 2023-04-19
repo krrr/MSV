@@ -57,7 +57,7 @@ class PlayerController:
 
         self.skill_cooldown = {
             'burning_soul_blade': 110, 'weapon_aura': 180, 'nightmare_invite': 60, 'true_arachnid_reflection': 250,
-            'rising_rage': 10, 'worldreaver': 15
+            'rising_rage': 10, 'worldreaver': 25, 'solar_crest': 250, 'instinctual_combo': 120, 'erda_shower': 60
         }
 
         self.v_buff_cd = 180  # common cool down for v buff
@@ -311,9 +311,16 @@ class PlayerController:
             prev_y, prev_x = self.y, self.x
 
     def use_set_skill(self, skill_name):
+        if skill_name == 'erda_shower':
+            self.key_mgr.press_key(DIK_DOWN)
+
         for i in range(2):
             self.key_mgr.single_press(self.keymap[skill_name], duration=0.2 + random_number(0.04),
                                       additional_duration=0 if i == 1 else 0.36 + random_number(0.04))
+        if skill_name == 'erda_shower':
+            time.sleep(0.03 + random_number(0.02))
+            self.key_mgr.release_key(DIK_DOWN)
+
         self.last_skill_use_time[skill_name] = time.time()
         self.skill_cast_counter += 1
         time.sleep(self.SET_SKILL_COMMON_DELAY + random_number(0.1))
@@ -358,6 +365,12 @@ class PlayerController:
         self.key_mgr.single_press(self.keymap["worldreaver"])
         self.last_skill_use_time['worldreaver'] = time.time()
         self.skill_cast_counter += 1
+        time.sleep(1.6 + random_number(0.05))
+
+    def solar_crest(self):
+        self.key_mgr.single_press(self.keymap["solar_crest"])
+        self.last_skill_use_time['solar_crest'] = time.time()
+        self.skill_cast_counter += 1
         time.sleep(0.8 + random_number(0.05))
 
     def beam_blade(self):
@@ -380,6 +393,9 @@ class PlayerController:
                                           additional_duration=0 if i == 1 else 0.1 + random_number(0.04))
             time.sleep(self.BUFF_COMMON_DELAY + random_number(0.04))
         return ret
+
+    def instinctual_combo(self, wait_before=0):
+        return self._use_buff_skill('instinctual_combo', self.skill_cooldown['instinctual_combo'], wait_before)
 
     def holy_symbol(self, wait_before=0):
         return self._use_buff_skill('holy_symbol', self.v_buff_cd, wait_before)
