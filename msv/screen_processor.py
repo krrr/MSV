@@ -209,7 +209,7 @@ class StaticImageProcessor:
         self.minimap_rect = None
 
         self.cv_templates = {}
-        for i in ('gm_cap', 'dialog_end_chat', 'eboss_minute', 'eboss_second'):
+        for i in ('gm_cap', 'dialog_end_chat', 'hp0'):
             path = ':/template/' + i + '_tpl.png'
             self.cv_templates[i] = cv2.imdecode(read_qt_resource(path, True), cv2.IMREAD_GRAYSCALE)
             if self.cv_templates[i] is None:
@@ -423,26 +423,16 @@ class StaticImageProcessor:
 
         return 0
 
-    def check_elite_boss(self):
+    def check_death(self):
         h, w = self.gray_img.shape
         # countdown area
-        area_w = 216
-        area_h = 56
-        x = (w // 2) - (area_w // 2)
-        y = 30
-        # search smaller area only
-        x += area_w // 2
-        area_w //= 2
-        y += area_h // 2
-        area_h //= 2
+        area_w = 174
+        area_h = 17
+        x = (w // 2) - (area_w // 2) + 12
+        y = h - 54
 
         cropped = self.gray_img[y:y+area_h, x:x+area_w]
-        match_res = cv2.matchTemplate(cropped, self.cv_templates['eboss_minute'], cv2.TM_SQDIFF_NORMED)
-        loc = np.where(match_res < 0.06)
-        if len(loc[0]) != 1:
-            return False
-
-        match_res = cv2.matchTemplate(cropped, self.cv_templates['eboss_second'], cv2.TM_SQDIFF_NORMED)
+        match_res = cv2.matchTemplate(cropped, self.cv_templates['hp0'], cv2.TM_SQDIFF_NORMED)
         loc = np.where(match_res < 0.06)
         return len(loc[0]) == 1
 

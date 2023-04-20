@@ -359,7 +359,7 @@ class PlayerController:
         self.key_mgr.single_press(self.keymap["rising_rage"])
         self.last_skill_use_time['rising_rage'] = time.time()
         self.skill_cast_counter += 1
-        time.sleep(0.7 + random_number(0.05))
+        time.sleep(0.9 + random_number(0.05))
 
     def worldreaver(self):
         self.key_mgr.single_press(self.keymap["worldreaver"])
