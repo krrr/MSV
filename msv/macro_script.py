@@ -204,7 +204,7 @@ class MacroController:
                                                 abs(self.player_manager.x - solution.upper_bound[0]))
                         x = solution.lower_bound[0] + 2 if closer_to_next_lower else solution.upper_bound[0] - 2
 
-                self.player_manager.dbl_jump_move(x)
+                self.player_manager.dbl_jump_move(x, attack=True)
                 self.poll_conn()
                 self.player_manager.horizontal_move_goal(x)
 
